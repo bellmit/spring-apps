@@ -11,6 +11,8 @@ http://192.168.109.3:9998/swagger-ui.html
 http://192.168.109.3:5555/myapps/hello/greeting
 
 
+
+
 #### 可执行jar包的启动命令
 java -jar /data/work/luciuschina/spring-boot-example/target/spring-boot-example-0.0.1-SNAPSHOT.jar --spring.config.name=application --spring.config.location=file:/data/work/luciuschina/spring-boot-example/src/main/resources/config/
 

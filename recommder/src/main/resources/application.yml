@@ -1,0 +1,31 @@
+app:
+  rcmd:
+    info:
+      default-rcmd-type: 1
+      default-page-size: 10
+      kafka-topic: article-rcmd-request
+
+
+logging:
+  level:
+    org:
+      springframework: ERROR
+    com:
+      haozhuo: DEBUG
+  file: /data/work/luciuschina/spring-apps/tmp/recommder.log
+
+spring:
+  redis:
+    sentinel:
+      master: mymaster
+      nodes: 192.168.1.150:26379,192.168.1.152:26379,192.168.1.153:26379
+  datasource:
+    dataetl:
+      url: jdbc:mysql://192.168.1.162:3306/yjk_data_etl
+      username: datag
+      password: yjkdatag
+      maximum-pool-size: 15
+  kafka:
+    bootstrap-servers: 192.168.1.152:9092,192.168.1.153:9092
+
+

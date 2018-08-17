@@ -6,12 +6,14 @@
     <groupId>com.haozhuo</groupId>
     <artifactId>spring-apps</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.2.0</version>
     <modules>
         <module>eureka-server</module>
-        <module>apps</module>
+        <module>test-apps</module>
         <module>common</module>
         <module>zuul-router</module>
+        <module>recommder</module>
+        <module>datag-service</module>
     </modules>
 
 
@@ -32,7 +34,6 @@
         <relativePath/>
         <!-- lookup parent from repository -->
     </parent>
-
     <dependencies>
 
         <!-- swagger support -->
@@ -76,7 +77,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- spring2.0 redis 连接池需要 common-pool2 -->
+            <!-- spring2.0 redis 连接池需要 com.haozhuo.common-pool2 -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-pool2</artifactId>

@@ -4,6 +4,10 @@ app:
       default-rcmd-type: 1
       default-page-size: 10
       kafka-topic: article-rcmd-request
+  redis:
+    expire-days: 15
+
+
 
 
 logging:

@@ -1,12 +1,19 @@
 package com.haozhuo.rcmd.service;
 
+import com.haozhuo.common.JavaUtils;
 import com.haozhuo.rcmd.model.RcmdInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Lucius on 8/17/18.
@@ -15,12 +22,34 @@ import org.springframework.stereotype.Component;
 public class RedisService {
     private static final Logger logger = LoggerFactory.getLogger(RedisService.class);
     @Autowired
+    private Environment environment;
+
+    @Autowired
     @Qualifier("redisTemplate0")
     private StringRedisTemplate redisDB0;
 
     @Autowired
     @Qualifier("redisTemplate1")
     private StringRedisTemplate redisDB1;
+
+    private String curDate;
+
+    private String[] lastNdays;
+
+    @Value("${app.redis.expire-days:15}")
+    private int redisExpireDays;
+
+    private synchronized void updateDateInfo() {
+        lastNdays = JavaUtils.getLastNdaysArray(redisExpireDays);
+        curDate = JavaUtils.getTodayStr();
+        logger.debug("redisExpireDays:{}, curDate:{}, lastNdays:{}", redisExpireDays, curDate, Arrays.asList(lastNdays));
+    }
+
+    private void checkOrUpdateDateInfo() {
+        if (!JavaUtils.getTodayStr().equals(curDate)) {
+            updateDateInfo();
+        }
+    }
 
     /**
      * 将如
@@ -53,5 +82,20 @@ public class RedisService {
         if (value == null) value = "";
         logger.info("getRcmdInfo key -- {}; rcmdResult -- {}", key, value);
         return parseRcmdInfo(value);
+    }
+
+
+    /**
+     * 根据userId获取最近给用户推送过的视频列表
+     *
+     * @return
+     */
+    public Set<String> getPushedVideos(String userId) {
+        checkOrUpdateDateInfo();
+        Set<String> result = new HashSet<>();
+        for (String day : lastNdays) {
+            result.addAll(redisDB0.opsForSet().members(String.format("video-pushed:%s:%s", userId, day)));
+        }
+        return result;
     }
 }

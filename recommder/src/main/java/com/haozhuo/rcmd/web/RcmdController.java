@@ -4,13 +4,16 @@ import com.haozhuo.rcmd.config.kafka.KafkaProducer;
 import com.haozhuo.rcmd.model.InfoListParams;
 import com.haozhuo.rcmd.model.RcmdInfo;
 import com.haozhuo.rcmd.model.RcmdInfoMsg;
+import com.haozhuo.rcmd.service.ElasticsearchService;
 import com.haozhuo.rcmd.service.JdbcService;
 import com.haozhuo.rcmd.service.RedisService;
 import io.swagger.annotations.ApiOperation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -24,6 +27,10 @@ import java.util.Set;
 @RestController
 public class RcmdController {
     private static final Logger logger = LoggerFactory.getLogger(RcmdController.class);
+
+    @Autowired
+    private ElasticsearchService esService;
+
     @Autowired
     private RedisService redisService;
 
@@ -50,7 +57,7 @@ public class RcmdController {
     /**
      * 资讯推荐列表接口
      * 旧接口：
-     *      recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
+     * recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
      *
      * @param params
      * @return
@@ -104,16 +111,17 @@ public class RcmdController {
     /**
      * 推荐视频列表
      * 旧接口：
-     *      video-recommender项目中的VideoRecomController中的getSearchContent()方法getMatchContent()方法
-            生产环境输入：
-             curl -XPOST -H "Content-Type: application/json" http://datanode2:9090/api/video-recommder/videomatch/recommend/all -d '{
-             "userId":"c63fc45c-35d1-43d5-b864-2bdb82542dfd",
-             "size":10
-             }'
-            返回：
-            ["575","591","588","339","311","303","309","317","324","331"]
+     * video-recommender项目中的VideoRecomController中的getMatchContent()方法
+     * 生产环境输入：
+     * curl -XPOST -H "Content-Type: application/json" http://datanode2:9090/api/video-recommder/videomatch/recommend/all -d '{
+     * "userId":"c63fc45c-35d1-43d5-b864-2bdb82542dfd",
+     * "size":10
+     * }'
+     * 返回：
+     * ["575","591","588","339","311","303","309","317","324","331"]
      * 新接口：
      * 注意：旧接口中有一个flag参数，并没有用到，所以新接口中删除
+     *
      * @param userId
      * @param pageSize
      * @return
@@ -123,20 +131,25 @@ public class RcmdController {
     public Object getVideoListByUserId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
-        Set<String> alreadyPushedVideos = redisService.getPushedVideos(userId);
+        String[] alreadyPushedVideos = redisService.getPushedVideos(userId);
+        logger.debug("alreadyPushedVideos:{}",StringUtils.arrayToCommaDelimitedString(alreadyPushedVideos));
         Set<String> userLabels = jdbcService.getLabelsByUserId(userId);
-        //TODO 从mysql查找age和sex
-        return userLabels;
+
+        //最后需要把查到的结果存入Redis的已推荐的key中
+        String[] result = esService.getFixedSizeVideoIdsByLabel(StringUtils.collectionToDelimitedString(userLabels, ","), alreadyPushedVideos, pageSize);
+        redisService.setPushedVideos(userId, result);
+        return result;
     }
 
 
     /**
      * 搜索视频列表
      * 旧接口：
-     *      video-recommender项目中的VideoRecomController中的getSearchContent()方法
-     *      //TODO 对该接口有疑问
-     *
+     * video-recommender项目中的VideoRecomController中的getSearchContent()方法
+     * //TODO 对该接口有疑问
+     * <p>
      * 新接口：
+     *
      * @param keywords
      * @return
      */

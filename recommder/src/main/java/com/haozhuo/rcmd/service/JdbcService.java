@@ -117,13 +117,20 @@ public class JdbcService {
     }
 
     private List<String> getReportLabelIdList(String userId) {
-        String reportLabelSql = String.format("select label_ids from report_userid_label where user_id = '%s'", userId);
-        String labelIds = dataetlDB.queryForObject(reportLabelSql, new RowMapper<String>() {
-            @Override
-            public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                return resultSet.getString("label_ids");
-            }
-        });
+        String labelIds = "";
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            labelIds = dataetlDB.queryForObject(
+                    String.format("select label_ids from report_userid_label where user_id = '%s'", userId),
+                    new RowMapper<String>() {
+                        @Override
+                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                            return resultSet.getString("label_ids");
+                        }
+                    });
+        } catch (Exception ex) {
+            logger.info("report_userid_label中没有这个userId:{}", userId);
+        }
         return Arrays.asList(labelIds.split(","));
     }
 

@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Lucius on 8/17/18.
@@ -90,12 +90,21 @@ public class RedisService {
      *
      * @return
      */
-    public Set<String> getPushedVideos(String userId) {
+    public String[] getPushedVideos(String userId) {
         checkOrUpdateDateInfo();
         Set<String> result = new HashSet<>();
         for (String day : lastNdays) {
             result.addAll(redisDB0.opsForSet().members(String.format("video-pushed:%s:%s", userId, day)));
         }
-        return result;
+        return result.toArray(new String[0]);
+    }
+
+    public void setPushedVideos(String userId, String[] pushedVideoIds) {
+        if (pushedVideoIds.length == 0)
+            return;
+        String key = String.format("video-pushed:%s:%s", userId, curDate);
+        logger.debug("key:{}", key);
+        redisDB0.opsForSet().add(key, pushedVideoIds);
+        redisDB0.expire(key, redisExpireDays, TimeUnit.DAYS);
     }
 }

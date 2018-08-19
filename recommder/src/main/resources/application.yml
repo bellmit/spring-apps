@@ -4,6 +4,10 @@ app:
       default-rcmd-type: 1
       default-page-size: 10
       kafka-topic: article-rcmd-request
+    video:
+      es:
+        video-index: videos_info
+    goods:
   redis:
     expire-days: 15
 
@@ -31,5 +35,9 @@ spring:
       maximum-pool-size: 15
   kafka:
     bootstrap-servers: 192.168.1.152:9092,192.168.1.153:9092
+  data:
+    elasticsearch:
+      cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300
+      cluster-name: hz-es-cluster1
 
 

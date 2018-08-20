@@ -7,12 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -21,8 +19,6 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisService {
     private static final Logger logger = LoggerFactory.getLogger(RedisService.class);
-    @Autowired
-    private Environment environment;
 
     @Autowired
     @Qualifier("redisTemplate0")
@@ -36,13 +32,16 @@ public class RedisService {
 
     private String[] lastNdays;
 
-    @Value("${app.redis.expire-days:15}")
-    private int redisExpireDays;
+    @Value("${app.default.redis.expire-days:15}")
+    private int expireDays;
+
+    private final String videoPushedKey = "video-pushed:%s:%s";
+    private final String goodsPushedKey = "goods-pushed:%s:%s";
 
     private synchronized void updateDateInfo() {
-        lastNdays = JavaUtils.getLastNdaysArray(redisExpireDays);
+        lastNdays = JavaUtils.getLastNdaysArray(expireDays);
         curDate = JavaUtils.getTodayStr();
-        logger.debug("redisExpireDays:{}, curDate:{}, lastNdays:{}", redisExpireDays, curDate, Arrays.asList(lastNdays));
+        logger.debug("expireDays:{}, curDate:{}, lastNdays:{}", expireDays, curDate, Arrays.asList(lastNdays));
     }
 
     private void checkOrUpdateDateInfo() {
@@ -84,6 +83,14 @@ public class RedisService {
         return parseRcmdInfo(value);
     }
 
+    private String[] getPushedKeys(String userId, String key) {
+        checkOrUpdateDateInfo();
+        Set<String> result = new HashSet<>();
+        for (String day : lastNdays) {
+            result.addAll(redisDB0.opsForSet().members(String.format(key, userId, day)));
+        }
+        return result.toArray(new String[0]);
+    }
 
     /**
      * 根据userId获取最近给用户推送过的视频列表
@@ -91,20 +98,80 @@ public class RedisService {
      * @return
      */
     public String[] getPushedVideos(String userId) {
-        checkOrUpdateDateInfo();
-        Set<String> result = new HashSet<>();
-        for (String day : lastNdays) {
-            result.addAll(redisDB0.opsForSet().members(String.format("video-pushed:%s:%s", userId, day)));
-        }
-        return result.toArray(new String[0]);
+        return getPushedKeys(userId, videoPushedKey);
+    }
+
+    /**
+     * 根据userId获取最近给用户推送过的商品列表
+     *
+     * @return
+     */
+    public String[] getPushedGoods(String userId) {
+        return getPushedKeys(userId, goodsPushedKey);
+    }
+
+    private void setPushedKey(String userId, String key, String[] pushedIds) {
+        if (pushedIds.length == 0) return;
+        String realKey = String.format(key, userId, curDate);
+        logger.debug("key:{}", realKey);
+        redisDB0.opsForSet().add(realKey, pushedIds);
+        redisDB0.expire(realKey, expireDays, TimeUnit.DAYS);
     }
 
     public void setPushedVideos(String userId, String[] pushedVideoIds) {
-        if (pushedVideoIds.length == 0)
-            return;
-        String key = String.format("video-pushed:%s:%s", userId, curDate);
-        logger.debug("key:{}", key);
-        redisDB0.opsForSet().add(key, pushedVideoIds);
-        redisDB0.expire(key, redisExpireDays, TimeUnit.DAYS);
+        setPushedKey(userId, videoPushedKey, pushedVideoIds);
+    }
+
+    public void setPushedGoods(String userId, String[] pushedGoodsIds) {
+        setPushedKey(userId, goodsPushedKey, pushedGoodsIds);
+    }
+
+
+    private void deletePushedKey(String userId, String key) {
+        List<String> keys = new ArrayList<>();
+        for (String day : lastNdays) {
+            keys.add(String.format(key, userId, day));
+        }
+        redisDB0.delete(keys);
+    }
+
+    public void deleteVideoPushedKey(String userId) {
+        deletePushedKey(userId, videoPushedKey);
+    }
+
+    public void deleteGoodsPushedKey(String userId) {
+        deletePushedKey(userId, goodsPushedKey);
+    }
+
+    /**
+     * 解析如下的形式，只需要冒号前面的整数
+     * 249163: 0.23237589, 221388: 0.19470099, 249617: 0.18869004, 197323: 0.18331973, 209836: 0.17684466, 205834: 0.16972847
+     */
+    private List<String> parseSimValue(String value) {
+        List<String> result = new ArrayList<String>();
+        if ("".equals(value.trim()))
+            return result;
+        try {
+            for (String item : value.toString().split(",")) {
+                result.add(item.split(":")[0].trim());
+            }
+        } catch (Exception e) {
+            logger.error("parseSimiValue error:{}", e);
+        }
+        return result;
+    }
+
+    public Map<String, List<String>> getSimByInfoId(String infoId) {
+        String hashKey = String.format("simi_%s", infoId);
+        Map<String, List<String>> map = new HashMap<>();
+        for (String valueKey : new String[]{"a", "v", "l"}) {
+            Object valueOrNull = redisDB0.opsForHash().get(hashKey, valueKey);
+            List<String> idList = new ArrayList<>();
+            if (valueOrNull != null) {
+                idList = parseSimValue(valueOrNull.toString());
+            }
+            map.put(valueKey, idList);
+        }
+        return map;
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import com.haozhuo.common.Tuple;
+import org.springframework.util.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -49,6 +50,11 @@ public class JdbcService {
         });
     }
 
+    /**
+     * 获取频道名称 和 频道id的映射关系
+     *
+     * @return
+     */
     public Map<String, Integer> getCategoryNameIdMap() {
         List<Category> list = dataetlDB.query("select name, id from category;", new RowMapper<Category>() {
             @Override
@@ -65,6 +71,11 @@ public class JdbcService {
         return resultMap;
     }
 
+    /**
+     * 获取频道以及对应的文章数的映射关系
+     *
+     * @return
+     */
     public Map<Integer, Integer> getCategoryIdCountMap() {
         //查询每个频道有多少文章
         Map<Integer, Integer> resultMap = new HashMap<>();
@@ -88,6 +99,11 @@ public class JdbcService {
         return resultMap;
     }
 
+    /**
+     * 获取labelId和labelName的映射关系
+     *
+     * @return
+     */
     public Map<String, String> getDiseaseLabelIdNameMap() {
         //查询每个频道有多少文章
         Map<String, String> resultMap = new HashMap<>();
@@ -106,6 +122,12 @@ public class JdbcService {
         return resultMap;
     }
 
+    /**
+     * 根据userId，获取动态的labelIds
+     *
+     * @param userId
+     * @return
+     */
     private List<String> getDynamicLabelIdList(String userId) {
         String dynamicLabelSql = String.format("select distinct label_id from dynamic_userid_label x where x.user_id = '%s' and x.update_time > '%s'", userId, JavaUtils.getNdaysAgo(30));
         return dataetlDB.query(dynamicLabelSql, new RowMapper<String>() {
@@ -116,6 +138,12 @@ public class JdbcService {
         });
     }
 
+    /**
+     * 根据userId，获取最近一份报告的疾病labelIds
+     *
+     * @param userId
+     * @return
+     */
     private List<String> getReportLabelIdList(String userId) {
         String labelIds = "";
         try {
@@ -135,7 +163,23 @@ public class JdbcService {
     }
 
 
-    public Set<String> getLabelsByUserId(String userId) {
+    /**
+     * 根据userId获取用户的labelNames
+     *
+     * @param userId
+     * @return
+     */
+    public String getLabelStrByUserId(String userId) {
+        return StringUtils.collectionToDelimitedString(getLabelSetByUserId(userId), ",");
+    }
+
+    /**
+     * 根据userId获取用户的labelNames
+     *
+     * @param userId
+     * @return
+     */
+    public Set<String> getLabelSetByUserId(String userId) {
         Set<String> labelIdSet = new HashSet<>();
         labelIdSet.addAll(getDynamicLabelIdList(userId));
         labelIdSet.addAll(getReportLabelIdList(userId));
@@ -146,6 +190,67 @@ public class JdbcService {
             }
         }
         return labelNameSet;
+    }
+
+
+    /**
+     * 根据videoId获取videoLabels
+     *
+     * @param videoId
+     * @return
+     */
+    public String getVideoLabelsById(String videoId) {
+        String labels = "";
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            labels = dataetlDB.queryForObject(
+                    String.format("select labels from videos_info where id = %s", videoId),
+                    new RowMapper<String>() {
+                        @Override
+                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                            return resultSet.getString("labels");
+                        }
+                    });
+        } catch (Exception ex) {
+            logger.debug("getVideoLabelsById error", ex);
+            logger.info("videos_info中没有这个id:{}", videoId);
+        }
+        return labels;
 
     }
+
+    /**
+     * 根据infoId获取labelIds
+     */
+    public String getLabelIdsByInfoId(String infoId) {
+        String labelIds = "";
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            String sql = String.format("select x.disease_label_ids from  article x where x.information_id = %s", infoId);
+            logger.debug("sql:{}", sql);
+            labelIds = dataetlDB.queryForObject(sql, new RowMapper<String>() {
+                @Override
+                public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                    return resultSet.getString("disease_label_ids");
+                }
+            });
+        } catch (Exception ex) {
+            logger.debug("getLabelIdsByInfoId error", ex);
+            logger.info("article id:{},没有labelIds", infoId);
+        }
+        return labelIds;
+    }
+
+    /**
+     * 根据infoId获取labelNames
+     */
+    public String getLabelNameByInfoId(String infoId) {
+        String labelIds = getLabelIdsByInfoId(infoId);
+        StringBuffer buffer = new StringBuffer();
+        for (String labelId : labelIds.split(",")) {
+            buffer.append(diseaseLabelIdNameMap.get(labelId)).append(",");
+        }
+        return buffer.toString();
+    }
+
 }

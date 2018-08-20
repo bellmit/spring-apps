@@ -8,10 +8,11 @@ app:
       es:
         video-index: videos_info
     goods:
-  redis:
-    expire-days: 15
-
-
+      es:
+        goods-index: good
+  default:
+    redis:
+      expire-days: 15
 
 
 logging:

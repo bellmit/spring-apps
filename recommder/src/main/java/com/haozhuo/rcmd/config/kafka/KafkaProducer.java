@@ -2,7 +2,7 @@ package com.haozhuo.rcmd.config.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.haozhuo.rcmd.model.RcmdInfoMsg;
+import com.haozhuo.rcmd.model.RcmdRequestMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,13 +34,13 @@ public class KafkaProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Value("${app.rcmd.info.kafka-topic}")
-    private String rcmdInfoTopic;
+    @Value("${app.kafka.topic.article-rcmd-request}")
+    private String articleRcmdRequestTopic;
 
-    public void sendRcmdInfoMsg(RcmdInfoMsg msg) {
+    public void sendRcmdRequestMsg(RcmdRequestMsg msg) {
         try {
             logger.debug("send msg:{}", msg);
-            kafkaTemplate.send(rcmdInfoTopic, objectMapper.writeValueAsString(msg));
+            kafkaTemplate.send(articleRcmdRequestTopic, objectMapper.writeValueAsString(msg));
         } catch (JsonProcessingException e) {
             logger.error("发送Kafka消息{}失败:{}",msg,e);
         }

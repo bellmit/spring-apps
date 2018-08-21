@@ -1,18 +1,15 @@
 app:
-  rcmd:
-    info:
-      default-rcmd-type: 1
-      default-page-size: 10
-      kafka-topic: article-rcmd-request
-    video:
-      es:
-        video-index: videos_info
-    goods:
-      es:
-        goods-index: good
-  default:
-    redis:
-      expire-days: 15
+  es:
+    video-index: videos_info
+    live-index: lives_info
+    goods-index: good
+    article-index: article3
+    reportlabel-index: reportlabel
+  redis:
+    expire-days: 15
+  kafka:
+    topic:
+      article-rcmd-request: article-rcmd-request
 
 
 logging:

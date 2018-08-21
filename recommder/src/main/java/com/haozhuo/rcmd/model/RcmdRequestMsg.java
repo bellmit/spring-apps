@@ -8,13 +8,13 @@ import lombok.Setter;
 @Setter
 @Getter
 @AllArgsConstructor
-public class RcmdInfoMsg {
+public class RcmdRequestMsg {
     String userId;
     int rcmdType;
 
     @Override
     public String toString() {
-        return "RcmdInfoMsg{" +
+        return "RcmdRequestMsg{" +
                 "userId='" + userId + '\'' +
                 ", rcmdType=" + rcmdType +
                 '}';

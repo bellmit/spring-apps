@@ -32,7 +32,7 @@ public class RedisService {
 
     private String[] lastNdays;
 
-    @Value("${app.default.redis.expire-days:15}")
+    @Value("${app.redis.expire-days:15}")
     private int expireDays;
 
     private final String videoPushedKey = "video-pushed:%s:%s";

@@ -16,14 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.gaussDecayFunction;
-
 
 @Component
 public class EsService {
@@ -97,6 +92,10 @@ public class EsService {
         String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(labels, "keywords", "labels", "title"), excludeIds, 0, size);
         logger.debug("labels:{}, video ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
+    }
+
+    public String[] getVideoIdsByLabel(String labels, int size) {
+        return getVideoIdsByLabel(labels,new String[]{}, size);
     }
 
     public String[] getLivesIdsByLabel(String labels, String[] excludeIds, int size) {

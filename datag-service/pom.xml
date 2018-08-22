@@ -12,6 +12,7 @@
     <artifactId>datag-service</artifactId>
 
     <dependencies>
+
         <!-- spring-boot-starter-jdbc默认自带HikariCP连接池-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,4 +1,4 @@
-package com.haozhuo.common;
+package com.haozhuo.rcmd.common;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.search.SearchHit;

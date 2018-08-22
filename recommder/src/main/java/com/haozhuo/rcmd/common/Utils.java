@@ -1,4 +1,4 @@
-package com.haozhuo.rcmd;
+package com.haozhuo.rcmd.common;
 
 /**
  * Created by Lucius on 8/20/18.

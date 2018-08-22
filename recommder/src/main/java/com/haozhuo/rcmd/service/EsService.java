@@ -1,12 +1,11 @@
 package com.haozhuo.rcmd.service;
 
-import com.haozhuo.common.EsUtils;
-import com.haozhuo.common.JavaUtils;
-import com.haozhuo.rcmd.Utils;
+import com.haozhuo.rcmd.common.EsUtils;
+import com.haozhuo.rcmd.common.Utils;
 import com.haozhuo.rcmd.model.AbnormalParam;
+import com.haozhuo.rcmd.model.ArticleContent;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.lucene.search.function.CombineFunction;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -16,8 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Component
@@ -95,7 +97,7 @@ public class EsService {
     }
 
     public String[] getVideoIdsByLabel(String labels, int size) {
-        return getVideoIdsByLabel(labels,new String[]{}, size);
+        return getVideoIdsByLabel(labels, new String[]{}, size);
     }
 
     public String[] getLivesIdsByLabel(String labels, String[] excludeIds, int size) {
@@ -116,6 +118,25 @@ public class EsService {
 
     public String[] getArticleIdsByLabel(String labels, int size) {
         return getArticleIdsByLabel(labels, new String[]{}, size);
+    }
+
+    public List<ArticleContent> getArticleContentByLabels(String labels, int size, Map<Integer, String> categoryIdNameMap) {
+        QueryBuilder qb = QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("title", labels).slop(0).analyzer("ik_smart").boost(0.80f))
+                .should(QueryBuilders.matchPhraseQuery("abstracts", labels).slop(0).analyzer("ik_smart").boost(0.15f))
+                .should(QueryBuilders.matchPhraseQuery("content", labels).slop(0).analyzer("ik_smart").boost(0.05f));
+        SearchHit[] hits = client.prepareSearch(articleIndex).setQuery(qb).setSize(size).execute().actionGet().getHits().getHits();
+        List<ArticleContent> result = new ArrayList<>(hits.length);
+        for (SearchHit hit : hits) {
+            result.add(new ArticleContent(
+                    hit.getId(),
+                    hit.getSource().get("title").toString(),
+                    hit.getSource().get("abstracts").toString(),
+                    hit.getSource().get("content").toString(),
+                    hit.getSource().get("crawler_time").toString(),
+                    new Double(hit.getScore()),
+                    categoryIdNameMap.get(Integer.parseInt(hit.getType()))));
+        }
+        return result;
     }
 
     public String[] getGoodsIdsByLabels(String labels, String[] excludeIds, int size) {
@@ -198,6 +219,15 @@ public class EsService {
 
     private String[] getArticleIdsRandomly(String[] excludeIds, int size) {
         return getArticleIdsByCondition(QueryBuilders.matchAllQuery(), excludeIds, 0, size);
+    }
+
+    public boolean isExistKeyword(String keyword) {
+        SearchRequestBuilder srb = client.prepareSearch(videosInfoIndex, livesInfoIndex, articleIndex).setQuery(
+                QueryBuilders.boolQuery()
+                        .should(QueryBuilders.matchPhraseQuery("title", keyword))
+                        .should(QueryBuilders.matchPhraseQuery("labels", keyword))
+                        .should(QueryBuilders.matchPhraseQuery("keywords", keyword))).setSize(1);
+        return EsUtils.getDocIdsAsList(srb).size() == 1;
     }
 }
 

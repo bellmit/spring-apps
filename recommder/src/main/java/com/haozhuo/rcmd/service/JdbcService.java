@@ -1,6 +1,7 @@
 package com.haozhuo.rcmd.service;
 
-import com.haozhuo.common.JavaUtils;
+import com.haozhuo.rcmd.common.JavaUtils;
+import com.haozhuo.rcmd.common.Tuple;
 import com.haozhuo.rcmd.model.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +10,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import com.haozhuo.common.Tuple;
 import org.springframework.util.StringUtils;
 
 import java.sql.ResultSet;
@@ -55,20 +55,21 @@ public class JdbcService {
      *
      * @return
      */
-    public Map<String, Integer> getCategoryNameIdMap() {
+    public List<Category> getCategoryNameIdList() {
         List<Category> list = dataetlDB.query("select name, id from category;", new RowMapper<Category>() {
             @Override
             public Category mapRow(ResultSet resultSet, int i) throws SQLException {
                 return new Category(resultSet.getInt("id"), resultSet.getString("name"));
             }
         });
+        return list;
 
-        Map<String, Integer> resultMap = new HashMap<String, Integer>();
-        for (Category category : list) {
-            resultMap.put(category.getName(), category.getId());
-        }
-        logger.info("getCategoryNameIdMap:{}", resultMap.toString());
-        return resultMap;
+//        Map<String, Integer> resultMap = new HashMap<String, Integer>();
+//        for (Category category : list) {
+//            resultMap.put(category.getName(), category.getId());
+//        }
+//        logger.info("getCategoryNameIdMap:{}", resultMap.toString());
+//        return resultMap;
     }
 
     /**

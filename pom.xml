@@ -25,6 +25,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <springboot.version>2.0.4.RELEASE</springboot.version>
+        <maven-war.version>2.1.1</maven-war.version>
+        <maven-jar.version>2.6</maven-jar.version>
     </properties>
 
     <parent>
@@ -102,11 +104,23 @@
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
+        <!--<pluginManagement>-->
+                <!--<plugins>-->
+                    <!--<plugin>-->
+                        <!--<groupId>org.springframework.boot</groupId>-->
+                        <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
+                        <!--<configuration>-->
+                            <!--<fork>true</fork>-->
+                        <!--</configuration>-->
+                    <!--</plugin>-->
+                <!--</plugins>-->
+        <!--</pluginManagement>-->
     </build>
 
 </project>

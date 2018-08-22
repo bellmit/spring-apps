@@ -1,6 +1,6 @@
 package com.haozhuo.rcmd.service;
 
-import com.haozhuo.common.JavaUtils;
+import com.haozhuo.rcmd.common.JavaUtils;
 import com.haozhuo.rcmd.model.RcmdInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

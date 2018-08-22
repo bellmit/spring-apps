@@ -21,7 +21,7 @@ import java.util.*;
  * Created by Lucius on 8/16/18.
  */
 
-@RequestMapping(value = "/")
+@RequestMapping(value = "/rcmd")
 @RestController
 public class RcmdController {
     private static final Logger logger = LoggerFactory.getLogger(RcmdController.class);
@@ -35,29 +35,11 @@ public class RcmdController {
     @Autowired
     private KafkaProducer kafkaProducer;
 
+    @Autowired
     private JdbcService jdbcService;
-
-    private final Map<String, Integer> categoryNameIdMap;
-    private final Map<Integer, String> categoryIdNameMap;
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    @Autowired
-    public RcmdController(JdbcService jdbcService) {
-        this.jdbcService = jdbcService;
-        List<Category> list = this.jdbcService.getCategoryNameIdList();
-        Map<Integer, String> categoryIdNameMap = new HashMap<>();
-        Map<String, Integer> categoryNameIdMap = new HashMap<>();
-
-        for (Category category : list) {
-            categoryIdNameMap.put(category.getId(), category.getName());
-            categoryNameIdMap.put(category.getName(), category.getId());
-        }
-        this.categoryNameIdMap = categoryNameIdMap;
-        logger.info("categoryNameIdMap:" + this.categoryNameIdMap);
-        this.categoryIdNameMap = categoryIdNameMap;
-        logger.info("categoryIdNameMap:" + this.categoryIdNameMap);
-    }
 
     /**
      * 输入userId,返回推荐商品的id
@@ -279,7 +261,7 @@ public class RcmdController {
             @RequestParam(value = "size", defaultValue = "10") int pageSize,
             @RequestParam(value = "contentType", defaultValue = "推荐") String categoryName) {
         long beginTime = System.currentTimeMillis();
-        int rmcdType = categoryNameIdMap.getOrDefault(categoryName, 1);
+        int rmcdType = jdbcService.categoryNameIdMap.getOrDefault(categoryName, 1);
         kafkaProducer.sendRcmdRequestMsg(new RcmdRequestMsg(userId, rmcdType));
         //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
         RcmdInfo rcmdInfo = redisService.getRcmdInfo(userId, rmcdType);
@@ -408,7 +390,8 @@ public class RcmdController {
     public Object getDetailsOfInfosByLabels(
             @RequestParam(value = "label") String labels,
             @RequestParam(value = "pageSize", defaultValue = "10") int size) {
-        return esService.getArticleContentByLabels(labels, size, categoryIdNameMap);
+        return esService.getArticleContentByLabels(labels, size, jdbcService.categoryIdNameMap);
     }
+
 
 }

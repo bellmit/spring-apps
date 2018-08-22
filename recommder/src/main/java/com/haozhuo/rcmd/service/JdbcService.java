@@ -2,7 +2,8 @@ package com.haozhuo.rcmd.service;
 
 import com.haozhuo.rcmd.common.JavaUtils;
 import com.haozhuo.rcmd.common.Tuple;
-import com.haozhuo.rcmd.model.Category;
+import com.haozhuo.rcmd.model.LiveInfo;
+import com.haozhuo.rcmd.model.VideoInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,21 +24,28 @@ import java.util.*;
 public class JdbcService {
     private static final Logger logger = LoggerFactory.getLogger(JdbcService.class);
 
-    private final Map<Integer, Integer> categoryIdCountMap;
-
-    private final Map<String, String> diseaseLabelIdNameMap;
+    public final Map<Integer, Integer> categoryIdCountMap;
+    public final Map<String, String> labelIdNameMap = new HashMap<>();
+    public final Map<String, String> labelNameIdMap = new HashMap<>();
+    public final Map<String, Integer> categoryNameIdMap = new HashMap<>();
+    public final Map<Integer, String> categoryIdNameMap = new HashMap<>();
 
     Random rand = new Random();
-
 
     @Qualifier("dataetlJdbc") //选择jdbc连接池
     private final JdbcTemplate dataetlDB;
 
     @Autowired
     public JdbcService(JdbcTemplate jdbcTemplate) {
+        logger.info("init JdbcService .................");
         this.dataetlDB = jdbcTemplate;
         this.categoryIdCountMap = getCategoryIdCountMap();
-        this.diseaseLabelIdNameMap = getDiseaseLabelIdNameMap();
+        initLabelMap();
+        logger.debug("labelIdNameMap:{}", labelIdNameMap);
+        logger.debug("labelNameIdMap:{}", labelNameIdMap);
+        initCategoryMap();
+        logger.debug("categoryNameIdMap:{}", categoryNameIdMap);
+        logger.debug("categoryIdNameMap:{}", categoryIdNameMap);
     }
 
     public List<String> getRandomInfos(int rcmdType, int pageSize, int getNumber) {
@@ -55,22 +63,19 @@ public class JdbcService {
      *
      * @return
      */
-    public List<Category> getCategoryNameIdList() {
-        List<Category> list = dataetlDB.query("select name, id from category;", new RowMapper<Category>() {
+    private void initCategoryMap() {
+        List<Tuple<Integer, String>> list = dataetlDB.query("select name, id from category;", new RowMapper<Tuple<Integer, String>>() {
             @Override
-            public Category mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Category(resultSet.getInt("id"), resultSet.getString("name"));
+            public Tuple<Integer, String> mapRow(ResultSet resultSet, int i) throws SQLException {
+                return new Tuple(resultSet.getInt("id"), resultSet.getString("name"));
             }
         });
-        return list;
-
-//        Map<String, Integer> resultMap = new HashMap<String, Integer>();
-//        for (Category category : list) {
-//            resultMap.put(category.getName(), category.getId());
-//        }
-//        logger.info("getCategoryNameIdMap:{}", resultMap.toString());
-//        return resultMap;
+        for (Tuple<Integer, String> category : list) {
+            this.categoryIdNameMap.put(category.getT1(), category.getT2());
+            this.categoryNameIdMap.put(category.getT2(), category.getT1());
+        }
     }
+
 
     /**
      * 获取频道以及对应的文章数的映射关系
@@ -100,27 +105,19 @@ public class JdbcService {
         return resultMap;
     }
 
-    /**
-     * 获取labelId和labelName的映射关系
-     *
-     * @return
-     */
-    public Map<String, String> getDiseaseLabelIdNameMap() {
-        //查询每个频道有多少文章
-        Map<String, String> resultMap = new HashMap<>();
 
+    private void initLabelMap() {
+        //查询每个频道有多少文章
         List<Tuple<String, String>> list = dataetlDB.query("select id, label from disease_label", new RowMapper<Tuple<String, String>>() {
             @Override
             public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
                 return new Tuple<String, String>(resultSet.getString("id"), resultSet.getString("label"));
             }
         });
-
         for (Tuple<String, String> tuple : list) {
-            resultMap.put(tuple.getT1(), tuple.getT2());
-
+            labelIdNameMap.put(tuple.getT1(), tuple.getT2());
+            labelNameIdMap.put(tuple.getT2(), tuple.getT1());
         }
-        return resultMap;
     }
 
     /**
@@ -186,13 +183,12 @@ public class JdbcService {
         labelIdSet.addAll(getReportLabelIdList(userId));
         Set<String> labelNameSet = new HashSet<>();
         for (String labelId : labelIdSet) {
-            if (diseaseLabelIdNameMap.containsKey(labelId)) {
-                labelNameSet.add(diseaseLabelIdNameMap.get(labelId));
+            if (labelIdNameMap.containsKey(labelId)) {
+                labelNameSet.add(labelIdNameMap.get(labelId));
             }
         }
         return labelNameSet;
     }
-
 
     /**
      * 根据videoId获取videoLabels
@@ -217,7 +213,6 @@ public class JdbcService {
             logger.info("videos_info中没有这个id:{}", videoId);
         }
         return labels;
-
     }
 
     /**
@@ -249,9 +244,50 @@ public class JdbcService {
         String labelIds = getLabelIdsByInfoId(infoId);
         StringBuffer buffer = new StringBuffer();
         for (String labelId : labelIds.split(",")) {
-            buffer.append(diseaseLabelIdNameMap.get(labelId)).append(",");
+            buffer.append(labelIdNameMap.get(labelId)).append(",");
         }
         return buffer.toString();
     }
 
+    public String getLabelIdsByNames(String labelNames) {
+        List<String> list = new ArrayList<>();
+        for (String labelName : labelNames.split(",")) {
+            if (this.labelNameIdMap.containsKey(labelName)) {
+                list.add(this.labelNameIdMap.get(labelName));
+            }
+        }
+        return StringUtils.collectionToCommaDelimitedString(list);
+    }
+
+    public void updateVideo(VideoInfo videoInfo) {
+        String query = "INSERT INTO `videos_info` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
+                " `label_ids`, `keywords`, `basic_tags`, `category`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                " ON DUPLICATE KEY UPDATE `title` = ?, `one_level_tag` = ?, `two_level_tag` = ?, `labels` = ?, " +
+                " `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?";
+        dataetlDB.update(query, videoInfo.getId(), videoInfo.getTitle(), videoInfo.getOneLevelTag(), videoInfo.getTwoLevelTag(),
+                videoInfo.getLabels(), videoInfo.getLabelIds(), videoInfo.getKeywords(), videoInfo.getBasicTags(), videoInfo.getCategory(),
+                videoInfo.getTitle(), videoInfo.getOneLevelTag(), videoInfo.getTwoLevelTag(), videoInfo.getLabels(),
+                videoInfo.getLabelIds(), videoInfo.getKeywords(), videoInfo.getBasicTags(), videoInfo.getCategory());
+
+    }
+
+    public void updateLive(LiveInfo liveInfo) {
+        String query = "INSERT INTO `lives_info` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
+                " `label_ids`, `keywords`, `basic_tags`, `category`,`is_pay`,`play_time`) " +
+                " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE `title` = ?, `one_level_tag` = ?, " +
+                " `two_level_tag` = ?, `labels` = ?, `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?,`is_pay` = ?, `play_time` = ?";
+        dataetlDB.update(query, liveInfo.getId(), liveInfo.getTitle(), liveInfo.getOneLevelTag(), liveInfo.getTwoLevelTag(),
+                liveInfo.getLabels(), liveInfo.getLabelIds(), liveInfo.getKeywords(), liveInfo.getBasicTags(), liveInfo.getCategory(),
+                liveInfo.getIsPay(), liveInfo.getPlayTime(), liveInfo.getTitle(), liveInfo.getOneLevelTag(), liveInfo.getTwoLevelTag(), liveInfo.getLabels(),
+                liveInfo.getLabelIds(), liveInfo.getKeywords(), liveInfo.getBasicTags(), liveInfo.getCategory(), liveInfo.getIsPay(), liveInfo.getPlayTime());
+
+    }
+
+    public void deleteVideo(int id) {
+        dataetlDB.update("delete from videos_info where id = ?", id);
+    }
+
+    public void deleteLive(int id) {
+        dataetlDB.update("delete from lives_info where id = ?", id);
+    }
 }

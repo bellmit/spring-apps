@@ -2,8 +2,7 @@ package com.haozhuo.rcmd.service;
 
 import com.haozhuo.rcmd.common.EsUtils;
 import com.haozhuo.rcmd.common.Utils;
-import com.haozhuo.rcmd.model.AbnormalParam;
-import com.haozhuo.rcmd.model.ArticleContent;
+import com.haozhuo.rcmd.model.*;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -16,10 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Component
@@ -229,6 +225,61 @@ public class EsService {
                         .should(QueryBuilders.matchPhraseQuery("keywords", keyword))).setSize(1);
         return EsUtils.getDocIdsAsList(srb).size() == 1;
     }
+
+    public void updateVideo(VideoInfo videoInfo) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("keywords", videoInfo.getKeywords());
+        map.put("two_level_tag", videoInfo.getTwoLevelTag());
+        map.put("one_level_tag", videoInfo.getOneLevelTag());
+        map.put("basic_tags", videoInfo.getBasicTags());
+        map.put("title", videoInfo.getTitle());
+        map.put("category", videoInfo.getCategory());
+        map.put("labels", videoInfo.getLabels());
+        map.put("label_ids", videoInfo.getLabelIds());
+        client.prepareIndex(videosInfoIndex, "docs", videoInfo.getId().toString()).setSource(map).get();
+    }
+
+    public void deleteVideo(String id) {
+        client.prepareDelete(videosInfoIndex, "docs", id).get();
+    }
+
+    public void updateLive(LiveInfo liveInfo) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("keywords", liveInfo.getKeywords());
+        map.put("two_level_tag", liveInfo.getTwoLevelTag());
+        map.put("one_level_tag", liveInfo.getOneLevelTag());
+        map.put("basic_tags", liveInfo.getBasicTags());
+        map.put("title", liveInfo.getTitle());
+        map.put("category", liveInfo.getCategory());
+        map.put("labels", liveInfo.getLabels());
+        map.put("label_ids", liveInfo.getLabelIds());
+        map.put("is_pay", liveInfo.getIsPay());
+        map.put("play_time", liveInfo.getPlayTime());
+        client.prepareIndex(livesInfoIndex, "docs", liveInfo.getId().toString()).setSource(map).get();
+    }
+
+    public void deleteLive(String id) {
+        client.prepareDelete(livesInfoIndex, "docs", id).get();
+    }
+
+    public void updateGoods(Goods goods) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("content_name", goods.getContentName());
+        map.put("second_class", goods.getSecondClass());
+        map.put("display_label", goods.getDisplayLabel());
+        map.put("first_label", goods.getFirstLabel());
+        map.put("label", goods.getLabel());
+        map.put("first_class", goods.getFirstClass());
+        map.put("basic_label", goods.getBasicLabel());
+        map.put("second_label", goods.getSecondLabel());
+        client.prepareIndex(goodsIndex, "docs", goods.getContentId().toString()).setSource(map).get();
+    }
+
+    public void deleteGoods(String id) {
+        client.prepareDelete(goodsIndex, "docs", id).get();
+    }
+
+
 }
 
 

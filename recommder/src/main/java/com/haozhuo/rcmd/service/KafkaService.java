@@ -1,4 +1,4 @@
-package com.haozhuo.rcmd.config.kafka;
+package com.haozhuo.rcmd.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,14 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 /**
  * Created by Lucius on 8/14/18.
  */
-@Service
-public class KafkaProducer {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaProducer.class);
+@Component
+public class KafkaService {
+    private static final Logger logger = LoggerFactory.getLogger(KafkaService.class);
 
     /**
      * 下面这种通过构造器注入的方式是官网的写法。我其他地方都写成了：
@@ -30,7 +30,7 @@ public class KafkaProducer {
 
 
     @Autowired
-    public KafkaProducer(KafkaTemplate kafkaTemplate) {
+    public KafkaService(KafkaTemplate kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 

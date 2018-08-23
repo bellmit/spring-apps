@@ -50,7 +50,7 @@ public class JdbcService {
 
     public List<String> getRandomInfos(int rcmdType, int pageSize, int getNumber) {
         int limitBegin = rand.nextInt(categoryIdCountMap.get(rcmdType) - pageSize);
-        return dataetlDB.query(String.format("select x.information_id from article x limit %d, %d", limitBegin, getNumber), new RowMapper<String>() {
+        return dataetlDB.query(String.format("select x.information_id from article x where x.is_delete = 0 limit %d, %d", limitBegin, getNumber), new RowMapper<String>() {
             @Override
             public String mapRow(ResultSet resultSet, int i) throws SQLException {
                 return resultSet.getString("information_id");

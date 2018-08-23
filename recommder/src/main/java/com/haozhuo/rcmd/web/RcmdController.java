@@ -1,7 +1,7 @@
 package com.haozhuo.rcmd.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.haozhuo.rcmd.config.kafka.KafkaProducer;
+import com.haozhuo.rcmd.service.KafkaService;
 import com.haozhuo.rcmd.model.*;
 import com.haozhuo.rcmd.service.EsService;
 import com.haozhuo.rcmd.service.JdbcService;
@@ -33,7 +33,7 @@ public class RcmdController {
     private RedisService redisService;
 
     @Autowired
-    private KafkaProducer kafkaProducer;
+    private KafkaService kafkaService;
 
     @Autowired
     private JdbcService jdbcService;
@@ -284,7 +284,7 @@ public class RcmdController {
             @RequestParam(value = "contentType", defaultValue = "推荐") String categoryName) {
         long beginTime = System.currentTimeMillis();
         int rmcdType = jdbcService.categoryNameIdMap.getOrDefault(categoryName, 1);
-        kafkaProducer.sendRcmdRequestMsg(new RcmdRequestMsg(userId, rmcdType));
+        kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, rmcdType));
         //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
         RcmdInfo rcmdInfo = redisService.getRcmdInfo(userId, rmcdType);
         int compSize = pageSize - rcmdInfo.size();

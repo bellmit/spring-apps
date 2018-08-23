@@ -25,6 +25,10 @@ spring:
     sentinel:
       master: mymaster
       nodes: 192.168.1.150:26379,192.168.1.152:26379,192.168.1.153:26379
+    pool:
+      max-idle: 8
+      max-active: 8
+      min-idle: 0
   datasource:
     dataetl:
       url: jdbc:mysql://192.168.1.162:3306/yjk_data_etl?characterEncoding=utf-8

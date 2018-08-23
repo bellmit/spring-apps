@@ -9,11 +9,11 @@
     <version>0.2.0</version>
     <modules>
         <module>eureka-server</module>
-        <module>test-apps</module>
         <module>common</module>
         <module>zuul-router</module>
         <module>recommder</module>
         <module>datag-service</module>
+        <module>bisys</module>
     </modules>
 
 

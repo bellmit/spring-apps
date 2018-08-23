@@ -45,11 +45,12 @@ public class RcmdController {
      * 输入userId,返回推荐商品的id
      * 对应原来good-recommender项目中的GoodsRecomController中的getMatchContent()方法。
      */
-    @GetMapping("/goods/userId")
+    @GetMapping("/goods/userId/{userId}")
     @ApiOperation(value = "输入userId,返回推荐商品的id  【/goodsmatch/list/all】", notes = "输入userId,返回推荐商品的id。\n原接口: http://192.168.1.152:8087/swagger-ui.html#!/goods-recom-controller/getMatchContentUsingPOST")
     public Object getGoodsIdsByUserId(
-            @RequestParam(value = "userId") String userId,
+            @PathVariable(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
+        long beginTime = System.currentTimeMillis();
         String[] alreadyPushedGoods = redisService.getPushedGoods(userId);
         //从mysql查出userId的label
         String userLabels = jdbcService.getLabelStrByUserId(userId);
@@ -63,6 +64,7 @@ public class RcmdController {
         if (result.length < pageSize) {
             redisService.deleteGoodsPushedKey(userId);
         }
+        logger.info("/goods/userId/{}?size={}  cost: {}ms", userId, pageSize, System.currentTimeMillis() - beginTime);
         return result;
     }
 
@@ -73,17 +75,20 @@ public class RcmdController {
      *
      * @return
      */
-    @GetMapping("/goods/reportId")
+    @GetMapping("/goods/reportId/{reportId}")
     @ApiOperation(value = "根据报告Id返回推荐的商品  【/goodsmatch/getRecom/list】", notes = "根据报告Id返回推荐的商品。\n原接口: http://192.168.1.152:8087/swagger-ui.html#!/goods-recom-controller/getRecomListUsingPOST")
     public Object getGoodsIdsByReportId(
-            @RequestParam(value = "healthReportId") String healthReportId,
+            @PathVariable(value = "reportId") String reportId,
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
             @RequestParam(value = "pageNum", defaultValue = "1") int pageNum) {
-        String labels = esService.getLabelsByReportId(healthReportId);
+        long beginTime = System.currentTimeMillis();
+        String labels = esService.getLabelsByReportId(reportId);
         if ("".equals(labels))
             return null;
         int from = (pageNum - 1) * pageSize;
-        return esService.getGoodsIdsByLabels(labels, from, pageSize);
+        String[] result = esService.getGoodsIdsByLabels(labels, from, pageSize);
+        logger.info("/goods/reportId/{}?pageSize={}&pageNum={}  cost: {}ms", reportId, pageSize, pageNum, System.currentTimeMillis() - beginTime);
+        return result;
     }
 
     /**
@@ -101,25 +106,27 @@ public class RcmdController {
      * 注意：旧接口中有一个flag参数，并没有用到，所以新接口中删除
      *
      * @param userId
-     * @param pageSize
+     * @param size
      * @return
      */
-    @GetMapping("/video/userId")
+    @GetMapping("/video/userId/{userId}")
     @ApiOperation(value = "根据userId,匹配推荐的视频列表  【/videomatch/recommend/all】", notes = "输入对应的userId,返回推荐视频列表。 \n原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getMatchContentUsingPOST")
     public Object getVideoListByUserId(
-            @RequestParam(value = "userId") String userId,
-            @RequestParam(value = "size", defaultValue = "10") int pageSize) {
+            @PathVariable(value = "userId") String userId,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        long beginTime = System.currentTimeMillis();
         String[] alreadyPushedVideos = redisService.getPushedVideos(userId);
         logger.debug("alreadyPushedVideos:{}", StringUtils.arrayToCommaDelimitedString(alreadyPushedVideos));
         String userLabels = jdbcService.getLabelStrByUserId(userId);
 
         //最后需要把查到的结果存入Redis的已推荐的key中
-        String[] result = esService.getVideoIdsByLabel(userLabels, alreadyPushedVideos, pageSize);
+        String[] result = esService.getVideoIdsByLabel(userLabels, alreadyPushedVideos, size);
         redisService.setPushedVideos(userId, result);
         //如果返回的数据小于pageSize,则认为所有的视频都被推荐了，那么将Redis中推过的视频列表的key删除，使得所有视频可以重新推送
-        if (result.length < pageSize) {
+        if (result.length < size) {
             redisService.deleteVideoPushedKey(userId);
         }
+        logger.info("/video/userId/{}?size={}  cost: {}ms", userId, size, System.currentTimeMillis() - beginTime);
         return result;
     }
 
@@ -133,12 +140,15 @@ public class RcmdController {
      * <p>
      * 新接口：
      */
-    @GetMapping("/video/keyword")
+    @GetMapping("/video/keyword/{keyword}")
     @ApiOperation(value = "根据关键词返回视频列表  【/videomatch/search/all】", notes = "根据输入的关键词，和视频的标题进行匹配，得到相应的视频id列表。\n原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getSearchContentUsingPOST")
     public Object getVideoListByKeyword(
-            @RequestParam(value = "keyword") String keyword,
+            @PathVariable(value = "keyword") String keyword,
             @RequestParam(value = "size", defaultValue = "20") int size) {
-        return esService.getVideoIdsByTitle(keyword, size);
+        long beginTime = System.currentTimeMillis();
+        String[] result = esService.getVideoIdsByTitle(keyword, size);
+        logger.info("/video/keyword/{}?size={}  cost: {}ms", keyword, size, System.currentTimeMillis() - beginTime);
+        return result;
     }
 
 
@@ -146,14 +156,16 @@ public class RcmdController {
      * 旧的接口：
      * curl -X POST --header "ArticleInfo-Type: application/json"  "http://datanode2:9090/api/video-recommder/videomatch/relative/all?vid=570"
      */
-    @GetMapping("/video/videoId")
+    @GetMapping("/video/videoId/{videoId}")
     @ApiOperation(value = "根据videoId返回与它相似的视频列表  【/videomatch/relative/all】", notes = "根据videoId返回与它相似的视频列表。\n原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getRelativeContentUsingPOST")
     public Object getVideoListBySimilarity(
-            @RequestParam(value = "videoId") String videoId,
+            @PathVariable(value = "videoId") String videoId,
             @RequestParam(value = "size", defaultValue = "20") int size) {
+        long beginTime = System.currentTimeMillis();
         String videoLabels = jdbcService.getVideoLabelsById(videoId);
-        logger.debug("videoId:{}, videoLabels:{}", videoId, videoLabels);
-        return esService.getSimilarVideoIds(videoId, videoLabels, size);
+        String[] result = esService.getSimilarVideoIds(videoId, videoLabels, size);
+        logger.info("/video/videoId/{}?size={}  cost: {}ms", videoId, size, System.currentTimeMillis() - beginTime);
+        return result;
     }
 
 
@@ -164,9 +176,12 @@ public class RcmdController {
      * 测试环境：http://47.98.165.120:8085/get?userId=00007d91-fefe-4234-bc08-2496ea8360c6
      */
     @ApiOperation(value = "根据userId获取用户的标签  【/get】", notes = "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getMatchContentUsingGET")
-    @GetMapping(value = "/labels/userId")
-    public String getLablesByUserId(@RequestParam(value = "userId") String userId) {
-        return jdbcService.getLabelStrByUserId(userId);
+    @GetMapping(value = "/labels/userId/{userId}")
+    public String getLablesByUserId(@PathVariable(value = "userId") String userId) {
+        long beginTime = System.currentTimeMillis();
+        String result = jdbcService.getLabelStrByUserId(userId);
+        logger.info("/labels/userId/{}  cost: {}ms", userId, System.currentTimeMillis() - beginTime);
+        return result;
     }
 
     /**
@@ -176,9 +191,12 @@ public class RcmdController {
      * 测试环境：http://192.168.1.152:8085/getByReport?healthReportId=1
      */
     @ApiOperation(value = "根据healthReportId返回报告的标签  【/getByReport】", notes = "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getBasicInfoByReportUsingGET")
-    @GetMapping(value = "/labels/reportId")
-    public String getLablesByReportId(@RequestParam(value = "healthReportId") String healthReportId) {
-        return esService.getLabelsByReportId(healthReportId);
+    @GetMapping(value = "/labels/reportId/{reportId}")
+    public String getLablesByReportId(@PathVariable(value = "reportId") String reportId) {
+        long beginTime = System.currentTimeMillis();
+        String result = esService.getLabelsByReportId(reportId);
+        logger.info("/labels/reportId/{}  cost: {}ms", reportId, System.currentTimeMillis() - beginTime);
+        return result;
     }
 
 
@@ -198,14 +216,16 @@ public class RcmdController {
      * 中匹配出相应的商品
      */
     @ApiOperation(value = "根据infoId获取相似的资讯、视频、直播、商品  【/getSimi/all】", notes = "输入infoId,返回相似的资讯、视频、直播、商品。\n原接口: http://192.168.1.152:8085/getSimi/all?informationId=56")
-    @RequestMapping(value = "/mul/ALVG/infoId", method = RequestMethod.GET)
-    public Object getMulAlvgByInfoId(@RequestParam(value = "infoId") String infoId) {
+    @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
+    public Object getMulAlvgByInfoId(@PathVariable(value = "infoId") String infoId) {
+        long beginTime = System.currentTimeMillis();
         //资讯、视频、直播的结果
         Map<String, List<String>> map = redisService.getSimByInfoId(infoId);
         //商品的结果
         String labels = jdbcService.getLabelNameByInfoId(infoId);
         String[] goodsIds = esService.getGoodsIdsByLabels(labels, 0, 10);
         map.put("g", Arrays.asList(goodsIds));
+        logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
         return map;
     }
 
@@ -230,6 +250,7 @@ public class RcmdController {
     public Object getMulAlvByAbnorm(
             @RequestParam(value = "pageSize", defaultValue = "20") int size,
             @RequestParam(value = "jsonStr") String jsonStr) {
+        long beginTime = System.currentTimeMillis();
         AbnormalParam abnormal = null;
         try {
             abnormal = mapper.readValue(jsonStr, AbnormalParam.class);
@@ -244,6 +265,7 @@ public class RcmdController {
         result.addAll(addTypeForIds(videoIds, "video"));
         result.addAll(addTypeForIds(livesIds, "live"));
         result.addAll(addTypeForIds(articleIds, "article"));
+        logger.info("/mul/ALV/abnorm?jsonStr={}  cost: {}ms", jsonStr, System.currentTimeMillis() - beginTime);
         return result;
     }
 
@@ -254,10 +276,10 @@ public class RcmdController {
      *
      * @return
      */
-    @GetMapping("/mul/ALV/userId")
+    @GetMapping("/mul/ALV/userId/{userId}")
     @ApiOperation(value = "根据userId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】", notes = "原接口: http://192.168.1.152:8078/swagger-ui.html#/\n es-matcher-controller中的四个方法合并成一个")
     public Object getInfoList(
-            @RequestParam(value = "userId") String userId,
+            @PathVariable(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int pageSize,
             @RequestParam(value = "contentType", defaultValue = "推荐") String categoryName) {
         long beginTime = System.currentTimeMillis();
@@ -271,6 +293,8 @@ public class RcmdController {
             rcmdInfo.add(jdbcService.getRandomInfos(rmcdType, pageSize, compSize));
         }
         logger.debug("getInfoList: cost {} ms", (System.currentTimeMillis() - beginTime) / 1000);
+
+        logger.info("/mul/ALV/userId/{}?contentType={}  cost: {}ms", userId, categoryName, System.currentTimeMillis() - beginTime);
         return rcmdInfo;
     }
 
@@ -300,6 +324,7 @@ public class RcmdController {
             @RequestParam(value = "labels", defaultValue = "") String labels,
             @RequestParam(value = "keywords", defaultValue = "") String keywords,
             @RequestParam(value = "excludeVideoId", defaultValue = "") String excludeVideoId) {
+        long beginTime = System.currentTimeMillis();
         String[] liveIds = esService.getLivesIdsByLabel(labels + keywords, 1);
         String[] videoIds = esService.getVideoIdsByLabel(labels + keywords, new String[]{excludeVideoId}, 3 - liveIds.length);
         String[] articleIds = esService.getArticleIdsByLabel(labels + keywords, size - liveIds.length - videoIds.length);
@@ -307,6 +332,8 @@ public class RcmdController {
         result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
         result.addAll(addTypeForIds(Arrays.asList(liveIds), "live"));
         result.addAll(addTypeForIds(Arrays.asList(articleIds), "article"));
+        logger.info("/mul/ALV/videoInfo?labels={}&keywords={}&excludeVideoId={}&pageSize={}  cost: {}ms", labels, keywords, excludeVideoId, size, System.currentTimeMillis() - beginTime);
+
         return result;
     }
 
@@ -317,10 +344,11 @@ public class RcmdController {
      * 新的接口如下：
      */
     @ApiOperation(value = "根据关键词推荐资讯、视频、直播  【/getRecom/reportHelp】", notes = "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByKwListUsingPOST")
-    @GetMapping(value = "/mul/ALV/keywordArray")
+    @GetMapping(value = "/mul/ALV/keywordArray/{keyword}")
     public Object getMulAlvByKeywords(
             @RequestParam(value = "pageSize", defaultValue = "20") int size,
-            @RequestParam(value = "keyword") String[] keywordArray) {
+            @PathVariable(value = "keyword") String[] keywordArray) {
+        long beginTime = System.currentTimeMillis();
         Map<String, List<String>> map = new HashMap<>();
         for (String keyword : keywordArray) {
             String[] liveIds = esService.getLivesIdsByLabel(keyword, 1);
@@ -332,6 +360,7 @@ public class RcmdController {
             result.addAll(addTypeForIds(Arrays.asList(articleIds), "article"));
             map.put(keyword, result);
         }
+        logger.info("/mul/ALV/keywordArray/{} cost: {}ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return map;
     }
 
@@ -361,20 +390,26 @@ public class RcmdController {
             @RequestParam(value = "pageSize", defaultValue = "20") int size,
             @RequestParam(value = "abnormialStr", defaultValue = "") String abnormialStr,
             @RequestParam(value = "abnormialAliasStr", defaultValue = "") String abnormialAliasStr) {
-        return esService.getArticleIdsByAbnormStr(abnormialStr, abnormialAliasStr, size, true);
+        long beginTime = System.currentTimeMillis();
+        String[] result = esService.getArticleIdsByAbnormStr(abnormialStr, abnormialAliasStr, size, true);
+        logger.info("/article/abnorm?abnormialStr={}&abnormialAliasStr={} cost: {}ms", abnormialStr, abnormialAliasStr, System.currentTimeMillis() - beginTime);
+        return result;
+
     }
 
     @ApiOperation(value = "输入关键词数组，过滤出在视频、直播、文章的title、keywords或者labe中出现的关键词",
             notes = "输入关键词数组，过滤出视频、直播、文章的title、keywords、labe中出现的词。\n" +
                     "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getExistsKwListUsingGET")
-    @GetMapping(value = "/existKeywords")
-    public List<String> getExistsKwList(@RequestParam(value = "keywordArray") String[] keywordArray) {
+    @GetMapping(value = "/existKeywords/{keywordArray}")
+    public List<String> getExistsKwList(@PathVariable(value = "keywordArray") String[] keywordArray) {
+        long beginTime = System.currentTimeMillis();
         List<String> list = new ArrayList<>();
         for (String keyword : keywordArray) {
             if (esService.isExistKeyword(keyword)) {
                 list.add(keyword);
             }
         }
+        logger.info("/existKeywords/{}  cost:{} ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return list;
     }
 
@@ -386,11 +421,14 @@ public class RcmdController {
      * 测试环境：curl -X GET --header  "http://47.98.165.120:8085/get/list?label=%E9%98%B4%E9%81%93%E7%82%8E&pageSize=10"
      */
     @ApiOperation(value = "根据标签返回文章的详细内容  【/get/list】", notes = "根据标签返回文章的详细内容。注意:contentType现在已经没了\n原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getMatchListUsingGET")
-    @RequestMapping(value = "/detailsOfInfos/labels", method = RequestMethod.GET)
+    @RequestMapping(value = "/detailsOfInfos/{label}", method = RequestMethod.GET)
     public Object getDetailsOfInfosByLabels(
-            @RequestParam(value = "label") String labels,
+            @PathVariable(value = "label") String labels,
             @RequestParam(value = "pageSize", defaultValue = "10") int size) {
-        return esService.getArticleContentByLabels(labels, size, jdbcService.categoryIdNameMap);
+        long beginTime = System.currentTimeMillis();
+        List<ArticleContent> result = esService.getArticleContentByLabels(labels, size, jdbcService.categoryIdNameMap);
+        logger.info("/detailsOfInfos/{}?pageSize={}  cost:{} ms", labels, size, System.currentTimeMillis() - beginTime);
+        return result;
     }
 
 

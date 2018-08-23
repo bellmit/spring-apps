@@ -1,0 +1,18 @@
+logging:
+  level:
+    org:
+      springframework: ERROR
+    com:
+      haozhuo: DEBUG
+  file: /data/work/luciuschina/spring-apps/tmp/bisys.log
+
+spring:
+  datasource:
+    bisys:
+      url: jdbc:mysql://192.168.1.162:3306/bisys?characterEncoding=utf-8
+      username: datag
+      password: yjkdatag
+      maximum-pool-size: 15
+
+
+

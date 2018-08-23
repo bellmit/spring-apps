@@ -31,50 +31,62 @@ public class TableSynController {
      * @return
      */
     @PostMapping("/video/update")
-    @ApiOperation(value = "视频更新接口")
+    @ApiOperation(value = "视频更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public String videoUpdate(@RequestBody VideoInfo videoInfo) {
+        long beginTime = System.currentTimeMillis();
         videoInfo.setLabelIds(jdbcService.getLabelIdsByNames(videoInfo.getLabels()));
         jdbcService.updateVideo(videoInfo);
         esService.updateVideo(videoInfo);
+        logger.info("/video/update  videoId:{}  cost:{} ms", videoInfo.getId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
-    @GetMapping("/video/delete")
+    @DeleteMapping("/video/delete/{id}")
     @ApiOperation(value = "视频删除接口")
-    public Object videoDelete(@RequestParam String id) {
+    public Object videoDelete(@PathVariable(value = "id") String id) {
+        long beginTime = System.currentTimeMillis();
         jdbcService.deleteVideo(Integer.parseInt(id));
         esService.deleteVideo(id);
+        logger.info("/video/delete/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
     @PostMapping("/live/update")
-    @ApiOperation(value = "直播更新接口")
+    @ApiOperation(value = "直播更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public Object liveUpdate(@RequestBody LiveInfo liveInfo) {
+        long beginTime = System.currentTimeMillis();
         liveInfo.setLabelIds(jdbcService.getLabelIdsByNames(liveInfo.getLabels()));
         jdbcService.updateLive(liveInfo);
         esService.updateLive(liveInfo);
+        logger.info("/live/update  goodsId:{}  cost:{} ms", liveInfo.getId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
-    @GetMapping("/live/delete")
+    @DeleteMapping("/live/delete/{id}")
     @ApiOperation(value = "直播删除接口")
-    public Object liveDelete(@RequestParam String id) {
+    public Object liveDelete(@PathVariable(value = "id") String id) {
+        long beginTime = System.currentTimeMillis();
         jdbcService.deleteLive(Integer.parseInt(id));
         esService.deleteLive(id);
+        logger.info("/live/delete/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
     @PostMapping("/goods/update")
-    @ApiOperation(value = "商品更新接口")
+    @ApiOperation(value = "商品更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public Object goodsUpdate(@RequestBody Goods goods) {
+        long beginTime = System.currentTimeMillis();
         esService.updateGoods(goods);
+        logger.info("/goods/update  goodsId:{}  cost:{} ms",goods.getContentId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
-    @GetMapping("/goods/delete")
+    @DeleteMapping("/goods/delete/{id}")
     @ApiOperation(value = "商品删除接口")
-    public Object goodDelete(@RequestParam String id) {
+    public Object goodDelete(@PathVariable(value = "id") String id) {
+        long beginTime = System.currentTimeMillis();
         esService.deleteGoods(id);
+        logger.info("/goods/delete/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 }

@@ -223,7 +223,13 @@ public class EsService {
                         .should(QueryBuilders.matchPhraseQuery("title", keyword))
                         .should(QueryBuilders.matchPhraseQuery("labels", keyword))
                         .should(QueryBuilders.matchPhraseQuery("keywords", keyword))).setSize(1);
-        return EsUtils.getDocIdsAsList(srb).size() == 1;
+        boolean isExist = true;
+        if(EsUtils.getDocIdsAsList(srb).size() == 0) {
+            SearchRequestBuilder srb2 = client.prepareSearch(articleIndex).setQuery(
+                    QueryBuilders.matchPhraseQuery("title", keyword)).setSize(1);
+            isExist = EsUtils.getDocIdsAsList(srb2).size() == 1;
+        }
+        return isExist;
     }
 
     public void updateVideo(VideoInfo videoInfo) {

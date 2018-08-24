@@ -9,10 +9,8 @@
     <version>0.2.0</version>
     <modules>
         <module>eureka-server</module>
-        <module>common</module>
         <module>zuul-router</module>
         <module>recommder</module>
-        <module>datag-service</module>
         <module>bisys</module>
     </modules>
 
@@ -85,19 +83,6 @@
                 <artifactId>commons-pool2</artifactId>
                 <version>2.4.2</version>
             </dependency>
-            <!--&lt;!&ndash; spring cloud &ndash;&gt;-->
-            <!--<dependency>-->
-            <!--<groupId>org.springframework.cloud</groupId>-->
-            <!--<artifactId>spring-cloud-starter-config</artifactId>-->
-            <!--</dependency>-->
-            <!--&lt;!&ndash;<dependency>&ndash;&gt;-->
-            <!--&lt;!&ndash;<groupId>org.springframework.cloud</groupId>&ndash;&gt;-->
-            <!--&lt;!&ndash;<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>&ndash;&gt;-->
-            <!--&lt;!&ndash;</dependency>&ndash;&gt;-->
-            <!--<dependency>-->
-            <!--<groupId>org.springframework.cloud</groupId>-->
-            <!--<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>-->
-            <!--</dependency>-->
         </dependencies>
     </dependencyManagement>
 
@@ -110,17 +95,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
-        <!--<pluginManagement>-->
-                <!--<plugins>-->
-                    <!--<plugin>-->
-                        <!--<groupId>org.springframework.boot</groupId>-->
-                        <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
-                        <!--<configuration>-->
-                            <!--<fork>true</fork>-->
-                        <!--</configuration>-->
-                    <!--</plugin>-->
-                <!--</plugins>-->
-        <!--</pluginManagement>-->
     </build>
 
 </project>

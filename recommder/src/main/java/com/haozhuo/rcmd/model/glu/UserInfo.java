@@ -1,5 +1,6 @@
 package com.haozhuo.rcmd.model.glu;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Setter;
 import lombok.Getter;
 
@@ -8,6 +9,7 @@ import lombok.Getter;
  */
 @Setter
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserInfo {
     private int age;
     private int sex;

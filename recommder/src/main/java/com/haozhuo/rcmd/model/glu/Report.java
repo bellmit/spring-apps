@@ -1,5 +1,6 @@
 package com.haozhuo.rcmd.model.glu;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Setter;
 import lombok.Getter;
 
@@ -8,8 +9,9 @@ import lombok.Getter;
  */
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Report {
     CheckItem[] checkItems;
-    String[] generalSummarys;
-    String[] generalSummarys2;
+//    String[] generalSummarys;
+//    String[] generalSummarys2;
 }

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/table-syn")
 @RestController
 public class TableSynController {
-    private static final Logger logger = LoggerFactory.getLogger(RcmdController.class);
+    private static final Logger logger = LoggerFactory.getLogger(TableSynController.class);
     @Autowired
     private EsService esService;
     @Autowired
@@ -87,6 +87,47 @@ public class TableSynController {
         long beginTime = System.currentTimeMillis();
         esService.deleteGoods(id);
         logger.info("/goods/delete/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
+
+
+    //============================
+
+
+    @PostMapping("/article/update")
+    @ApiOperation(value = "资讯更新接口")
+    public Object articleUpdate(@RequestBody Goods goods) {
+        long beginTime = System.currentTimeMillis();
+        esService.updateGoods(goods);
+        logger.info("/article/update  id:{}  cost:{} ms",goods.getContentId(), System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
+    @DeleteMapping("/article/delete/{id}")
+    @ApiOperation(value = "资讯删除接口")
+    public Object articleDelete(@PathVariable(value = "id") String id) {
+        long beginTime = System.currentTimeMillis();
+        esService.deleteGoods(id);
+        logger.info("/article/delete/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
+    @PostMapping("/channel/update")
+    @ApiOperation(value = "频道更新接口")
+    public Object channelUpdate(@RequestBody Goods goods) {
+        long beginTime = System.currentTimeMillis();
+        esService.updateGoods(goods);
+        logger.info("/channel/update  id:{}  cost:{} ms",goods.getContentId(), System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
+    @DeleteMapping("/channel/delete/{id}")
+    @ApiOperation(value = "频道删除接口")
+    public Object channelDelete(@PathVariable(value = "id") String id) {
+        long beginTime = System.currentTimeMillis();
+        esService.deleteGoods(id);
+        logger.info("/channel/delete/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 }

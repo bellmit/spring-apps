@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 @Setter
 @AllArgsConstructor
+@Deprecated
 public class ArticleContent {
     String contentId;
 

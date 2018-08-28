@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -75,10 +76,15 @@ public class RedisService {
         return rcmdResult;
     }
 
-    public RcmdInfo getRcmdInfo(String userId, int rcmdType) {
-        String key = String.format("rcmd-infos:%d:%s", rcmdType, userId);
-        String value = redisDB1.opsForList().leftPop(key);
-        if (value == null) value = "";
+    public RcmdInfo getRcmdInfo(String userId, String categoryId) {
+        String key = String.format("rcmdInfo:%s", userId);
+        HashOperations<String, String , String> op = redisDB1.opsForHash();
+        String value = op.get(key, categoryId);
+        if (value == null) {
+            value = "";
+        } else {
+            op.delete(key, categoryId);
+        }
         logger.info("getRcmdInfo key -- {}; rcmdResult -- {}", key, value);
         return parseRcmdInfo(value);
     }

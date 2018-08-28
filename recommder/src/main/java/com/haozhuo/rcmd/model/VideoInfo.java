@@ -12,6 +12,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Data
+@Deprecated
 public class VideoInfo implements Serializable {
     private Long id;
     private String title;

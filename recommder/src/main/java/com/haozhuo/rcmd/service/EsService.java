@@ -81,19 +81,19 @@ public class EsService {
      * curl -XGET 'datanode153:9200/videos_info/_search?pretty' -d '{"size":10,"query":{"bool":{"must":{"multi_match":
      * {"query":"大叔","fields":["keywords","labels","title"]}},"must_not":[{"ids":{"values":["295"]}}]}}}'
      *
-     * @param labels
+     * @param text
      * @param excludeIds
      * @param size
      * @return
      */
-    public String[] getVideoIdsByLabel(String labels, String[] excludeIds, int size) {
-        String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(labels, "keywords", "labels", "title"), excludeIds, 0, size);
-        logger.debug("labels:{}, video ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
+    public String[] getVideoIdsBySearch(String text, String[] excludeIds, int size) {
+        String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, "tags", "title"), excludeIds, 0, size);
+        logger.debug("labels:{}, video ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
-    public String[] getVideoIdsByLabel(String labels, int size) {
-        return getVideoIdsByLabel(labels, new String[]{}, size);
+    public String[] getVideoIdsBySearch(String labels, int size) {
+        return getVideoIdsBySearch(labels, new String[]{}, size);
     }
 
     public String[] getLivesIdsByLabel(String labels, String[] excludeIds, int size) {
@@ -116,24 +116,24 @@ public class EsService {
         return getArticleIdsByLabel(labels, new String[]{}, size);
     }
 
-    public List<ArticleContent> getArticleContentByLabels(String labels, int size, Map<Integer, String> categoryIdNameMap) {
-        QueryBuilder qb = QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("title", labels).slop(0).analyzer("ik_smart").boost(0.80f))
-                .should(QueryBuilders.matchPhraseQuery("abstracts", labels).slop(0).analyzer("ik_smart").boost(0.15f))
-                .should(QueryBuilders.matchPhraseQuery("content", labels).slop(0).analyzer("ik_smart").boost(0.05f));
-        SearchHit[] hits = client.prepareSearch(articleIndex).setQuery(qb).setSize(size).execute().actionGet().getHits().getHits();
-        List<ArticleContent> result = new ArrayList<>(hits.length);
-        for (SearchHit hit : hits) {
-            result.add(new ArticleContent(
-                    hit.getId(),
-                    hit.getSource().get("title").toString(),
-                    hit.getSource().get("abstracts").toString(),
-                    hit.getSource().get("content").toString(),
-                    hit.getSource().get("crawler_time").toString(),
-                    new Double(hit.getScore()),
-                    categoryIdNameMap.get(Integer.parseInt(hit.getType()))));
-        }
-        return result;
-    }
+//    public List<ArticleContent> getArticleContentByLabels(String labels, int size, Map<Integer, String> categoryIdNameMap) {
+//        QueryBuilder qb = QueryBuilders.boolQuery().should(QueryBuilders.matchPhraseQuery("title", labels).slop(0).analyzer("ik_smart").boost(0.80f))
+//                .should(QueryBuilders.matchPhraseQuery("abstracts", labels).slop(0).analyzer("ik_smart").boost(0.15f))
+//                .should(QueryBuilders.matchPhraseQuery("content", labels).slop(0).analyzer("ik_smart").boost(0.05f));
+//        SearchHit[] hits = client.prepareSearch(articleIndex).setQuery(qb).setSize(size).execute().actionGet().getHits().getHits();
+//        List<ArticleContent> result = new ArrayList<>(hits.length);
+//        for (SearchHit hit : hits) {
+//            result.add(new ArticleContent(
+//                    hit.getId(),
+//                    hit.getSource().get("title").toString(),
+//                    hit.getSource().get("abstracts").toString(),
+//                    hit.getSource().get("content").toString(),
+//                    hit.getSource().get("crawler_time").toString(),
+//                    new Double(hit.getScore()),
+//                    categoryIdNameMap.get(Integer.parseInt(hit.getType()))));
+//        }
+//        return result;
+//    }
 
     public String[] getGoodsIdsByLabels(String labels, String[] excludeIds, int size) {
         String[] ids = getGoodsIdsByCondition(QueryBuilders.matchQuery("label", labels), excludeIds, 0, size);
@@ -147,11 +147,11 @@ public class EsService {
         return ids;
     }
 
-    public String[] getSimilarVideoIds(String videoId, String label, int size) {
+    public String[] getSimilarVideoIdsByTags(String videoId, String tags, int size) {
         //去掉这些对匹配结果有负面影响的词
-        String replacedLabel = Utils.removeStopWords(label);
-        logger.debug("replacedLabel:{}", replacedLabel);
-        return getVideoIdsByCondition(QueryBuilders.matchQuery("labels", replacedLabel), new String[]{videoId}, 0, size);
+        String replacedTags = Utils.removeStopWords(tags);
+        logger.debug("replacedLabel:{}", replacedTags);
+        return getVideoIdsByCondition(QueryBuilders.matchQuery("tags", replacedTags), new String[]{videoId}, 0, size);
     }
 
     /**
@@ -293,7 +293,7 @@ public class EsService {
 //
 //    /**
 //     * 旧接口从video这个索引中匹配数据，但是video这个索引已经不维护了。改写后的从video_info匹配数据，不考虑年龄和性别
-//     * 先从 getVideoIdsByLabel()方法获取数据，如果查到的结果少于特定条数，再使用getVideoIdsRandomly()补充：
+//     * 先从 getVideoIdsBySearch()方法获取数据，如果查到的结果少于特定条数，再使用getVideoIdsRandomly()补充：
 //     *
 //     * @param labels
 //     * @param excludeIds
@@ -301,7 +301,7 @@ public class EsService {
 //     * @return
 //     */
 //    public String[] getFixedSizeVideoIdsByLabel(String labels, String[] excludeIds, int size) {
-//        String[] resultByLabels = getVideoIdsByLabel(labels, excludeIds, size);
+//        String[] resultByLabels = getVideoIdsBySearch(labels, excludeIds, size);
 //        if (resultByLabels.length < size) {
 //            String[] newExcludeIds = Stream.concat(Arrays.stream(resultByLabels), Arrays.stream(excludeIds))
 //                    .toArray(String[]::new);

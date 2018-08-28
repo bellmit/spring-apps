@@ -50,17 +50,15 @@ public class GluService {
     }
 
 
-    public ReportObjData getAndParseReport(String reportId) {
+    public ReportObjData getAndParseReport(Long reportId) {
         try {
             ReportHttpMsg reportHttpMsg = restTemplate.build().getForObject(String.format(url, reportId), ReportHttpMsg.class);
             String userInfoJson = reportHttpMsg.getData().getUserInfo().replaceAll("\\\"", "\"");
             UserInfo userInfo = mapper.readValue(userInfoJson, UserInfo.class);
             String reportJson = reportHttpMsg.getData().getReportContent().replaceAll("\\\"", "\"");
-            System.out.println(reportJson);
             Report report = mapper.readValue(reportJson,Report.class);
             return new ReportObjData(userInfo, report);
         } catch (Exception e) {
-            e.printStackTrace();
             logger.info("解析报告{}出错,可能不存在这个报告,或者该报告缺少userInfo or reportContent", reportId);
             return null;
         }

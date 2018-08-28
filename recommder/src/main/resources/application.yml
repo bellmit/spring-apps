@@ -1,10 +1,14 @@
 app:
   es:
-    video-index: videos_info
+    video-index: video4
     live-index: lives_info
     goods-index: good
-    article-index: article3
+    article-index: article4
     reportlabel-index: reportlabel
+  mysql:
+    article: article4
+    video: video4
+    live: lives_info
   redis:
     expire-days: 15
   kafka:

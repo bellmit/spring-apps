@@ -1,13 +1,12 @@
 package com.haozhuo.rcmd.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.haozhuo.rcmd.service.KafkaService;
-import com.haozhuo.rcmd.model.*;
-import com.haozhuo.rcmd.service.EsService;
-import com.haozhuo.rcmd.service.JdbcService;
-import com.haozhuo.rcmd.service.RedisService;
+import com.haozhuo.rcmd.model.AbnormalParam;
+import com.haozhuo.rcmd.model.ArticleContent;
+import com.haozhuo.rcmd.model.RcmdInfo;
+import com.haozhuo.rcmd.model.RcmdRequestMsg;
+import com.haozhuo.rcmd.service.*;
 import io.swagger.annotations.ApiOperation;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +45,15 @@ public class RcmdController {
      * 对应原来good-recommender项目中的GoodsRecomController中的getMatchContent()方法。
      */
     @GetMapping("/goods/userId/{userId}")
-    @ApiOperation(value = "输入userId,返回推荐商品的id  【/goodsmatch/list/all】", notes = "输入userId,返回推荐商品的id。\n原接口: http://192.168.1.152:8087/swagger-ui.html#!/goods-recom-controller/getMatchContentUsingPOST")
+    @ApiOperation(value = "输入userId,返回推荐商品的id  【/goodsmatch/list/all】",
+            notes = "输入userId,返回推荐商品的id。  \n " +
+                    "原接口: http://192.168.1.152:8087/swagger-ui.html#!/goods-recom-controller/getMatchContentUsingPOST  \n" +
+                    "业务逻辑:  \n" +
+                    "1.从mysql中的dynamic_userid_label表和report_userid_label中查出用户的label。  \n" +
+                    "2.从Redis中的'goods-pushed:{userId}:{date}'这个key得到最近15天已经推荐过的商品。  \n" +
+                    "3.步骤1中得到的label与ES中good索引的label字段进行匹配，排除步骤2中最近已经推荐过的商品，得到可以推荐的商品id。  \n" +
+                    "4.将这次推荐的商品id存入Redis中的'goods-pushed:{userId}:{date}' \n" +
+                    "5.如果所有商品都已经推荐完，那么清除Redis中的key，让商品可以重新加入到推荐队列中。")
     public Object getGoodsIdsByUserId(
             @PathVariable(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
@@ -76,7 +83,12 @@ public class RcmdController {
      * @return
      */
     @GetMapping("/goods/reportId/{reportId}")
-    @ApiOperation(value = "根据报告Id返回推荐的商品  【/goodsmatch/getRecom/list】", notes = "根据报告Id返回推荐的商品。\n原接口: http://192.168.1.152:8087/swagger-ui.html#!/goods-recom-controller/getRecomListUsingPOST")
+    @ApiOperation(value = "根据报告Id返回推荐的商品  【/goodsmatch/getRecom/list】",
+            notes = "根据报告Id返回推荐的商品。  \n" +
+                    "原接口: http://192.168.1.152:8087/swagger-ui.html#!/goods-recom-controller/getRecomListUsingPOST  \n" +
+                    "业务逻辑：  \n" +
+                    "1.根据reportId从ES的reportlabel索引中得到报告的label。  \n" +
+                    "2.步骤1中的label与ES中good索引的label字段进行匹配，得到推荐的商品id。")
     public Object getGoodsIdsByReportId(
             @PathVariable(value = "reportId") String reportId,
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
@@ -110,7 +122,15 @@ public class RcmdController {
      * @return
      */
     @GetMapping("/video/userId/{userId}")
-    @ApiOperation(value = "根据userId,匹配推荐的视频列表  【/videomatch/recommend/all】", notes = "输入对应的userId,返回推荐视频列表。 \n原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getMatchContentUsingPOST")
+    @ApiOperation(value = "根据userId,匹配推荐的视频列表  【/videomatch/recommend/all】",
+            notes = "输入对应的userId,返回推荐视频列表。  \n" +
+                    "原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getMatchContentUsingPOST  \n" +
+                    "业务逻辑:  \n" +
+                    "1.从mysql中的dynamic_userid_label表和report_userid_label中查出用户的label。  \n" +
+                    "2.从Redis中的'video-pushed:{userId}:{date}'这个key得到最近15天已经推荐过的视频。  \n" +
+                    "3.步骤1中得到的label与ES中video4索引的tags、title字段进行匹配，排除步骤2中最近已经推荐过的视频，得到这次推荐的视频id。  \n" +
+                    "4.将这次推荐的视频id存入Redis中的'video-pushed:{userId}:{date}'中  \n" +
+                    "5.如果所有视频都已经推荐完，那么清除Redis中的key，让视频可以重新加入到推荐队列中。")
     public Object getVideoListByUserId(
             @PathVariable(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
@@ -120,7 +140,7 @@ public class RcmdController {
         String userLabels = jdbcService.getLabelStrByUserId(userId);
 
         //最后需要把查到的结果存入Redis的已推荐的key中
-        String[] result = esService.getVideoIdsByLabel(userLabels, alreadyPushedVideos, size);
+        String[] result = esService.getVideoIdsBySearch(userLabels, alreadyPushedVideos, size);
         redisService.setPushedVideos(userId, result);
         //如果返回的数据小于pageSize,则认为所有的视频都被推荐了，那么将Redis中推过的视频列表的key删除，使得所有视频可以重新推送
         if (result.length < size) {
@@ -141,7 +161,11 @@ public class RcmdController {
      * 新接口：
      */
     @GetMapping("/video/keyword/{keyword}")
-    @ApiOperation(value = "根据关键词返回视频列表  【/videomatch/search/all】", notes = "根据输入的关键词，和视频的标题进行匹配，得到相应的视频id列表。\n原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getSearchContentUsingPOST")
+    @ApiOperation(value = "根据关键词返回视频列表  【/videomatch/search/all】",
+            notes = "根据输入的关键词，和视频的标题进行匹配，得到相应的视频id列表。  \n" +
+                    "原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getSearchContentUsingPOST  \n" +
+                    "业务逻辑:  \n" +
+                    "将keyword与ES的video4的title进行匹配。返回相似度最高的size个视频Id")
     public Object getVideoListByKeyword(
             @PathVariable(value = "keyword") String keyword,
             @RequestParam(value = "size", defaultValue = "20") int size) {
@@ -157,13 +181,17 @@ public class RcmdController {
      * curl -X POST --header "ArticleInfo-Type: application/json"  "http://datanode2:9090/api/video-recommder/videomatch/relative/all?vid=570"
      */
     @GetMapping("/video/videoId/{videoId}")
-    @ApiOperation(value = "根据videoId返回与它相似的视频列表  【/videomatch/relative/all】", notes = "根据videoId返回与它相似的视频列表。\n原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getRelativeContentUsingPOST")
+    @ApiOperation(value = "根据videoId返回与它相似的视频列表  【/videomatch/relative/all】",
+            notes = "根据videoId返回与它相似的视频列表。  \n" +
+                    "原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getRelativeContentUsingPOST  \n" +
+                    "1.根据videoId从mysql的video4表中找到它的tags。  \n" +
+                    "2.将ES的video4中的tags与步骤1中的tags进行匹配，获取相似的videoIds。")
     public Object getVideoListBySimilarity(
             @PathVariable(value = "videoId") String videoId,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         long beginTime = System.currentTimeMillis();
-        String videoLabels = jdbcService.getVideoLabelsById(videoId);
-        String[] result = esService.getSimilarVideoIds(videoId, videoLabels, size);
+        String videoTags = jdbcService.getVideoTagsById(videoId);
+        String[] result = esService.getSimilarVideoIdsByTags(videoId, videoTags, size);
         logger.info("/video/videoId/{}?size={}  cost: {}ms", videoId, size, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -175,7 +203,11 @@ public class RcmdController {
      * 对应developerApi中GetUserLabelController中的getMatchContent()方法
      * 测试环境：http://47.98.165.120:8085/get?userId=00007d91-fefe-4234-bc08-2496ea8360c6
      */
-    @ApiOperation(value = "根据userId获取用户的标签  【/get】", notes = "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getMatchContentUsingGET")
+    @ApiOperation(value = "根据userId获取用户的标签  【/get】",
+            notes = "根据userId获取用户的标签  \n " +
+                    "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getMatchContentUsingGET  \n" +
+                    "业务逻辑:  \n" +
+                    "从mysql中的dynamic_userid_label表和report_userid_label中查出用户的label。  ")
     @GetMapping(value = "/labels/userId/{userId}")
     public String getLablesByUserId(@PathVariable(value = "userId") String userId) {
         long beginTime = System.currentTimeMillis();
@@ -190,13 +222,67 @@ public class RcmdController {
      * 对应developerApi中GetUserLabelController中的getBasicInfoByReport()方法
      * 测试环境：http://192.168.1.152:8085/getByReport?healthReportId=1
      */
-    @ApiOperation(value = "根据healthReportId返回报告的标签  【/getByReport】", notes = "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getBasicInfoByReportUsingGET")
+    @ApiOperation(value = "根据healthReportId返回报告的标签  【/getByReport】",
+            notes = "根据healthReportId返回报告的标签  \n" +
+                    "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getBasicInfoByReportUsingGET  \n" +
+                    "业务逻辑:  \n" +
+                    "根据reportId从ES的reportlabel索引找到该报告的标签")
     @GetMapping(value = "/labels/reportId/{reportId}")
     public String getLablesByReportId(@PathVariable(value = "reportId") String reportId) {
         long beginTime = System.currentTimeMillis();
         String result = esService.getLabelsByReportId(reportId);
         logger.info("/labels/reportId/{}  cost: {}ms", reportId, System.currentTimeMillis() - beginTime);
         return result;
+    }
+
+
+    /**
+     * (该接口废除，请从java的mysql数据库中根据tags返回文章详细内容)
+     * 根据标签返回文章
+     * 旧的接口，
+     * 对应developerApi中GetUserLabelController中的getMatchList()方法
+     * 测试环境：curl -X GET --header  "http://47.98.165.120:8085/get/list?label=%E9%98%B4%E9%81%93%E7%82%8E&pageSize=10"
+     */
+    @ApiOperation(value = "(该接口废除，请从java的mysql数据库中根据tags返回文章详细内容) 根据标签返回文章的详细内容  【/get/list】",
+            notes = "(该接口废除，请从java的mysql数据库中根据tags返回文章详细内容!!)   \n" +
+                    "原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getMatchListUsingGET")
+    @RequestMapping(value = "/detailsOfInfos/{label}", method = RequestMethod.GET)
+    @Deprecated
+    public Object getDetailsOfInfosByLabels() {
+        return null;
+    }
+
+    /**
+     * 根据userId获取资讯、视频、直播的推荐列表
+     * 旧接口：
+     * recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
+     * @return
+     */
+    @GetMapping("/mul/ALV/userId/{userId}")
+    @ApiOperation(value = "根据userId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】",
+            notes = "根据userId获取资讯、视频、直播的推荐列表  \n" +
+                    "es-matcher-controller中的四个方法合并成一个  \"" +
+                    "原接口: http://192.168.1.152:8078/swagger-ui.html#/  \n" +
+                    "业务逻辑:  \n" +
+                    "1.从Redis的'rcmdInfo:{userId}'这个Hash中获取HashKey为{categoryId}的推荐信息。这条推荐信息由flink-data-etl这个项目之前产生的。  \n" +
+                    "2.如果Redis中获取不到相应的推荐信息,那么从mysql数据库中随机产生size条资讯进行推荐。  \n" +
+                    "3.通过Kafka消息告知flink-data-etl项目产生新的推荐信息，供下次使用。"
+                   )
+    public Object getInfosByUserId(
+            @PathVariable(value = "userId") String userId,
+            @RequestParam(value = "size", defaultValue = "10") int pageSize,
+            @RequestParam(value = "categoryId") int categoryId) { //TODO “推荐这”个类别categoryId传什么过来？
+        long beginTime = System.currentTimeMillis();
+        kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, categoryId));
+        //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
+        RcmdInfo rcmdInfo = redisService.getRcmdInfo(userId, String.valueOf(categoryId));
+        int compSize = pageSize - rcmdInfo.size();
+        //如果上述推荐的结果小于默认的推荐结果，则进行补充。万一从redis中读取不到数据，就要产生10条。
+        if (compSize > 0) {
+            rcmdInfo.add(jdbcService.getRandomInfos(categoryId, pageSize, compSize));
+        }
+        logger.info("/mul/ALV/userId/{}?categoryId={}  cost: {}ms", userId, categoryId, System.currentTimeMillis() - beginTime);
+        return rcmdInfo;
     }
 
 
@@ -215,14 +301,20 @@ public class RcmdController {
      * 根据infoId从获取article的labels，根据这个labels从good索引的label，content_name，display_label
      * 中匹配出相应的商品
      */
-    @ApiOperation(value = "根据infoId获取相似的资讯、视频、直播、商品  【/getSimi/all】", notes = "输入infoId,返回相似的资讯、视频、直播、商品。\n原接口: http://192.168.1.152:8085/getSimi/all?informationId=56")
+    @ApiOperation(value = "根据infoId获取相似的资讯、视频、直播、商品  【/getSimi/all】",
+            notes = "输入infoId,返回相似的资讯、视频、直播、商品。  \n" +
+                    "原接口: http://192.168.1.152:8085/getSimi/all?informationId=56  \n" +
+                    "业务逻辑:  \n" +
+                    "1.相似的资讯、视频和直播是从Redis中的'simi_{infoId}'这个key中获取。这是黄金宝之前就用的逻辑。  \n" +
+                    "2.推荐商品的产生是通过查询传入资讯的tags，使用该tags匹配ES中good索引的label字段得到。  \n" +
+                    "3.将上述的资讯、视频、直播和商品合并后进行返回。")
     @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
     public Object getMulAlvgByInfoId(@PathVariable(value = "infoId") String infoId) {
         long beginTime = System.currentTimeMillis();
         //资讯、视频、直播的结果
         Map<String, List<String>> map = redisService.getSimByInfoId(infoId);
         //商品的结果
-        String labels = jdbcService.getLabelNameByInfoId(infoId);
+        String labels = jdbcService.getTagsByInfoId(infoId);
         String[] goodsIds = esService.getGoodsIdsByLabels(labels, 0, 10);
         map.put("g", Arrays.asList(goodsIds));
         logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
@@ -269,34 +361,7 @@ public class RcmdController {
         return result;
     }
 
-    /**
-     * 根据userId获取资讯、视频、直播的推荐列表
-     * 旧接口：
-     * recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
-     *
-     * @return
-     */
-    @GetMapping("/mul/ALV/userId/{userId}")
-    @ApiOperation(value = "根据userId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】", notes = "原接口: http://192.168.1.152:8078/swagger-ui.html#/\n es-matcher-controller中的四个方法合并成一个")
-    public Object getInfoList(
-            @PathVariable(value = "userId") String userId,
-            @RequestParam(value = "size", defaultValue = "10") int pageSize,
-            @RequestParam(value = "contentType", defaultValue = "推荐") String categoryName) {
-        long beginTime = System.currentTimeMillis();
-        int rmcdType = jdbcService.categoryNameIdMap.getOrDefault(categoryName, 1);
-        kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, rmcdType));
-        //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
-        RcmdInfo rcmdInfo = redisService.getRcmdInfo(userId, rmcdType);
-        int compSize = pageSize - rcmdInfo.size();
-        //如果上述推荐的结果小于默认的推荐结果，则进行补充
-        if (compSize > 0) {
-            rcmdInfo.add(jdbcService.getRandomInfos(rmcdType, pageSize, compSize));
-        }
-        logger.debug("getInfoList: cost {} ms", (System.currentTimeMillis() - beginTime) / 1000);
 
-        logger.info("/mul/ALV/userId/{}?contentType={}  cost: {}ms", userId, categoryName, System.currentTimeMillis() - beginTime);
-        return rcmdInfo;
-    }
 
     /**
      * 旧的接口：
@@ -326,7 +391,7 @@ public class RcmdController {
             @RequestParam(value = "excludeVideoId", defaultValue = "") String excludeVideoId) {
         long beginTime = System.currentTimeMillis();
         String[] liveIds = esService.getLivesIdsByLabel(labels + keywords, 1);
-        String[] videoIds = esService.getVideoIdsByLabel(labels + keywords, new String[]{excludeVideoId}, 3 - liveIds.length);
+        String[] videoIds = esService.getVideoIdsBySearch(labels + keywords, new String[]{excludeVideoId}, 3 - liveIds.length);
         String[] articleIds = esService.getArticleIdsByLabel(labels + keywords, size - liveIds.length - videoIds.length);
         List<String> result = new ArrayList<>();
         result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
@@ -352,7 +417,7 @@ public class RcmdController {
         Map<String, List<String>> map = new HashMap<>();
         for (String keyword : keywordArray) {
             String[] liveIds = esService.getLivesIdsByLabel(keyword, 1);
-            String[] videoIds = esService.getVideoIdsByLabel(keyword, 3 - liveIds.length);
+            String[] videoIds = esService.getVideoIdsBySearch(keyword, 3 - liveIds.length);
             String[] articleIds = esService.getArticleIdsByLabel(keyword, size - liveIds.length - videoIds.length);
             List<String> result = new ArrayList<>();
             result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
@@ -414,22 +479,6 @@ public class RcmdController {
     }
 
 
-    /**
-     * 根据标签返回文章
-     * 旧的接口，
-     * 对应developerApi中GetUserLabelController中的getMatchList()方法
-     * 测试环境：curl -X GET --header  "http://47.98.165.120:8085/get/list?label=%E9%98%B4%E9%81%93%E7%82%8E&pageSize=10"
-     */
-    @ApiOperation(value = "根据标签返回文章的详细内容  【/get/list】", notes = "根据标签返回文章的详细内容。注意:contentType现在已经没了\n原接口: http://192.168.1.152:8085/swagger-ui.html#!/get-user-label-controller/getMatchListUsingGET")
-    @RequestMapping(value = "/detailsOfInfos/{label}", method = RequestMethod.GET)
-    public Object getDetailsOfInfosByLabels(
-            @PathVariable(value = "label") String labels,
-            @RequestParam(value = "pageSize", defaultValue = "10") int size) {
-        long beginTime = System.currentTimeMillis();
-        List<ArticleContent> result = esService.getArticleContentByLabels(labels, size, jdbcService.categoryIdNameMap);
-        logger.info("/detailsOfInfos/{}?pageSize={}  cost:{} ms", labels, size, System.currentTimeMillis() - beginTime);
-        return result;
-    }
 
 
 }

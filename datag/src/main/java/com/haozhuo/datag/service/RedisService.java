@@ -174,7 +174,7 @@ public class RedisService {
             Object valueOrNull = redisDB0.opsForHash().get(hashKey, valueKey);
             List<String> idList = new ArrayList<>();
             if (valueOrNull != null) {
-                idList = parseSimValue(valueOrNull.toString());
+                idList = parseSimValue(valueOrNull.toString().replaceAll("'","")); //Redis中有数据有问题：'289': 0.43851748, '190': 0.33565181，带了单引号
             }
             map.put(valueKey, idList);
         }

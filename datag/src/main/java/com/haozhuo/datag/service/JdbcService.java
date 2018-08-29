@@ -234,7 +234,7 @@ public class JdbcService {
         String labelsIds = "";
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  articleTable x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
+            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
                 @Override
                 public String mapRow(ResultSet resultSet, int i) throws SQLException {
                     return resultSet.getString("disease_label_ids");

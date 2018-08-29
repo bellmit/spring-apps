@@ -22,10 +22,10 @@ import java.util.stream.Stream;
 public class EsService {
     private static final Logger logger = LoggerFactory.getLogger(EsService.class);
     @Value("${app.es.video-index}")
-    private String videosInfoIndex;
+    private String videoIndex;
 
     @Value("${app.es.live-index}")
-    private String livesInfoIndex;
+    private String liveIndex;
 
     @Value("${app.es.goods-index}")
     private String goodsIndex;
@@ -40,7 +40,7 @@ public class EsService {
     private TransportClient client;
 
     private String[] getVideoIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
-        return getIndexByCondition(videosInfoIndex, condition, excludeIds, from, size);
+        return getIndexByCondition(videoIndex, condition, excludeIds, from, size);
     }
 
     private String[] getGoodsIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
@@ -48,7 +48,7 @@ public class EsService {
     }
 
     private String[] getLiveIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
-        return getIndexByCondition(livesInfoIndex, condition, excludeIds, from, size);
+        return getIndexByCondition(liveIndex, condition, excludeIds, from, size);
     }
 
     private String[] getArticleIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
@@ -67,53 +67,64 @@ public class EsService {
         return EsUtils.getDocIdsAsArray(srb);
     }
 
-    /**
-     * @param title
-     * @param size
-     * @return
-     */
-    public String[] getVideoIdsByTitle(String title, int size) {
-        return getVideoIdsByCondition(QueryBuilders.matchQuery("title", title), new String[]{}, 0, size);
-    }
-
 
     /**
-     * curl -XGET 'datanode153:9200/videos_info/_search?pretty' -d '{"size":10,"query":{"bool":{"must":{"multi_match":
-     * {"query":"大叔","fields":["keywords","labels","title"]}},"must_not":[{"ids":{"values":["295"]}}]}}}'
-     *
-     * @param text
-     * @param excludeIds
-     * @param size
-     * @return
+     * 如果fieldNames不输入，默认设为"title", "tags"
      */
-    public String[] getVideoIdsBySearch(String text, String[] excludeIds, int size) {
-        String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, "tags", "title"), excludeIds, 0, size);
+    public String[] getVideoIds(String text, String[] excludeIds, int size, String... fieldNames) {
+        if (fieldNames.length == 0) {
+            fieldNames = new String[]{"title", "tags"};
+        }
+        String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
         logger.debug("labels:{}, video ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
-    public String[] getVideoIdsBySearch(String labels, int size) {
-        return getVideoIdsBySearch(labels, new String[]{}, size);
+    /**
+     * 如果fieldNames不输入，默认设为"title", "tags"
+     *
+     * @param labels
+     * @param size
+     * @param fieldNames
+     * @return
+     */
+    public String[] getVideoIds(String labels, int size, String... fieldNames) {
+        return getVideoIds(labels, new String[]{}, size, fieldNames);
     }
 
-    public String[] getLivesIdsByLabel(String labels, String[] excludeIds, int size) {
-        String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(labels, "keywords", "labels", "title"), excludeIds, 0, size);
+    //    /**
+//     * @param title
+//     * @param size
+//     * @return
+//     */
+//    public String[] getVideoIds(String title, int size) {
+//        return getVideoIdsByCondition(QueryBuilders.matchQuery("title", title), new String[]{}, 0, size);
+//    }
+//
+    public String[] getLivesIds(String labels, String[] excludeIds, int size, String... fieldNames) {
+        if (fieldNames.length == 0) {
+            fieldNames = new String[]{"keywords", "labels", "title"};
+        }
+        String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(labels, fieldNames), excludeIds, 0, size);
         logger.debug("labels:{}, live ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
-    public String[] getLivesIdsByLabel(String labels, int size) {
-        return getLivesIdsByLabel(labels, new String[]{}, size);
+    public String[] getLivesIds(String labels, int size, String... fieldNames) {
+        return getLivesIds(labels, new String[]{}, size, fieldNames);
     }
 
-    public String[] getArticleIdsByLabel(String labels, String[] excludeIds, int size) {
-        String[] ids = getArticleIdsByCondition(QueryBuilders.multiMatchQuery(labels, "keywords", "labels", "title"), excludeIds, 0, size);
-        logger.debug("labels:{}, live ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
+    public String[] getArticleIds(String text, String[] excludeIds, int size, String... fieldNames) {
+        if (fieldNames.length == 0) {
+            fieldNames = new String[]{"title", "tags"};
+        }
+        String[] ids = getArticleIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
+        logger.debug("text:{}, article ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
-    public String[] getArticleIdsByLabel(String labels, int size) {
-        return getArticleIdsByLabel(labels, new String[]{}, size);
+    public String[] getArticleIds(String labels, int size, String... fieldNames) {
+        return getArticleIds(labels, new String[]{}, size, fieldNames);
     }
 
 //    public List<ArticleContent> getArticleContentByLabels(String labels, int size, Map<Integer, String> categoryIdNameMap) {
@@ -174,33 +185,38 @@ public class EsService {
         return result;
     }
 
-    private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param) {
-        return QueryBuilders.boolQuery().should(QueryBuilders.multiMatchQuery(param.getExceptionItemName(), "title", "labels", "keywords").boost(80))
-                .should(QueryBuilders.multiMatchQuery(param.getExceptionItemAlias(), "title", "labels", "keywords").boost(20))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleDiseases(), "title", "labels", "keywords").boost(40))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleDiseaseAlias(), "title", "labels", "keywords").boost(10))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleSymptoms(), "title", "labels", "keywords").boost(5))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleSymptomAlias(), "title", "labels", "keywords"));
+    private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param, String... fieldNames) {
+        return QueryBuilders.boolQuery().should(QueryBuilders.multiMatchQuery(param.getExceptionItemName(), fieldNames).boost(80))
+                .should(QueryBuilders.multiMatchQuery(param.getExceptionItemAlias(), fieldNames).boost(60))
+                .should(QueryBuilders.multiMatchQuery(param.getPossibleDiseases(), fieldNames).boost(40))
+                .should(QueryBuilders.multiMatchQuery(param.getPossibleDiseaseAlias(), fieldNames).boost(10))
+                .should(QueryBuilders.multiMatchQuery(param.getPossibleSymptoms(), fieldNames).boost(5))
+                .should(QueryBuilders.multiMatchQuery(param.getPossibleSymptomAlias(), fieldNames));
     }
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {
-        SearchRequestBuilder srb = client.prepareSearch(livesInfoIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param)).setSize(size);
+        SearchRequestBuilder srb = client.prepareSearch(liveIndex)
+                .setQuery(getLiveOrVideoBasicBuilder(param, "title", "labels", "keywords")).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
     public List<String> getVideoIdsByAbnorm(AbnormalParam param, int size) {
-        SearchRequestBuilder srb = client.prepareSearch(videosInfoIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param)).setSize(size);
+        SearchRequestBuilder srb = client.prepareSearch(videoIndex)
+                .setQuery(getLiveOrVideoBasicBuilder(param, "title", "tags")).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
+    public List<String> getArticleIdsByAbnorm(AbnormalParam param, int size) {
+        SearchRequestBuilder srb = client.prepareSearch(articleIndex)
+                .setQuery(getLiveOrVideoBasicBuilder(param, "title", "tags")).setSize(size);
+        return EsUtils.getDocIdsAsList(srb);
+    }
 
     public String[] getArticleIdsByAbnormStr(String abnormialStr, String abnormialAliasStr, int size, boolean isComplement) {
         SearchRequestBuilder srb = client.prepareSearch(articleIndex).setQuery(
                 QueryBuilders.boolQuery()
-                        .should(QueryBuilders.multiMatchQuery(abnormialStr, "title", "keywords", "labels").boost(100)) // abnormialStr的优先级高于abnormialAliasStr
-                        .should(QueryBuilders.multiMatchQuery(abnormialAliasStr, "title", "keywords", "labels").boost(20))
+                        .should(QueryBuilders.multiMatchQuery(abnormialStr, "title", "tags").boost(100)) // abnormialStr的优先级高于abnormialAliasStr
+                        .should(QueryBuilders.multiMatchQuery(abnormialAliasStr,  "title", "tags").boost(20))
         ).setSize(size);
         String[] result = EsUtils.getDocIdsAsArray(srb);
         logger.debug("getArticleIdsByAbnormStr compSize:{}", size - result.length);
@@ -218,35 +234,37 @@ public class EsService {
     }
 
     public boolean isExistKeyword(String keyword) {
-        SearchRequestBuilder srb = client.prepareSearch(videosInfoIndex, livesInfoIndex, articleIndex).setQuery(
+        SearchRequestBuilder srb = client.prepareSearch(videoIndex,  articleIndex).setQuery(
                 QueryBuilders.boolQuery()
                         .should(QueryBuilders.matchPhraseQuery("title", keyword))
-                        .should(QueryBuilders.matchPhraseQuery("labels", keyword))
-                        .should(QueryBuilders.matchPhraseQuery("keywords", keyword))).setSize(1);
+                        .should(QueryBuilders.matchPhraseQuery("tags", keyword))).setSize(1);
         boolean isExist = true;
-        if(EsUtils.getDocIdsAsList(srb).size() == 0) {
-            SearchRequestBuilder srb2 = client.prepareSearch(articleIndex).setQuery(
-                    QueryBuilders.matchPhraseQuery("title", keyword)).setSize(1);
+        if (EsUtils.getDocIdsAsList(srb).size() == 0) {
+            SearchRequestBuilder srb2 = client.prepareSearch(liveIndex).setQuery(
+                    QueryBuilders.boolQuery()
+                            .should(QueryBuilders.matchPhraseQuery("title", keyword))
+                            .should(QueryBuilders.matchPhraseQuery("labels", keyword))
+                            .should(QueryBuilders.matchPhraseQuery("keywords", keyword))).setSize(1);
             isExist = EsUtils.getDocIdsAsList(srb2).size() == 1;
         }
         return isExist;
     }
 
-    public void updateVideo(VideoInfo videoInfo) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("keywords", videoInfo.getKeywords());
-        map.put("two_level_tag", videoInfo.getTwoLevelTag());
-        map.put("one_level_tag", videoInfo.getOneLevelTag());
-        map.put("basic_tags", videoInfo.getBasicTags());
-        map.put("title", videoInfo.getTitle());
-        map.put("category", videoInfo.getCategory());
-        map.put("labels", videoInfo.getLabels());
-        map.put("label_ids", videoInfo.getLabelIds());
-        client.prepareIndex(videosInfoIndex, "docs", videoInfo.getId().toString()).setSource(map).get();
-    }
+//    public void updateVideo(VideoInfo videoInfo) {
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("keywords", videoInfo.getKeywords());
+//        map.put("two_level_tag", videoInfo.getTwoLevelTag());
+//        map.put("one_level_tag", videoInfo.getOneLevelTag());
+//        map.put("basic_tags", videoInfo.getBasicTags());
+//        map.put("title", videoInfo.getTitle());
+//        map.put("category", videoInfo.getCategory());
+//        map.put("labels", videoInfo.getLabels());
+//        map.put("label_ids", videoInfo.getLabelIds());
+//        client.prepareIndex(videoIndex, "docs", videoInfo.getId().toString()).setSource(map).get();
+//    }
 
-    public void deleteVideo(String id) {
-        client.prepareDelete(videosInfoIndex, "docs", id).get();
+    public void deleteVideo(long id) {
+        client.prepareDelete(videoIndex, "docs", String.valueOf(id)).get();
     }
 
     public void updateLive(LiveInfo liveInfo) {
@@ -261,11 +279,11 @@ public class EsService {
         map.put("label_ids", liveInfo.getLabelIds());
         map.put("is_pay", liveInfo.getIsPay());
         map.put("play_time", liveInfo.getPlayTime());
-        client.prepareIndex(livesInfoIndex, "docs", liveInfo.getId().toString()).setSource(map).get();
+        client.prepareIndex(liveIndex, "docs", liveInfo.getId().toString()).setSource(map).get();
     }
 
     public void deleteLive(String id) {
-        client.prepareDelete(livesInfoIndex, "docs", id).get();
+        client.prepareDelete(liveIndex, "docs", id).get();
     }
 
     public void updateGoods(Goods goods) {

@@ -10,7 +10,7 @@
     <modules>
         <module>eureka-server</module>
         <module>zuul-router</module>
-        <module>recommder</module>
+        <module>datag</module>
         <module>bisys</module>
     </modules>
 

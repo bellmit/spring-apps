@@ -2,7 +2,6 @@ package com.haozhuo.rcmd.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.rcmd.model.AbnormalParam;
-import com.haozhuo.rcmd.model.ArticleContent;
 import com.haozhuo.rcmd.model.RcmdInfo;
 import com.haozhuo.rcmd.model.RcmdRequestMsg;
 import com.haozhuo.rcmd.service.*;
@@ -140,7 +139,7 @@ public class RcmdController {
         String userLabels = jdbcService.getLabelStrByUserId(userId);
 
         //最后需要把查到的结果存入Redis的已推荐的key中
-        String[] result = esService.getVideoIdsBySearch(userLabels, alreadyPushedVideos, size);
+        String[] result = esService.getVideoIds(userLabels, alreadyPushedVideos, size);
         redisService.setPushedVideos(userId, result);
         //如果返回的数据小于pageSize,则认为所有的视频都被推荐了，那么将Redis中推过的视频列表的key删除，使得所有视频可以重新推送
         if (result.length < size) {
@@ -170,7 +169,7 @@ public class RcmdController {
             @PathVariable(value = "keyword") String keyword,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         long beginTime = System.currentTimeMillis();
-        String[] result = esService.getVideoIdsByTitle(keyword, size);
+        String[] result = esService.getVideoIds(keyword, size, "title");
         logger.info("/video/keyword/{}?size={}  cost: {}ms", keyword, size, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -256,6 +255,7 @@ public class RcmdController {
      * 根据userId获取资讯、视频、直播的推荐列表
      * 旧接口：
      * recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
+     *
      * @return
      */
     @GetMapping("/mul/ALV/userId/{userId}")
@@ -267,7 +267,7 @@ public class RcmdController {
                     "1.从Redis的'rcmdInfo:{userId}'这个Hash中获取HashKey为{categoryId}的推荐信息。这条推荐信息由flink-data-etl这个项目之前产生的。  \n" +
                     "2.如果Redis中获取不到相应的推荐信息,那么从mysql数据库中随机产生size条资讯进行推荐。  \n" +
                     "3.通过Kafka消息告知flink-data-etl项目产生新的推荐信息，供下次使用。"
-                   )
+    )
     public Object getInfosByUserId(
             @PathVariable(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int pageSize,
@@ -309,13 +309,22 @@ public class RcmdController {
                     "2.推荐商品的产生是通过查询传入资讯的tags，使用该tags匹配ES中good索引的label字段得到。  \n" +
                     "3.将上述的资讯、视频、直播和商品合并后进行返回。")
     @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
-    public Object getMulAlvgByInfoId(@PathVariable(value = "infoId") String infoId) {
+    public Object getMulAlvgByInfoId(
+            @PathVariable(value = "infoId") String infoId,
+            @RequestParam(value = "version", defaultValue = "1") int version) {
         long beginTime = System.currentTimeMillis();
         //资讯、视频、直播的结果
         Map<String, List<String>> map = redisService.getSimByInfoId(infoId);
         //商品的结果
-        String labels = jdbcService.getTagsByInfoId(infoId);
-        String[] goodsIds = esService.getGoodsIdsByLabels(labels, 0, 10);
+        String tags;
+        if (version == 1) {
+            tags = jdbcService.getLabelsByInfoId(infoId); //TODO 大改版之后将这个条件去掉！！！！
+        } else {
+            tags = jdbcService.getTagsByInfoId(infoId);
+        }
+
+        logger.debug("tags:{}", tags);
+        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, 10);
         map.put("g", Arrays.asList(goodsIds));
         logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
         return map;
@@ -333,14 +342,18 @@ public class RcmdController {
      * @return
      */
     @ApiOperation(value = "根据异常项信息(jsonStr)获取相似的资讯、视频、直播  【/getRecom/abnormial/all】",
-            notes = "根据异常项信息(jsonStr)获取相似的资讯、视频、直播。jsonStr格式如下：\n" +
+            notes = "根据异常项信息(jsonStr)获取相似的资讯、视频、直播。jsonStr格式如下:  \n" +
                     " {\"exceptionItemName\":\"近视\",\"exceptionItemAlias\": \"肥胖\"," +
                     " \"possibleDiseases\": \"高血压\",\"possibleDiseaseAlias\": \"近视\"," +
-                    " \"possibleSymptoms\":\"近视\",\"possibleSymptomAlias\": \"近视\"} 。" +
-                    "\n原接口: http://47.98.165.120:8002/swagger-ui.html#!/article-recom-controller/getRecomByAbnormialAllUsingPOST")
+                    " \"possibleSymptoms\":\"近视\",\"possibleSymptomAlias\": \"近视\"} 。  \n" +
+                    "原接口: http://47.98.165.120:8002/swagger-ui.html#!/article-recom-controller/getRecomByAbnormialAllUsingPOST  \n" +
+                    "1.根据jsonStr匹配ES中lives_info索引中的title、labels和keywords，找到匹配度最高的1条。  \n" +
+                    "2.根据jsonStr匹配ES中video4索引中的title和tags，找到匹配度最高的2条。   \n" +
+                    "3.根据jsonStr匹配ES中article4索引中的title和tags，找到匹配度最高的{size}-3条。  \n" +
+                    "4.将上述结果放在一起返回。")
     @GetMapping(value = "/mul/ALV/abnorm")
     public Object getMulAlvByAbnorm(
-            @RequestParam(value = "pageSize", defaultValue = "20") int size,
+            @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "jsonStr") String jsonStr) {
         long beginTime = System.currentTimeMillis();
         AbnormalParam abnormal = null;
@@ -352,7 +365,7 @@ public class RcmdController {
         }
         List<String> livesIds = esService.getLiveIdsByAbnorm(abnormal, 1);
         List<String> videoIds = esService.getVideoIdsByAbnorm(abnormal, 3 - livesIds.size());
-        List<String> articleIds = esService.getLiveIdsByAbnorm(abnormal, size - videoIds.size() - livesIds.size());
+        List<String> articleIds = esService.getArticleIdsByAbnorm(abnormal, size - videoIds.size() - livesIds.size());
         List<String> result = new ArrayList<>();
         result.addAll(addTypeForIds(videoIds, "video"));
         result.addAll(addTypeForIds(livesIds, "live"));
@@ -360,7 +373,6 @@ public class RcmdController {
         logger.info("/mul/ALV/abnorm?jsonStr={}  cost: {}ms", jsonStr, System.currentTimeMillis() - beginTime);
         return result;
     }
-
 
 
     /**
@@ -373,31 +385,34 @@ public class RcmdController {
      * jsonStr : {"labels":"肾功能障碍", "keywords": "肾病,肾功能,血压,肾衰", "title":"前列腺钙化是怎么回事-李海松"}
      * 变更成请求参数，用excludeVideoId替换上面的title。
      * 去除旧接口中的userId请求参数,
-     *
-     * @return
-     * @RequestParam(value = "labels") String labels,
-     * @RequestParam(value = "keywords") String keywords,
-     * @RequestParam(value = "excludeVideoId") int excludeIds
+     * <p>
      * <p>
      * 匹配labels和keywords,但是过滤掉excludeInfoId的视频
      * 新的接口如下：
      */
-    @ApiOperation(value = "根据传过来的video的标签关键词信息获取相似的资讯、视频、直播  【/getRecom/videoTags】", notes = "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByVideoUsingPOST")
+    @ApiOperation(value = "根据视频的相关信息获取相似的资讯、视频、直播  【/getRecom/videoTags】",
+            notes = "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByVideoUsingPOST  \n" +
+                    "原来的jsonStr参数: {\"labels\":\"肾功能障碍\", \"keywords\": \"肾病,肾功能,血压,肾衰\", \"title\":\"前列腺钙化是怎么回事-李海松\"}  \n" +
+                    "变更成请求参数tags和excludeVideoId  \n" +
+                    "业务逻辑:  \n" +
+                    "1.根据tags匹配ES中lives_info索引中的title、labels和keywords，找到匹配度最高的1条。  \n" +
+                    "2.根据tags匹配ES中video4索引中的title和tags，但是排除id为{excludeVideoId}的视频，找到匹配度最高的2条。   \n" +
+                    "3.根据tags匹配ES中article4索引中的title和tags，找到匹配度最高的{size}-3条。  \n" +
+                    "4.将上述结果放在一起返回。")
     @GetMapping(value = "/mul/ALV/videoInfo")
     public Object getMulAlvByVideoInfo(
             @RequestParam(value = "pageSize", defaultValue = "20") int size,
-            @RequestParam(value = "labels", defaultValue = "") String labels,
-            @RequestParam(value = "keywords", defaultValue = "") String keywords,
+            @RequestParam(value = "tags", defaultValue = "") String tags,
             @RequestParam(value = "excludeVideoId", defaultValue = "") String excludeVideoId) {
         long beginTime = System.currentTimeMillis();
-        String[] liveIds = esService.getLivesIdsByLabel(labels + keywords, 1);
-        String[] videoIds = esService.getVideoIdsBySearch(labels + keywords, new String[]{excludeVideoId}, 3 - liveIds.length);
-        String[] articleIds = esService.getArticleIdsByLabel(labels + keywords, size - liveIds.length - videoIds.length);
+        String[] liveIds = esService.getLivesIds(tags, 1);
+        String[] videoIds = esService.getVideoIds(tags, new String[]{excludeVideoId}, 3 - liveIds.length);
+        String[] articleIds = esService.getArticleIds(tags, size - liveIds.length - videoIds.length);
         List<String> result = new ArrayList<>();
         result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
         result.addAll(addTypeForIds(Arrays.asList(liveIds), "live"));
         result.addAll(addTypeForIds(Arrays.asList(articleIds), "article"));
-        logger.info("/mul/ALV/videoInfo?labels={}&keywords={}&excludeVideoId={}&pageSize={}  cost: {}ms", labels, keywords, excludeVideoId, size, System.currentTimeMillis() - beginTime);
+        logger.info("/mul/ALV/videoInfo?tags={}&excludeVideoId={}&pageSize={}  cost: {}ms", tags, excludeVideoId, size, System.currentTimeMillis() - beginTime);
 
         return result;
     }
@@ -408,7 +423,15 @@ public class RcmdController {
      * abnormal-recommder的ArticleRecomController中的getRecomByKwList()方法
      * 新的接口如下：
      */
-    @ApiOperation(value = "根据关键词推荐资讯、视频、直播  【/getRecom/reportHelp】", notes = "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByKwListUsingPOST")
+    @ApiOperation(value = "根据关键词推荐资讯、视频、直播  【/getRecom/reportHelp】",
+            notes = "根据关键词推荐资讯、视频、直播  \n" +
+                    "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByKwListUsingPOST  \n" +
+                    "业务逻辑：  \n" +
+                    "传入的关键词是一个数组，对于数组中的每个关键词，进行以下操作：  \n" +
+                    "  1.根据关键词匹配ES中lives_info索引中的title、labels和keywords，找到匹配度最高的1条。  \n" +
+                    "  2.根据关键词匹配ES中video4索引中的title和tags，但是排除id为{excludeVideoId}的视频，找到匹配度最高的2条。   \n" +
+                    "  3.根据关键词匹配ES中article4索引中的title和tags，找到匹配度最高的{size}-3条。  \n" +
+                    "数组中所有关键词都执行完后，一起返回")
     @GetMapping(value = "/mul/ALV/keywordArray/{keyword}")
     public Object getMulAlvByKeywords(
             @RequestParam(value = "pageSize", defaultValue = "20") int size,
@@ -416,9 +439,9 @@ public class RcmdController {
         long beginTime = System.currentTimeMillis();
         Map<String, List<String>> map = new HashMap<>();
         for (String keyword : keywordArray) {
-            String[] liveIds = esService.getLivesIdsByLabel(keyword, 1);
-            String[] videoIds = esService.getVideoIdsBySearch(keyword, 3 - liveIds.length);
-            String[] articleIds = esService.getArticleIdsByLabel(keyword, size - liveIds.length - videoIds.length);
+            String[] liveIds = esService.getLivesIds(keyword, 1);
+            String[] videoIds = esService.getVideoIds(keyword, 3 - liveIds.length);
+            String[] articleIds = esService.getArticleIds(keyword, size - liveIds.length - videoIds.length);
             List<String> result = new ArrayList<>();
             result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
             result.addAll(addTypeForIds(Arrays.asList(liveIds), "live"));
@@ -449,22 +472,31 @@ public class RcmdController {
      * @param abnormialAliasStr
      * @return
      */
-    @ApiOperation(value = "输入异常名和异常别名,返回匹配的文章  【/getRecom/examGuide】", notes = "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByExamGuideUsingPOST ")
+    @ApiOperation(value = "输入异常名和异常别名,返回匹配的文章  【/getRecom/examGuide】",
+            notes = "输入异常名和异常别名,返回匹配的文章  \n" +
+                    "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getRecomByExamGuideUsingPOST  \n" +
+                    "业务逻辑:  \n" +
+                    "abnormialStr和abnormialAliasStr去匹配Article4中的tags和title字段。abnormialStr权重高于abnormialAliasStr。" +
+                    "将匹配度最高的size条数据返回。")
     @GetMapping(value = "/article/abnorm")
     public String[] getArticleByAbnorm(
-            @RequestParam(value = "pageSize", defaultValue = "20") int size,
+            @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "abnormialStr", defaultValue = "") String abnormialStr,
             @RequestParam(value = "abnormialAliasStr", defaultValue = "") String abnormialAliasStr) {
         long beginTime = System.currentTimeMillis();
         String[] result = esService.getArticleIdsByAbnormStr(abnormialStr, abnormialAliasStr, size, true);
         logger.info("/article/abnorm?abnormialStr={}&abnormialAliasStr={} cost: {}ms", abnormialStr, abnormialAliasStr, System.currentTimeMillis() - beginTime);
         return result;
-
     }
 
-    @ApiOperation(value = "输入关键词数组，过滤出在视频、直播、文章的title、keywords或者labe中出现的关键词",
-            notes = "输入关键词数组，过滤出视频、直播、文章的title、keywords、labe中出现的词。\n" +
-                    "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getExistsKwListUsingGET")
+    @ApiOperation(value = "输入关键词数组，过滤出在视频、直播、文章的title、tags中出现的关键词",
+            notes = "输入关键词数组，过滤出视频、直播、文章的title、tags中出现的词。\n" +
+                    "原接口: http://192.168.1.152:8002/swagger-ui.html#!/article-recom-controller/getExistsKwListUsingGET  \n" +
+                    "业务逻辑:  \n" +
+                    "只要满足以下任意条件，则认为该关键词存在：  \n" +
+                    "1.该关键词能匹配到(matchPhraseQuery)ES中article4索引中的title或tags字段。  \n" +
+                    "2.该关键词能匹配到(matchPhraseQuery)ES中video4索引中的title或tags字段。  \n" +
+                    "3.该关键词能匹配到(matchPhraseQuery)ES中lives_info索引中的title或keywords或labels字段。")
     @GetMapping(value = "/existKeywords/{keywordArray}")
     public List<String> getExistsKwList(@PathVariable(value = "keywordArray") String[] keywordArray) {
         long beginTime = System.currentTimeMillis();
@@ -477,8 +509,6 @@ public class RcmdController {
         logger.info("/existKeywords/{}  cost:{} ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return list;
     }
-
-
 
 
 }

@@ -8,7 +8,7 @@
         <version>0.2.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>recommder</artifactId>
+    <artifactId>datag</artifactId>
 
     <dependencies>
         <!-- spring-boot-starter-jdbc默认自带HikariCP连接池-->

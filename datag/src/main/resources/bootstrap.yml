@@ -11,4 +11,4 @@ server:
 spring:
   application:
     #当前应用名称
-    name: recommder-dev
+    name: datag-dev

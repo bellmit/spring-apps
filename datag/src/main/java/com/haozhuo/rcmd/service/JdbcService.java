@@ -3,12 +3,11 @@ package com.haozhuo.rcmd.service;
 import com.haozhuo.rcmd.common.JavaUtils;
 import com.haozhuo.rcmd.common.Tuple;
 import com.haozhuo.rcmd.model.LiveInfo;
-import com.haozhuo.rcmd.model.VideoInfo;
+import com.haozhuo.rcmd.model.Video;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -29,15 +28,9 @@ public class JdbcService {
     public final Map<Integer, Integer> categoryIdCountMap;
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
-//    public final Map<String, Integer> categoryNameIdMap = new HashMap<>();
-//    public final Map<Integer, String> categoryIdNameMap = new HashMap<>();
-
     private final String live;
-
     private final String video;
-
     private final String article;
-
     Random rand = new Random();
 
     @Qualifier("dataetlJdbc") //选择jdbc连接池
@@ -54,9 +47,6 @@ public class JdbcService {
         initLabelMap();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
-//        initCategoryMap();
-//        logger.debug("categoryNameIdMap:{}", categoryNameIdMap);
-//        logger.debug("categoryIdNameMap:{}", categoryIdNameMap);
     }
 
     public List<String> getRandomInfos(int categoryId, int pageSize, int getNumber) {
@@ -66,33 +56,13 @@ public class JdbcService {
         if (count > pageSize) {
             limitBegin = rand.nextInt(-pageSize);
         }
-        return dataetlDB.query(String.format("select x.information_id from %s x where x.status = 1 and x.category_id = %d limit %d, %d", article, categoryId, limitBegin, getNumber), new RowMapper<String>() {
+        return dataetlDB.query(String.format("select x.information_id from %s x where x.status = 1 and x.category_id = ? limit ?, ?", article), new Object[]{categoryId, limitBegin, getNumber}, new RowMapper<String>() {
             @Override
             public String mapRow(ResultSet resultSet, int i) throws SQLException {
                 return resultSet.getString("information_id");
             }
         });
     }
-
-//    /**
-//     * 获取频道名称 和 频道id的映射关系
-//     *
-//     * @return
-//     */
-//    @Deprecated
-//    private void initCategoryMap() {
-//        List<Tuple<Integer, String>> list = dataetlDB.query("select name, id from category;", new RowMapper<Tuple<Integer, String>>() {
-//            @Override
-//            public Tuple<Integer, String> mapRow(ResultSet resultSet, int i) throws SQLException {
-//                return new Tuple(resultSet.getInt("id"), resultSet.getString("name"));
-//            }
-//        });
-//        for (Tuple<Integer, String> category : list) {
-//            this.categoryIdNameMap.put(category.getT1(), category.getT2());
-//            this.categoryNameIdMap.put(category.getT2(), category.getT1());
-//        }
-//    }
-
 
     /**
      * 获取频道以及对应的文章数的映射关系
@@ -145,8 +115,8 @@ public class JdbcService {
      * @return
      */
     private List<String> getDynamicLabelIdList(String userId) {
-        String dynamicLabelSql = String.format("select distinct label_id from dynamic_userid_label x where x.user_id = '%s' and x.update_time > '%s'", userId, JavaUtils.getNdaysAgo(30));
-        return dataetlDB.query(dynamicLabelSql, new RowMapper<String>() {
+        String dynamicLabelSql = String.format("select distinct label_id from dynamic_userid_label x where x.user_id = ? and x.update_time > ?");
+        return dataetlDB.query(dynamicLabelSql, new Object[]{userId, JavaUtils.getNdaysAgo(30)}, new RowMapper<String>() {
             @Override
             public String mapRow(ResultSet resultSet, int i) throws SQLException {
                 return resultSet.getString("label_id");
@@ -165,7 +135,8 @@ public class JdbcService {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             labelIds = dataetlDB.queryForObject(
-                    String.format("select label_ids from report_userid_label where user_id = '%s'", userId),
+                    "select label_ids from report_userid_label where user_id = ?",
+                    new Object[]{userId},
                     new RowMapper<String>() {
                         @Override
                         public String mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -219,7 +190,8 @@ public class JdbcService {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             labels = dataetlDB.queryForObject(
-                    String.format("select tags from %s where id = %s", video, videoId),
+                    String.format("select tags from %s where id = ?", video),
+                    new Object[]{videoId},
                     new RowMapper<String>() {
                         @Override
                         public String mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -240,9 +212,9 @@ public class JdbcService {
         String tags = "";
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            String sql = String.format("select x.tags from  %s x where x.information_id = %s", article, infoId);
+            String sql = String.format("select x.tags from  %s x where x.information_id =?", article);
             logger.debug("sql:{}", sql);
-            tags = dataetlDB.queryForObject(sql, new RowMapper<String>() {
+            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, new RowMapper<String>() {
                 @Override
                 public String mapRow(ResultSet resultSet, int i) throws SQLException {
                     return resultSet.getString("tags");
@@ -254,17 +226,28 @@ public class JdbcService {
         return tags;
     }
 
-//    /**
-//     * 根据infoId获取labelNames
-//     */
-//    public String getTagsByInfoId(String infoId) {
-//        String labelIds = getLabelIdsByInfoId(infoId);
-//        StringBuffer buffer = new StringBuffer();
-//        for (String labelId : labelIds.split(",")) {
-//            buffer.append(labelIdNameMap.get(labelId)).append(",");
-//        }
-//        return buffer.toString();
-//    }
+    @Deprecated
+    public String getLabelsByInfoId(String infoId) {
+        StringBuffer result = new StringBuffer();
+        String labelsIds = "";
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
+                @Override
+                public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                    return resultSet.getString("disease_label_ids");
+                }
+            });
+        } catch (Exception ex) {
+            logger.debug("getTagsByInfoId error", ex);
+        }
+        for(String labelId : labelsIds.split(",")){
+            if(labelIdNameMap.containsKey(labelId)) {
+                result.append(labelIdNameMap.get(labelId));
+            }
+        }
+        return result.toString();
+    }
 
     public String getLabelIdsByNames(String labelNames) {
         List<String> list = new ArrayList<>();
@@ -277,36 +260,35 @@ public class JdbcService {
     }
 
 
-    public void updateVideo(VideoInfo videoInfo) {
-        String query = "INSERT INTO `videos_info` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
-                " `label_ids`, `keywords`, `basic_tags`, `category`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                " ON DUPLICATE KEY UPDATE `title` = ?, `one_level_tag` = ?, `two_level_tag` = ?, `labels` = ?, " +
-                " `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?";
-        dataetlDB.update(query, videoInfo.getId(), videoInfo.getTitle(), videoInfo.getOneLevelTag(), videoInfo.getTwoLevelTag(),
-                videoInfo.getLabels(), videoInfo.getLabelIds(), videoInfo.getKeywords(), videoInfo.getBasicTags(), videoInfo.getCategory(),
-                videoInfo.getTitle(), videoInfo.getOneLevelTag(), videoInfo.getTwoLevelTag(), videoInfo.getLabels(),
-                videoInfo.getLabelIds(), videoInfo.getKeywords(), videoInfo.getBasicTags(), videoInfo.getCategory());
+    public void updateVideo(Video video) {
+//        String query = "INSERT INTO `videos_info` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
+//                " `label_ids`, `keywords`, `basic_tags`, `category`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+//                " ON DUPLICATE KEY UPDATE `title` = ?, `one_level_tag` = ?, `two_level_tag` = ?, `labels` = ?, " +
+//                " `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?";
+//        dataetlDB.update(query, videoInfo.getId(), videoInfo.getTitle(), videoInfo.getOneLevelTag(), videoInfo.getTwoLevelTag(),
+//                videoInfo.getLabels(), videoInfo.getLabelIds(), videoInfo.getKeywords(), videoInfo.getBasicTags(), videoInfo.getCategory(),
+//                videoInfo.getTitle(), videoInfo.getOneLevelTag(), videoInfo.getTwoLevelTag(), videoInfo.getLabels(),
+//                videoInfo.getLabelIds(), videoInfo.getKeywords(), videoInfo.getBasicTags(), videoInfo.getCategory());
 
     }
 
     public void updateLive(LiveInfo liveInfo) {
-        String query = "INSERT INTO `lives_info` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
+        String query = String.format("INSERT INTO `%s` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
                 " `label_ids`, `keywords`, `basic_tags`, `category`,`is_pay`,`play_time`) " +
                 " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE `title` = ?, `one_level_tag` = ?, " +
-                " `two_level_tag` = ?, `labels` = ?, `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?,`is_pay` = ?, `play_time` = ?";
+                " `two_level_tag` = ?, `labels` = ?, `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?,`is_pay` = ?, `play_time` = ?", live);
         dataetlDB.update(query, liveInfo.getId(), liveInfo.getTitle(), liveInfo.getOneLevelTag(), liveInfo.getTwoLevelTag(),
                 liveInfo.getLabels(), liveInfo.getLabelIds(), liveInfo.getKeywords(), liveInfo.getBasicTags(), liveInfo.getCategory(),
                 liveInfo.getIsPay(), liveInfo.getPlayTime(), liveInfo.getTitle(), liveInfo.getOneLevelTag(), liveInfo.getTwoLevelTag(), liveInfo.getLabels(),
                 liveInfo.getLabelIds(), liveInfo.getKeywords(), liveInfo.getBasicTags(), liveInfo.getCategory(), liveInfo.getIsPay(), liveInfo.getPlayTime());
-
     }
 
-    public void deleteVideo(int id) {
-        dataetlDB.update("delete from videos_info where id = ?", id);
+    public void deleteVideo(long id) {
+        dataetlDB.update(String.format("delete from %s where id = ?", video), id);
     }
 
     public void deleteLive(int id) {
-        dataetlDB.update("delete from lives_info where id = ?", id);
+        dataetlDB.update(String.format("delete from %s where id = ?", live), id);
     }
 
     public void updatePermitUsers(long healthReportId, int flag) {

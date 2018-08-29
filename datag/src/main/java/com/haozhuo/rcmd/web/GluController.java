@@ -27,7 +27,7 @@ public class GluController {
 
     @GetMapping("/highGluPermit/{reportId}")
     @ApiOperation(value = "输入reportId，判断该报告是否符合高血糖准入,返回1表示准入,0表示不准入", notes = "")
-    public Object getGoodsIdsByUserId(@PathVariable(value = "reportId") Long reportId) {
+    public Object getHighGluPermit(@PathVariable(value = "reportId") Long reportId) {
         long beginTime = System.currentTimeMillis();
         ReportObjData reportObjData = gluService.getAndParseReport(reportId);
         int isLegal = gluService.isLegal(reportObjData) ? 1 : 0;

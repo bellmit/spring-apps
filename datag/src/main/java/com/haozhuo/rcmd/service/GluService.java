@@ -46,7 +46,6 @@ public class GluService {
         textRefMap.put("甘油三酯", new Tuple<>(0.45D, 1.8D));
         textRefMap.put("总胆固醇", new Tuple<>(2.33D, 5.7D));
         textRefMap.put("血糖（空腹）", new Tuple<>(3.9D, 6.1D));
-
     }
 
 

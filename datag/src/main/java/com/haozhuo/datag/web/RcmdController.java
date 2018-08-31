@@ -51,7 +51,7 @@ public class RcmdController {
                     "1.从mysql中的dynamic_userid_label表和report_userid_label中查出用户的label。  \n" +
                     "2.从Redis中的'goods-pushed:{userId}:{date}'这个key得到最近15天已经推荐过的商品。  \n" +
                     "3.步骤1中得到的label与ES中good索引的label字段进行匹配，排除步骤2中最近已经推荐过的商品，得到可以推荐的商品id。  \n" +
-                    "4.将这次推荐的商品id存入Redis中的'goods-pushed:{userId}:{date}' \n" +
+                    "4.将这次推荐的商品id存入Redis中的'goods-pushed:{userId}:{date}'  \n" +
                     "5.如果所有商品都已经推荐完，那么清除Redis中的key，让商品可以重新加入到推荐队列中。")
     public Object getGoodsIdsByUserId(
             @PathVariable(value = "userId") String userId,
@@ -258,30 +258,42 @@ public class RcmdController {
      *
      * @return
      */
-    @GetMapping("/mul/ALV/userId/{userId}")
+    @GetMapping("/mul/ALV/user_channel")
     @ApiOperation(value = "根据userId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】",
             notes = "根据userId获取资讯、视频、直播的推荐列表  \n" +
-                    "es-matcher-controller中的四个方法合并成一个  \"" +
+                    "es-matcher-controller中的四个方法合并成一个  \n" +
                     "原接口: http://192.168.1.152:8078/swagger-ui.html#/  \n" +
+                    "当前接口参数:  \n" +
+                    "1.userId可以不传，那么随机从这个频道中取出{size}条数据，否则会考虑用户标签进行推荐  \n" +
+                    "2.channelId可以传频道的id或者该频道下具体的分类id或者不传,如果不传表示“推荐”类型  \n" +
                     "业务逻辑:  \n" +
                     "1.从Redis的'rcmdInfo:{userId}'这个Hash中获取HashKey为{categoryId}的推荐信息。这条推荐信息由flink-data-etl这个项目之前产生的。  \n" +
                     "2.如果Redis中获取不到相应的推荐信息,那么从mysql数据库中随机产生size条资讯进行推荐。  \n" +
                     "3.通过Kafka消息告知flink-data-etl项目产生新的推荐信息，供下次使用。"
     )
     public Object getInfosByUserId(
-            @PathVariable(value = "userId") String userId,
-            @RequestParam(value = "size", defaultValue = "10") int pageSize,
-            @RequestParam(value = "categoryId") int categoryId) { //TODO “推荐这”个类别categoryId传什么过来？
+            @RequestParam(value = "channelId", defaultValue = "-1") int channelId,
+            @RequestParam(value = "userId", defaultValue = "0") String userId,
+            @RequestParam(value = "size", defaultValue = "10") int pageSize
+            ) {
+
         long beginTime = System.currentTimeMillis();
-        kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, categoryId));
-        //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
-        RcmdInfo rcmdInfo = redisService.getRcmdInfo(userId, String.valueOf(categoryId));
-        int compSize = pageSize - rcmdInfo.size();
+        int compSize = pageSize;
+        RcmdInfo rcmdInfo = new RcmdInfo();
+
+        //如果有userId，那么从推荐中取
+        if(!"0".equals(userId)) {
+            kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, channelId));
+            //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
+            rcmdInfo = redisService.getRcmdInfo(userId, String.valueOf(channelId));
+            compSize = pageSize - rcmdInfo.size();
+        }
+
         //如果上述推荐的结果小于默认的推荐结果，则进行补充。万一从redis中读取不到数据，就要产生10条。
         if (compSize > 0) {
-            rcmdInfo.add(jdbcService.getRandomInfos(categoryId, pageSize, compSize));
+            rcmdInfo.add(jdbcService.getRandomInfosByChannelId(channelId, compSize));
         }
-        logger.info("/mul/ALV/userId/{}?categoryId={}  cost: {}ms", userId, categoryId, System.currentTimeMillis() - beginTime);
+        logger.info("/mul/ALV/user_channel?userId={}&channelId={} cost: {}ms", userId, channelId, System.currentTimeMillis() - beginTime);
         return rcmdInfo;
     }
 

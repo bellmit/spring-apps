@@ -28,6 +28,8 @@ public class JdbcService {
     private static final Logger logger = LoggerFactory.getLogger(JdbcService.class);
 
     public final Map<Integer, Integer> categoryIdCountMap;
+    public final Map<Integer, Integer> channelIdCountMap;
+    private int articleCount;
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String liveTable;
@@ -45,25 +47,52 @@ public class JdbcService {
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
+
         this.categoryIdCountMap = getCategoryIdCountMap();
+        this.channelIdCountMap = getChannnelIdCountMap();
+
+        int count = 0;
+        for (int value : channelIdCountMap.values()) {
+            count += value;
+        }
+        articleCount = count;
+        logger.info("channelIdCountMap:{}", this.channelIdCountMap);
+        logger.info("categoryIdCountMap:{}", this.categoryIdCountMap);
+        logger.info("articleCount:{}", this.articleCount);
+
+
         initLabelMap();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
     }
 
-    public List<String> getRandomInfos(int categoryId, int pageSize, int getNumber) {
 
-        int count = categoryIdCountMap.get(categoryId);
-        int limitBegin = 0;
-        if (count > pageSize) {
-            limitBegin = rand.nextInt(-pageSize);
+    public List<String> getRandomInfosByChannelId(int channelId, int size) {
+        String sql;
+        Object[] params;
+
+        if (channelIdCountMap.containsKey(channelId)) { //频道
+            sql = String.format("select x.information_id from %s x where x.status = 1 and channel_id = ? limit ?, ?", articleTable);
+            int totalNum = channelIdCountMap.get(channelId);
+            params = new Object[]{channelId, getBegin(totalNum, size), size};
+        } else if (categoryIdCountMap.containsKey(channelId)) { //分类
+            sql = String.format("select x.information_id from %s x where x.status = 1 and category_id = ? limit ?, ?", articleTable);
+            int totalNum = categoryIdCountMap.get(channelId);
+            params = new Object[]{channelId, getBegin(totalNum, size), size};
+        } else { //推荐
+            sql = String.format("select x.information_id from %s x where x.status = 1 limit ?, ?", articleTable);
+            params = new Object[]{getBegin(articleCount, size), size};
         }
-        return dataetlDB.query(String.format("select x.information_id from %s x where x.status = 1 and x.category_id = ? limit ?, ?", articleTable), new Object[]{categoryId, limitBegin, getNumber}, new RowMapper<String>() {
+        return dataetlDB.query(sql, params, new RowMapper<String>() {
             @Override
             public String mapRow(ResultSet resultSet, int i) throws SQLException {
                 return resultSet.getString("information_id");
             }
         });
+    }
+
+    private int getBegin(int totalNum, int size) {
+        return (totalNum <= size) ? 0 : rand.nextInt(totalNum - size);
     }
 
     /**
@@ -76,7 +105,8 @@ public class JdbcService {
         //查询每个频道有多少文章
         Map<Integer, Integer> resultMap = new HashMap<>();
 
-        String sql = String.format("select x.category_id, count(1) as num from %s x group by x.category_id ", articleTable);
+        String sql = String.format("select category_id , count(1) as num from %s x where x.status = 1 group by x.category_id", articleTable);
+
 
         List<Tuple<Integer, Integer>> list = dataetlDB.query(sql, new RowMapper<Tuple<Integer, Integer>>() {
             @Override
@@ -84,20 +114,33 @@ public class JdbcService {
                 return new Tuple<Integer, Integer>(resultSet.getInt("category_id"), resultSet.getInt("num"));
             }
         });
-
-        int totalSize = 0;
-        for (Tuple<Integer, Integer> tuple : list) {
-            resultMap.put(tuple.getT1(), tuple.getT2());
-            totalSize += tuple.getT2();
+        for (Tuple<Integer, Integer> l : list) {
+            resultMap.put(l.getT1(), l.getT2());
         }
-        resultMap.put(1, totalSize); //推荐的id为1
+
         logger.info("getCategoryIdCountMap:{}", resultMap.toString());
         return resultMap;
     }
 
+    public Map<Integer, Integer> getChannnelIdCountMap() {
+        //查询每个频道有多少文章
+        Map<Integer, Integer> resultMap = new HashMap<>();
+
+        String sql = String.format("select channel_id, count(1) as num from %s  x where x.status = 1 group by x.channel_id ", articleTable);
+        List<Tuple<Integer, Integer>> list = dataetlDB.query(sql, new RowMapper<Tuple<Integer, Integer>>() {
+            @Override
+            public Tuple<Integer, Integer> mapRow(ResultSet resultSet, int i) throws SQLException {
+                return new Tuple<Integer, Integer>(resultSet.getInt("channel_id"), resultSet.getInt("num"));
+            }
+        });
+        for (Tuple<Integer, Integer> l : list) {
+            resultMap.put(l.getT1(), l.getT2());
+        }
+        logger.info("getChannnelIdCountMap:{}", resultMap.toString());
+        return resultMap;
+    }
 
     private void initLabelMap() {
-        //查询每个频道有多少文章
         List<Tuple<String, String>> list = dataetlDB.query("select id, label from disease_label", new RowMapper<Tuple<String, String>>() {
             @Override
             public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {

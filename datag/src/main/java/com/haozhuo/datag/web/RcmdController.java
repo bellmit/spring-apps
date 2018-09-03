@@ -255,7 +255,8 @@ public class RcmdController {
      * 根据userId获取资讯、视频、直播的推荐列表
      * 旧接口：
      * recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
-     *
+     * ES 匹配时考虑不感兴趣的标签
+     * curl -XGET "192.168.1.152:9200/article3/_search?pretty" -d '{"size":3,"query": {"bool": {"should": [{ "match": { "title": "风湿关节炎食疗方剂,肺炎,近视"}},{"match": {"tags": "肺炎,风湿,脂肪肝" }}],"must_not": {"match": { "tags":"肺炎,风湿"}}}}}'
      * @return
      */
     @GetMapping("/mul/ALV/user_channel")
@@ -273,10 +274,13 @@ public class RcmdController {
                     "  \n" +
                     "2 其他频道(其他的channelId):  \n" +
                     "2.1 传userId(对推过的资讯进行缓存，一段时间内不再推):  \n" +
+                    "    步骤2.1中需要从Redis的PInfo:{userId}这个key中找到最近推荐过的视频和文章。  \n" +
+                    "    PInfo:{userId}是一个Hash。HashKey是{a/v_channelId_categoryId}   \n" +
                     "2.1.1 推荐频道(channelId==10000,且categoryId==0,需要用户标签信息):  \n" +
-                    "      " +
+                    "    点击行为+标签" +
                     "2.1.2 某频道下的所有(其他channelId,且categoryId==0,需要用户标签信息)  \n" +
                     "2.1.3 某频道下的某个分类(其他channelId,且categoryId>0,不需要用户标签信息)  \n" +
+                    "      " +
                     "2.2 不传userId(推过的资讯不进行缓存,随机推):  \n" +
                     "2.2.1 推荐频道(channelId==10000,且categoryId==0):  \n" +
                     "      select x.information_id from article4 x where x.status = 1 limit {随机数}, {size}  \n" +
@@ -318,6 +322,7 @@ public class RcmdController {
                 rcmdInfo = redisService.getRcmdInfo(userId, String.valueOf(channelId));
                 compSize = pageSize - rcmdInfo.size();
             } else { //频道下的某个类别
+                //从Redis中获取该类别已经推过的文章
 
             }
 
@@ -554,6 +559,18 @@ public class RcmdController {
         }
         logger.info("/existKeywords/{}  cost:{} ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return list;
+    }
+
+
+    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签(新增)",
+            notes = "业务逻辑:  \n" +
+                    "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的hateTag:{userId}中。")
+    @GetMapping(value = "/article/not_interested")
+    public Object setNotInerestedTagsByInfoId(
+            @RequestParam(value = "userId") String userId,
+            @RequestParam(value = "InfoId") Long infoId) {
+        //TODO
+        return null;
     }
 
 

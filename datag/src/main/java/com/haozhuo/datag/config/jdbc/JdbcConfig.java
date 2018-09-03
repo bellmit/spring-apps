@@ -27,10 +27,27 @@ public class JdbcConfig {
         return new DataSourceProperties();
     }
 
-    @Primary
     @Bean
     @ConfigurationProperties("spring.datasource.dataetl")
     public DataSource dataetlDataSource() {
         return dataetlDataSourceProperties().initializeDataSourceBuilder().build();
+    }
+
+
+    @Bean(name = "bisysJdbc")
+    public JdbcTemplate bisysJdbcTemplate() {
+        return new JdbcTemplate(bisysDataSource());
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.bisys")
+    public DataSourceProperties bisysDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.bisys")
+    public DataSource bisysDataSource() {
+        return bisysDataSourceProperties().initializeDataSourceBuilder().build();
     }
 }

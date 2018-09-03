@@ -41,6 +41,11 @@ spring:
       username: datag
       password: yjkdatag
       maximum-pool-size: 15
+    bisys:
+      url: jdbc:mysql://192.168.1.162:3306/bisys?characterEncoding=utf-8
+      username: datag
+      password: yjkdatag
+      maximum-pool-size: 2
   kafka:
     bootstrap-servers: 192.168.1.152:9092,192.168.1.153:9092
   data:

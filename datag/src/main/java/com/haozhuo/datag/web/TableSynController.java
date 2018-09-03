@@ -3,7 +3,7 @@ package com.haozhuo.datag.web;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.service.EsService;
-import com.haozhuo.datag.service.JdbcService;
+import com.haozhuo.datag.service.DataetlJdbcService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class TableSynController {
     @Autowired
     private EsService esService;
     @Autowired
-    private JdbcService jdbcService;
+    private DataetlJdbcService DataetlJdbcService;
 
     /**
      * 对应原来developer-api项目中的InsertEntityController中的
@@ -32,7 +32,7 @@ public class TableSynController {
     public String updateVideo(@RequestBody Video video) {
         long beginTime = System.currentTimeMillis();
         video.setUpdateTime(JavaUtils.getCurrent());
-        jdbcService.updateVideo(video);
+        DataetlJdbcService.updateVideo(video);
         if (video.getStatus() == 1) { //只有状态是1的才认为是发布的视频。其他一切状态都认为是删除
             esService.updateVideo(video);
         } else {
@@ -46,7 +46,7 @@ public class TableSynController {
     @ApiOperation(value = "视频删除接口")
     public Object deleteVideo(@PathVariable(value = "id") long id) {
         long beginTime = System.currentTimeMillis();
-        jdbcService.deleteVideo(id);
+        DataetlJdbcService.deleteVideo(id);
         esService.deleteVideo(id);
         logger.info("DELETE /video/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
@@ -57,7 +57,7 @@ public class TableSynController {
     public Object updateArticle(@RequestBody Article article) {
         article.setUpdateTime(JavaUtils.getCurrent());
         long beginTime = System.currentTimeMillis();
-        jdbcService.updateArticle(article);
+        DataetlJdbcService.updateArticle(article);
         if (article.getStatus() == 1) { //只有状态是1的才认为是发布的文章。其他一切状态都认为是删除
             esService.updateArticle(article);
         } else {
@@ -71,7 +71,7 @@ public class TableSynController {
     @ApiOperation(value = "资讯删除接口", notes = "mysql中的article4表中的status字段设置为0,ES中删除article4中的该文档")
     public Object deleteArticle(@PathVariable(value = "id") long id) {
         long beginTime = System.currentTimeMillis();
-        jdbcService.deleteArticle(id);
+        DataetlJdbcService.deleteArticle(id);
         esService.deleteArticle(id);
         logger.info("DELETE /article/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
@@ -81,7 +81,7 @@ public class TableSynController {
     @ApiOperation(value = "频道更新接口", notes = "同步到mysql的表中")
     public Object updateChannel(@RequestBody Channel channel) {
         long beginTime = System.currentTimeMillis();
-        jdbcService.updateChannel(channel);
+        DataetlJdbcService.updateChannel(channel);
         logger.info("POST /channel  id:{}  cost:{} ms", channel.getChannelId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
@@ -90,7 +90,7 @@ public class TableSynController {
     @ApiOperation(value = "频道删除接口", notes = "从mysql的表中删除")
     public Object deleteChannel(@PathVariable(value = "id") long id) {
         long beginTime = System.currentTimeMillis();
-        jdbcService.deleteChannel(id);
+        DataetlJdbcService.deleteChannel(id);
         logger.info("DELETE /channel/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
@@ -99,8 +99,8 @@ public class TableSynController {
     @ApiOperation(value = "直播更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public Object updateLive(@RequestBody LiveInfo liveInfo) {
         long beginTime = System.currentTimeMillis();
-        liveInfo.setLabelIds(jdbcService.getLabelIdsByNames(liveInfo.getLabels()));
-        jdbcService.updateLive(liveInfo);
+        liveInfo.setLabelIds(DataetlJdbcService.getLabelIdsByNames(liveInfo.getLabels()));
+        DataetlJdbcService.updateLive(liveInfo);
         esService.updateLive(liveInfo);
         logger.info("POST /live  goodsId:{}  cost:{} ms", liveInfo.getId(), System.currentTimeMillis() - beginTime);
         return "success!";
@@ -110,7 +110,7 @@ public class TableSynController {
     @ApiOperation(value = "直播删除接口")
     public Object deleteLive(@PathVariable(value = "id") long id) {
         long beginTime = System.currentTimeMillis();
-        jdbcService.deleteLive(id);
+        DataetlJdbcService.deleteLive(id);
         esService.deleteLive(id);
         logger.info("DELETE /live/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";

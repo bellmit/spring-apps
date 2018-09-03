@@ -15,7 +15,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -24,8 +23,8 @@ import java.util.*;
  * Created by Lucius on 8/16/18.
  */
 @Component
-public class JdbcService {
-    private static final Logger logger = LoggerFactory.getLogger(JdbcService.class);
+public class DataetlJdbcService {
+    private static final Logger logger = LoggerFactory.getLogger(DataetlJdbcService.class);
 
     public final Map<Integer, Integer> categoryIdCountMap;
     public final Map<Integer, Integer> channelIdCountMap;
@@ -41,8 +40,8 @@ public class JdbcService {
     private final JdbcTemplate dataetlDB;
 
     @Autowired
-    public JdbcService(JdbcTemplate jdbcTemplate, Environment env) {
-        logger.info("init JdbcService .................");
+    public DataetlJdbcService(JdbcTemplate jdbcTemplate, Environment env) {
+        logger.info("init DataetlJdbcService .................");
         this.dataetlDB = jdbcTemplate;
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");

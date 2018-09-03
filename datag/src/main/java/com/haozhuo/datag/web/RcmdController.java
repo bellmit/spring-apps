@@ -34,7 +34,7 @@ public class RcmdController {
     private KafkaService kafkaService;
 
     @Autowired
-    private JdbcService jdbcService;
+    private DataetlJdbcService DataetlJdbcService;
 
     private ObjectMapper mapper = new ObjectMapper();
 
@@ -59,7 +59,7 @@ public class RcmdController {
         long beginTime = System.currentTimeMillis();
         String[] alreadyPushedGoods = redisService.getPushedGoods(userId);
         //从mysql查出userId的label
-        String userLabels = jdbcService.getLabelStrByUserId(userId);
+        String userLabels = DataetlJdbcService.getLabelStrByUserId(userId);
 
         //根据userId的label匹配es中good索引中的label，返回内容。
         String[] result = esService.getGoodsIdsByLabels(userLabels, alreadyPushedGoods, pageSize);
@@ -136,7 +136,7 @@ public class RcmdController {
         long beginTime = System.currentTimeMillis();
         String[] alreadyPushedVideos = redisService.getPushedVideos(userId);
         logger.debug("alreadyPushedVideos:{}", StringUtils.arrayToCommaDelimitedString(alreadyPushedVideos));
-        String userLabels = jdbcService.getLabelStrByUserId(userId);
+        String userLabels = DataetlJdbcService.getLabelStrByUserId(userId);
 
         //最后需要把查到的结果存入Redis的已推荐的key中
         String[] result = esService.getVideoIds(userLabels, alreadyPushedVideos, size);
@@ -189,7 +189,7 @@ public class RcmdController {
             @PathVariable(value = "videoId") String videoId,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         long beginTime = System.currentTimeMillis();
-        String videoTags = jdbcService.getVideoTagsById(videoId);
+        String videoTags = DataetlJdbcService.getVideoTagsById(videoId);
         String[] result = esService.getSimilarVideoIdsByTags(videoId, videoTags, size);
         logger.info("/video/videoId/{}?size={}  cost: {}ms", videoId, size, System.currentTimeMillis() - beginTime);
         return result;
@@ -210,7 +210,7 @@ public class RcmdController {
     @GetMapping(value = "/labels/userId/{userId}")
     public String getLablesByUserId(@PathVariable(value = "userId") String userId) {
         long beginTime = System.currentTimeMillis();
-        String result = jdbcService.getLabelStrByUserId(userId);
+        String result = DataetlJdbcService.getLabelStrByUserId(userId);
         logger.info("/labels/userId/{}  cost: {}ms", userId, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -291,7 +291,7 @@ public class RcmdController {
 
         //如果上述推荐的结果小于默认的推荐结果，则进行补充。万一从redis中读取不到数据，就要产生10条。
         if (compSize > 0) {
-            rcmdInfo.add(jdbcService.getRandomInfosByChannelId(channelId, compSize));
+            rcmdInfo.add(DataetlJdbcService.getRandomInfosByChannelId(channelId, compSize));
         }
         logger.info("/mul/ALV/user_channel?userId={}&channelId={} cost: {}ms", userId, channelId, System.currentTimeMillis() - beginTime);
         return rcmdInfo;
@@ -330,9 +330,9 @@ public class RcmdController {
         //商品的结果
         String tags;
         if (version == 1) {
-            tags = jdbcService.getLabelsByInfoId(infoId); //TODO 大改版之后将这个条件去掉！！！！
+            tags = DataetlJdbcService.getLabelsByInfoId(infoId); //TODO 大改版之后将这个条件去掉！！！！
         } else {
-            tags = jdbcService.getTagsByInfoId(infoId);
+            tags = DataetlJdbcService.getTagsByInfoId(infoId);
         }
 
         logger.debug("tags:{}", tags);

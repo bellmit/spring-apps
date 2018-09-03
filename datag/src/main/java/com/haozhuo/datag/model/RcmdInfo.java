@@ -21,9 +21,19 @@ public class RcmdInfo {
         return video.size() + live.size() + article.size();
     }
 
-    public void add(List<String> ids) {
+    public void addArticles(List<String> ids) {
         for (String id : ids) {
             article.add(id);
+        }
+    }
+    public void addVideos(List<String> ids) {
+        for (String id : ids) {
+            video.add(id);
+        }
+    }
+    public void addLives(List<String> ids) {
+        for (String id : ids) {
+            live.add(id);
         }
     }
 }

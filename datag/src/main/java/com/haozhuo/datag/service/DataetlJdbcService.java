@@ -125,7 +125,7 @@ public class DataetlJdbcService {
         //查询每个频道有多少文章
         Map<Integer, Integer> resultMap = new HashMap<>();
 
-        String sql = String.format("select channel_id, count(1) as num from %s  x where x.status = 1 group by x.channel_id ", articleTable);
+        String sql = String.format("select channel_id, count(1) as num from %s  x where x.status = 1 and x.channel_id not in (10000,20000) group by x.channel_id ", articleTable);
         List<Tuple<Integer, Integer>> list = dataetlDB.query(sql, new RowMapper<Tuple<Integer, Integer>>() {
             @Override
             public Tuple<Integer, Integer> mapRow(ResultSet resultSet, int i) throws SQLException {

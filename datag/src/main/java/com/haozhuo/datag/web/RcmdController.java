@@ -264,34 +264,68 @@ public class RcmdController {
                     "es-matcher-controller中的四个方法合并成一个  \n" +
                     "原接口: http://192.168.1.152:8078/swagger-ui.html#/  \n" +
                     "当前接口参数:  \n" +
-                    "1.userId可以不传，那么随机从这个频道中取出{size}条数据，否则会考虑用户标签进行推荐  \n" +
-                    "2.channelId可以传频道的id或者该频道下具体的分类id或者不传,如果不传表示“推荐”类型  \n" +
+                    "userId可以不传，那么随机从这个频道中取出{size}条数据，否则会考虑用户标签进行推荐  \n" +
                     "业务逻辑:  \n" +
-                    "1.从Redis的'rcmdInfo:{userId}'这个Hash中获取HashKey为{categoryId}的推荐信息。这条推荐信息由flink-data-etl这个项目之前产生的。  \n" +
-                    "2.如果Redis中获取不到相应的推荐信息,那么从mysql数据库中随机产生size条资讯进行推荐。  \n" +
-                    "3.通过Kafka消息告知flink-data-etl项目产生新的推荐信息，供下次使用。"
+                    "  \n" +
+                    "1 视频频道(channelId==20000):  \n" +
+                    "1.1 传userId:  \n" +
+                    "1.2 不传userId:  \n" +
+                    "  \n" +
+                    "2 其他频道(其他的channelId):  \n" +
+                    "2.1 传userId(对推过的资讯进行缓存，一段时间内不再推):  \n" +
+                    "2.1.1 推荐频道(channelId==10000,且categoryId==0,需要用户标签信息):  \n" +
+                    "      " +
+                    "2.1.2 某频道下的所有(其他channelId,且categoryId==0,需要用户标签信息)  \n" +
+                    "2.1.3 某频道下的某个分类(其他channelId,且categoryId>0,不需要用户标签信息)  \n" +
+                    "2.2 不传userId(推过的资讯不进行缓存,随机推):  \n" +
+                    "2.2.1 推荐频道(channelId==10000,且categoryId==0):  \n" +
+                    "      select x.information_id from article4 x where x.status = 1 limit {随机数}, {size}  \n" +
+                    "2.2.2 某频道下的所有(其他channelId,且categoryId==0):  \n" +
+                    "      select x.information_id from article4 x where x.status = 1 and channel_id = {channelId} limit {随机数}, {size}  \n" +
+                    "2.2.3 某频道下的某个分类(其他channelId,且categoryId>0):  \n" +
+                    "      select x.information_id from article4 x where x.status = 1 and category_id = {categoryId} limit {随机数}, {size}  \n"
+//                    "1.从Redis的'rcmdInfo:{userId}'这个Hash中获取HashKey为{categoryId}的推荐信息。这条推荐信息由flink-data-etl这个项目之前产生的。  \n" +
+//                    "2.如果Redis中获取不到相应的推荐信息,那么从mysql数据库中随机产生size条资讯进行推荐。  \n" +
+//                    "3.通过Kafka消息告知flink-data-etl项目产生新的推荐信息，供下次使用。"
     )
-    public Object getInfosByUserId(
-            @RequestParam(value = "channelId", defaultValue = "-1") int channelId,
+    public Object getInfosByUserChannelId(
+            @RequestParam(value = "channelId") int channelId,
+            @RequestParam(value = "categoryId") int categoryId,
             @RequestParam(value = "userId", defaultValue = "0") String userId,
-            @RequestParam(value = "size", defaultValue = "10") int pageSize
-            ) {
+            @RequestParam(value = "size", defaultValue = "10") int pageSize) {
+        if (channelId == 20000) {//视频推荐
+            return rcmdVideos(channelId, categoryId, userId, pageSize);
+        } else { //文章推荐
+            return rcmdArticles(channelId, categoryId, userId, pageSize);
+        }
+    }
 
+    //TODO
+    private RcmdInfo rcmdVideos(int channelId, int categoryId, String userId, int pageSize) {
+        return new RcmdInfo();
+    }
+
+    private RcmdInfo rcmdArticles(int channelId, int categoryId, String userId, int pageSize) {
         long beginTime = System.currentTimeMillis();
         int compSize = pageSize;
         RcmdInfo rcmdInfo = new RcmdInfo();
 
         //如果有userId，那么从推荐中取
-        if(!"0".equals(userId)) {
-            kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, channelId));
-            //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
-            rcmdInfo = redisService.getRcmdInfo(userId, String.valueOf(channelId));
-            compSize = pageSize - rcmdInfo.size();
+        if (!"0".equals(userId)) {
+            if (categoryId == 0) { //频道下的所有 || 推荐
+                kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, channelId));
+                //目前size不管传入多少，返回都是10条。因为flink-data-etl的推荐中固定每次产生10条
+                rcmdInfo = redisService.getRcmdInfo(userId, String.valueOf(channelId));
+                compSize = pageSize - rcmdInfo.size();
+            } else { //频道下的某个类别
+
+            }
+
         }
 
         //如果上述推荐的结果小于默认的推荐结果，则进行补充。万一从redis中读取不到数据，就要产生10条。
         if (compSize > 0) {
-            rcmdInfo.add(dataetlJdbcService.getRandomInfosByChannelId(channelId, compSize));
+            rcmdInfo.addArticles(dataetlJdbcService.getRandomInfosByChannelId(channelId, compSize));
         }
         logger.info("/mul/ALV/user_channel?userId={}&channelId={} cost: {}ms", userId, channelId, System.currentTimeMillis() - beginTime);
         return rcmdInfo;

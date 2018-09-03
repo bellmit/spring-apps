@@ -23,7 +23,7 @@ public class GluController {
     @Autowired
     private GluService gluService;
     @Autowired
-    private DataetlJdbcService DataetlJdbcService;
+    private DataetlJdbcService dataetlJdbcService;
 
     @GetMapping("/highGluPermit/{reportId}")
     @ApiOperation(value = "输入reportId，判断该报告是否符合高血糖准入,返回1表示准入,0表示不准入", notes = "")
@@ -31,7 +31,7 @@ public class GluController {
         long beginTime = System.currentTimeMillis();
         ReportObjData reportObjData = gluService.getAndParseReport(reportId);
         int isLegal = gluService.isLegal(reportObjData) ? 1 : 0;
-        DataetlJdbcService.updatePermitUsers(reportId, isLegal);
+        dataetlJdbcService.updatePermitUsers(reportId, isLegal);
         logger.info("reportId:{},isLegal:{},cost:{}ms", reportId, isLegal, System.currentTimeMillis() - beginTime);
         return isLegal;
     }

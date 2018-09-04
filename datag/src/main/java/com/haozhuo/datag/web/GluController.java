@@ -2,7 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.model.glu.ReportObjData;
 import com.haozhuo.datag.service.DataetlJdbcService;
-import com.haozhuo.datag.service.GluService;
+import com.haozhuo.datag.service.biz.GluService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

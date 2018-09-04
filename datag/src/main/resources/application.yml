@@ -11,9 +11,10 @@ app:
     live: lives_info
   redis:
     expire-days: 15
+    pushed-key-max-size: 200
   kafka:
     topic:
-      article-rcmd-request: article-rcmd-request
+      article-rcmd-request: article-process-request
   rest:
     glu: http://192.168.1.178:10011/getReportContent?healthReportId=%s
 

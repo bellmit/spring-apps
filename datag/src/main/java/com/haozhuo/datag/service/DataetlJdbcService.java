@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -26,9 +27,7 @@ import java.util.*;
 public class DataetlJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(DataetlJdbcService.class);
 
-    public final Map<Integer, Integer> categoryIdCountMap;
-    public final Map<Integer, Integer> channelIdCountMap;
-    private int articleCount;
+    public final Map<String, String[]> channelMap = new HashMap<>();
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String liveTable;
@@ -46,97 +45,10 @@ public class DataetlJdbcService {
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
-
-        this.categoryIdCountMap = getCategoryIdCountMap();
-        this.channelIdCountMap = getChannnelIdCountMap();
-
-        int count = 0;
-        for (int value : channelIdCountMap.values()) {
-            count += value;
-        }
-        articleCount = count;
-        logger.info("channelIdCountMap:{}", this.channelIdCountMap);
-        logger.info("categoryIdCountMap:{}", this.categoryIdCountMap);
-        logger.info("articleCount:{}", this.articleCount);
-
-
+        initChannelMap();
         initLabelMap();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
-    }
-
-
-    public List<String> getRandomInfosByChannelId(int channelId, int size) {
-        String sql;
-        Object[] params;
-
-        if (channelIdCountMap.containsKey(channelId)) { //频道
-            sql = String.format("select x.information_id from %s x where x.status = 1 and channel_id = ? limit ?, ?", articleTable);
-            int totalNum = channelIdCountMap.get(channelId);
-            params = new Object[]{channelId, getBegin(totalNum, size), size};
-        } else if (categoryIdCountMap.containsKey(channelId)) { //分类
-            sql = String.format("select x.information_id from %s x where x.status = 1 and category_id = ? limit ?, ?", articleTable);
-            int totalNum = categoryIdCountMap.get(channelId);
-            params = new Object[]{channelId, getBegin(totalNum, size), size};
-        } else { //推荐
-            sql = String.format("select x.information_id from %s x where x.status = 1 limit ?, ?", articleTable);
-            params = new Object[]{getBegin(articleCount, size), size};
-        }
-        return dataetlDB.query(sql, params, new RowMapper<String>() {
-            @Override
-            public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                return resultSet.getString("information_id");
-            }
-        });
-    }
-
-    private int getBegin(int totalNum, int size) {
-        return (totalNum <= size) ? 0 : rand.nextInt(totalNum - size);
-    }
-
-    /**
-     * 获取频道以及对应的文章数的映射关系
-     *
-     * @return
-     */
-
-    public Map<Integer, Integer> getCategoryIdCountMap() {
-        //查询每个频道有多少文章
-        Map<Integer, Integer> resultMap = new HashMap<>();
-
-        String sql = String.format("select category_id , count(1) as num from %s x where x.status = 1 group by x.category_id", articleTable);
-
-
-        List<Tuple<Integer, Integer>> list = dataetlDB.query(sql, new RowMapper<Tuple<Integer, Integer>>() {
-            @Override
-            public Tuple<Integer, Integer> mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Tuple<Integer, Integer>(resultSet.getInt("category_id"), resultSet.getInt("num"));
-            }
-        });
-        for (Tuple<Integer, Integer> l : list) {
-            resultMap.put(l.getT1(), l.getT2());
-        }
-
-        logger.info("getCategoryIdCountMap:{}", resultMap.toString());
-        return resultMap;
-    }
-
-    public Map<Integer, Integer> getChannnelIdCountMap() {
-        //查询每个频道有多少文章
-        Map<Integer, Integer> resultMap = new HashMap<>();
-
-        String sql = String.format("select channel_id, count(1) as num from %s  x where x.status = 1 and x.channel_id not in (10000,20000) group by x.channel_id ", articleTable);
-        List<Tuple<Integer, Integer>> list = dataetlDB.query(sql, new RowMapper<Tuple<Integer, Integer>>() {
-            @Override
-            public Tuple<Integer, Integer> mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Tuple<Integer, Integer>(resultSet.getInt("channel_id"), resultSet.getInt("num"));
-            }
-        });
-        for (Tuple<Integer, Integer> l : list) {
-            resultMap.put(l.getT1(), l.getT2());
-        }
-        logger.info("getChannnelIdCountMap:{}", resultMap.toString());
-        return resultMap;
     }
 
     private void initLabelMap() {
@@ -152,21 +64,47 @@ public class DataetlJdbcService {
         }
     }
 
-    /**
-     * 根据userId，获取动态的labelIds
-     *
-     * @param userId
-     * @return
-     */
-    private List<String> getDynamicLabelIdList(String userId) {
-        String dynamicLabelSql = String.format("select distinct label_id from dynamic_userid_label x where x.user_id = ? and x.update_time > ?");
-        return dataetlDB.query(dynamicLabelSql, new Object[]{userId, JavaUtils.getNdaysAgo(30)}, new RowMapper<String>() {
+    private void initChannelMap() {
+        List<Tuple<String, String>> list = dataetlDB.query("select parent_id, channel_id from channel where parent_id >0", new RowMapper<Tuple<String, String>>() {
             @Override
-            public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                return resultSet.getString("label_id");
+            public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
+                return new Tuple<String, String>(resultSet.getString("parent_id"), resultSet.getString("channel_id"));
             }
         });
+        Map<String, List<String>> channelListMap = new HashMap<>();
+        List<String> tmpList;
+        for (Tuple<String, String> tuple : list) {
+            String key = tuple.getT1();
+            String value = tuple.getT2();
+            if (channelListMap.containsKey(key)) {
+                tmpList = channelListMap.get(key);
+                tmpList.add(value);
+                channelListMap.put(key, tmpList);
+            } else {
+                channelListMap.put(key, new ArrayList<String>(Arrays.asList(value)));
+            }
+        }
+        for(Map.Entry<String,List<String>> entry:channelListMap.entrySet()){
+            channelMap.put(entry.getKey(),entry.getValue().toArray(new String[]{}));
+        }
     }
+
+
+//    /**
+//     * 根据userId，获取动态的labelIds
+//     *
+//     * @param userId
+//     * @return
+//     */
+//    private List<String> getDynamicLabelIdList(String userId) {
+//        String dynamicLabelSql = String.format("select distinct label_id from dynamic_userid_label x where x.user_id = ? and x.update_time > ?");
+//        return dataetlDB.query(dynamicLabelSql, new Object[]{userId, JavaUtils.getNdaysAgo(30)}, new RowMapper<String>() {
+//            @Override
+//            public String mapRow(ResultSet resultSet, int i) throws SQLException {
+//                return resultSet.getString("label_id");
+//            }
+//        });
+//    }
 
     /**
      * 根据userId，获取最近一份报告的疾病labelIds
@@ -212,7 +150,7 @@ public class DataetlJdbcService {
      */
     public Set<String> getLabelSetByUserId(String userId) {
         Set<String> labelIdSet = new HashSet<>();
-        labelIdSet.addAll(getDynamicLabelIdList(userId));
+        //labelIdSet.addAll(getDynamicLabelIdList(userId));
         labelIdSet.addAll(getReportLabelIdList(userId));
         Set<String> labelNameSet = new HashSet<>();
         for (String labelId : labelIdSet) {

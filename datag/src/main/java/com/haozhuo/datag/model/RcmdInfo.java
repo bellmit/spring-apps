@@ -1,5 +1,6 @@
 package com.haozhuo.datag.model;
 
+import com.haozhuo.datag.common.JavaUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,16 +23,42 @@ public class RcmdInfo {
     }
 
     public void addArticles(List<String> ids) {
+        if (JavaUtils.isEmpty(ids)) return;
         for (String id : ids) {
             article.add(id);
         }
     }
+
+    public void addArticles(String[] ids) {
+        if (JavaUtils.isEmpty(ids)) return;
+        for (String id : ids) {
+            article.add(id);
+        }
+    }
+
     public void addVideos(List<String> ids) {
+        if (JavaUtils.isEmpty(ids)) return;
         for (String id : ids) {
             video.add(id);
         }
     }
+
+    public void addVideos(String[] ids) {
+        if (JavaUtils.isEmpty(ids)) return;
+        for (String id : ids) {
+            video.add(id);
+        }
+    }
+
+    public void addLives(String[] ids) {
+        if (JavaUtils.isEmpty(ids)) return;
+        for (String id : ids) {
+            live.add(id);
+        }
+    }
+
     public void addLives(List<String> ids) {
+        if (JavaUtils.isEmpty(ids)) return;
         for (String id : ids) {
             live.add(id);
         }

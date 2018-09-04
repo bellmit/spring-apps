@@ -2,6 +2,8 @@ package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.RcmdInfo;
+import com.mysql.jdbc.StringUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +35,84 @@ public class RedisService {
 
     private String[] lastNdays;
 
+    @Value("${app.redis.pushed-key-max-size:200}")
+    private int pushedKeyMaxSize;
     @Value("${app.redis.expire-days:15}")
     private int expireDays;
 
+    public int getPushedKeyMaxSize() {
+        return pushedKeyMaxSize;
+    }
+
     private final String videoPushedKey = "video-pushed:%s:%s";
     private final String goodsPushedKey = "goods-pushed:%s:%s";
+    private final String pushedInfoKey = "PushedInfo:%s";
+    private final String hateTagsKey = "HateTags:%s";
+    private final String loveTagsKey = "LoveTags:%s";
+
+    private void setHash(String key, String hashKey, String value) {
+        redisDB0.opsForHash().put(key, hashKey, value);
+        redisDB0.expire(key, expireDays, TimeUnit.DAYS);
+    }
+
+    private String getHash(String key, String hashKey) {
+        redisDB0.expire(key, expireDays, TimeUnit.DAYS);
+        Object value = redisDB0.opsForHash().get(key, hashKey);
+        if (value == null) {
+            return "";
+        } else {
+            return value.toString();
+        }
+    }
+
+    private void deleteHashKey(String key, String hashKey) {
+        redisDB0.opsForHash().delete(key, hashKey);
+    }
+
+    public String[] getPushedInfo(String userId, String hashKey, int maxSize) {
+        String key = String.format(pushedInfoKey, userId);
+        List<String> ids = new ArrayList<>();
+        for(String id:getHash(key, hashKey).split(",")){
+            if(!"".equals(id.trim())){
+                ids.add(id);
+            }
+        }
+        if (ids.size() > maxSize) {
+            deleteHashKey(key, hashKey);
+        }
+        return ids.toArray(new String[]{});
+    }
+
+    public String getHateTags(String userId) {
+        return getTags(hateTagsKey, userId);
+    }
+
+    public String getLoveTags(String userId) {
+        return getTags(loveTagsKey, userId);
+    }
+
+    private String getTags(String keyFormat, String userId) {
+        String key = String.format(keyFormat, userId);
+        redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
+        List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
+        StringBuffer result = new StringBuffer();
+        for (String hateTags : tagsList) {
+            result.append(hateTags).append(",");
+        }
+        return result.toString();
+    }
+
+
+    public void setPushedInfo(String userId, String hashKey, String value) {
+        setHash(String.format(pushedInfoKey, userId), hashKey, value);
+    }
+
+    public void setPushedInfo(String userId, String hashKey, String[] oldIds, String[] newIds) {
+
+        String value = org.springframework.util.StringUtils.arrayToCommaDelimitedString(ArrayUtils.addAll(oldIds, newIds));
+        logger.debug("setPushedInfo  -- userId:{},hashKey:{},value:{}", userId, hashKey, value);
+        setPushedInfo(userId, hashKey, value);
+    }
 
     private synchronized void updateDateInfo() {
         lastNdays = JavaUtils.getLastNdaysArray(expireDays);
@@ -51,43 +126,6 @@ public class RedisService {
         }
     }
 
-    /**
-     * 将如
-     * a:0:119962,a:0:127555,a:0:117354,a:0:118816,a:0:118330,v:0:59,a:0:119292,a:0:127676,a:0:124924,l:2:61
-     * 的形式转换成RcmdResult
-     *
-     * @param rcmdInfo
-     * @return
-     */
-    private RcmdInfo parseRcmdInfo(String rcmdInfo) {
-        RcmdInfo rcmdResult = new RcmdInfo();
-        for (String item : rcmdInfo.split(",")) {
-            String[] array = item.split(":");
-            if (array.length == 3) {
-                if ("a".equals(array[0])) {
-                    rcmdResult.getArticle().add(array[2]);
-                } else if ("v".equals(array[0])) {
-                    rcmdResult.getVideo().add(array[2]);
-                } else if ("l".equals(array[0])) {
-                    rcmdResult.getLive().add(array[2]);
-                }
-            }
-        }
-        return rcmdResult;
-    }
-
-    public RcmdInfo getRcmdInfo(String userId, String categoryId) {
-        String key = String.format("rcmdInfo:%s", userId);
-        HashOperations<String, String , String> op = redisDB1.opsForHash();
-        String value = op.get(key, categoryId);
-        if (value == null) {
-            value = "";
-        } else {
-            op.delete(key, categoryId);
-        }
-        logger.info("getRcmdInfo key -- {}; rcmdResult -- {}", key, value);
-        return parseRcmdInfo(value);
-    }
 
     private String[] getPushedKeys(String userId, String key) {
         checkOrUpdateDateInfo();
@@ -98,11 +136,7 @@ public class RedisService {
         return result.toArray(new String[0]);
     }
 
-    /**
-     * 根据userId获取最近给用户推送过的视频列表
-     *
-     * @return
-     */
+
     public String[] getPushedVideos(String userId) {
         return getPushedKeys(userId, videoPushedKey);
     }
@@ -116,22 +150,21 @@ public class RedisService {
         return getPushedKeys(userId, goodsPushedKey);
     }
 
-    private void setPushedKey(String userId, String key, String[] pushedIds) {
-        if (pushedIds.length == 0) return;
-        String realKey = String.format(key, userId, curDate);
-        logger.debug("key:{}", realKey);
-        redisDB0.opsForSet().add(realKey, pushedIds);
-        redisDB0.expire(realKey, expireDays, TimeUnit.DAYS);
+    private void setSets(String key, String[] value) {
+        if (value.length == 0) return;
+        redisDB0.opsForSet().add(key, value);
+        redisDB0.expire(key, expireDays, TimeUnit.DAYS);
     }
 
     public void setPushedVideos(String userId, String[] pushedVideoIds) {
-        setPushedKey(userId, videoPushedKey, pushedVideoIds);
+        String realKey = String.format(videoPushedKey, userId, curDate);
+        setSets(realKey, pushedVideoIds);
     }
 
     public void setPushedGoods(String userId, String[] pushedGoodsIds) {
-        setPushedKey(userId, goodsPushedKey, pushedGoodsIds);
+        String realKey = String.format(goodsPushedKey, userId, curDate);
+        setSets(realKey, pushedGoodsIds);
     }
-
 
     private void deletePushedKey(String userId, String key) {
         List<String> keys = new ArrayList<>();
@@ -174,10 +207,47 @@ public class RedisService {
             Object valueOrNull = redisDB0.opsForHash().get(hashKey, valueKey);
             List<String> idList = new ArrayList<>();
             if (valueOrNull != null) {
-                idList = parseSimValue(valueOrNull.toString().replaceAll("'","")); //Redis中有数据有问题：'289': 0.43851748, '190': 0.33565181，带了单引号
+                idList = parseSimValue(valueOrNull.toString().replaceAll("'", "")); //Redis中有数据有问题：'289': 0.43851748, '190': 0.33565181，带了单引号
             }
             map.put(valueKey, idList);
         }
         return map;
     }
 }
+//    /**
+//     * 将如
+//     * a:0:119962,a:0:127555,a:0:117354,a:0:118816,a:0:118330,v:0:59,a:0:119292,a:0:127676,a:0:124924,l:2:61
+//     * 的形式转换成RcmdResult
+//     *
+//     * @param rcmdInfo
+//     * @return
+//     */
+//    private RcmdInfo parseRcmdInfo(String rcmdInfo) {
+//        RcmdInfo rcmdResult = new RcmdInfo();
+//        for (String item : rcmdInfo.split(",")) {
+//            String[] array = item.split(":");
+//            if (array.length == 3) {
+//                if ("a".equals(array[0])) {
+//                    rcmdResult.getArticle().add(array[2]);
+//                } else if ("v".equals(array[0])) {
+//                    rcmdResult.getVideo().add(array[2]);
+//                } else if ("l".equals(array[0])) {
+//                    rcmdResult.getLive().add(array[2]);
+//                }
+//            }
+//        }
+//        return rcmdResult;
+//    }
+//
+//    public RcmdInfo getRcmdInfo(String userId, String categoryId) {
+//        String key = String.format("rcmdInfo:%s", userId);
+//        HashOperations<String, String, String> op = redisDB1.opsForHash();
+//        String value = op.get(key, categoryId);
+//        if (value == null) {
+//            value = "";
+//        } else {
+//            op.delete(key, categoryId);
+//        }
+//        logger.info("getRcmdInfo key -- {}; rcmdResult -- {}", key, value);
+//        return parseRcmdInfo(value);
+//    }

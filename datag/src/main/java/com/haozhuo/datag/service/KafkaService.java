@@ -27,7 +27,7 @@ public class KafkaService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Value("${app.kafka.topic.article-rcmd-request}")
+    @Value("${app.kafka.topic.article-process-request}")
     private String articleRcmdRequestTopic;
 
     public void sendRcmdRequestMsg(RcmdRequestMsg msg) {

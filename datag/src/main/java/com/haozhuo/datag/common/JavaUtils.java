@@ -3,6 +3,7 @@ package com.haozhuo.datag.common;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -42,7 +43,18 @@ public class JavaUtils {
         return getCurrentFormat("yyyy-MM-dd HH:mm:ss");
     }
 
-    public static String getToday() {return getCurrentFormat("yyyy-MM-dd");}
+    public static String getToday() {
+        return getCurrentFormat("yyyy-MM-dd");
+    }
 
 
+    public static boolean isEmpty(String str) {
+        return (str == null) || "".equals(str.trim());
+    }
+    public static boolean isEmpty(Object[] array) {
+        return (array == null) || array.length==0;
+    }
+    public static boolean isEmpty(Collection collection) {
+        return (collection == null) || collection.size()==0;
+    }
 }

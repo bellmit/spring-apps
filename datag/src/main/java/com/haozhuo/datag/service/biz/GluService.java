@@ -1,4 +1,4 @@
-package com.haozhuo.datag.service;
+package com.haozhuo.datag.service.biz;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.common.Tuple;

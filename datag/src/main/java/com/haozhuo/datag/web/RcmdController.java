@@ -123,7 +123,7 @@ public class RcmdController {
     public Object getGoodsIdsByLabels(
             @PathVariable(value = "labels") String labels) {
         long beginTime = System.currentTimeMillis();
-        String[] result = esService.getGoodsIdsByLabels(labels, new String[]{}, 10);
+        String[] result = esService.getGoodsIdsByLabels(labels, new String[]{}, 10, "label", "content_name");
         logger.info("/goods/labels/{}  cost: {}ms", labels, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -519,7 +519,7 @@ public class RcmdController {
     }
 
 
-    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签(新增)",
+    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签【新增，待实现！】",
             notes = "业务逻辑:  \n" +
                     "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的hateTag:{userId}中。")
     @GetMapping(value = "/article/not_interested")

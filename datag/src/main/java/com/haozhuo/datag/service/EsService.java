@@ -63,55 +63,6 @@ public class EsService {
     private GaussDecayFunctionBuilder gaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "15d", 0.8D);
     private GaussDecayFunctionBuilder gaussDecayFunctionPlayTime = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "15d", 0.8D);
 
-    /*
-    curl -XGET "192.168.1.152:9200/article3/_search?pretty" -d '{
-     "size": 10,
-     "query": {
-         "function_score": {
-             "query": {
-                 "bool": {
-                     "should": [{
-                         "multi_match": {
-                             "query": "风湿关节炎食疗方剂",  ####################### loveTags #########################
-                             "fields": ["title", "keywords"],
-                             "boost": 3
-                         }
-                     }, {
-                         "multi_match": {
-                             "query": "肺炎近视",   ####################### reportTags #########################
-                             "fields": ["title", "keywords"],
-                             "boost": 1
-                         }
-                     }],
-                     "must_not": [{
-                         "match": {
-                             "keywords": "近视"  ######################## hateTags ##################
-                         }
-                     }, {
-                         "ids": {
-                             "values": [
-                                 "131025", "131574", "131808"   ######################## pushedInfoAs ##################
-                             ]
-                         }
-                     }]
-                 }
-             },
-             "functions": [{
-                 "gauss": {
-                     "create_time": {
-                         "origin": "now",
-                         "scale": "30d",
-                         "offset": "15d",
-                         "decay": "0.8"
-                     }
-                 }
-             }]
-         }
-     }
-    }'
-
-     */
-
     private String[] recommend(String index, String[] types, QueryBuilder query, int size) {
         SearchRequestBuilder srb = client.prepareSearch(index)
                 .setSize(size).setQuery(
@@ -124,6 +75,9 @@ public class EsService {
         return EsUtils.getDocIdsAsArray(srb);
     }
 
+    /**
+     * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
+     */
     public String[] personalizedRecommend(String index, String[] types, String loveTags, String reportTags, String hateTags, String[] pushedIds, int size) {
         String tagField = getTagField(index);
         QueryBuilder query = QueryBuilders.boolQuery()
@@ -239,14 +193,20 @@ public class EsService {
         return getArticleIds(labels, new String[]{}, size, fieldNames);
     }
 
-    public String[] getGoodsIdsByLabels(String labels, String[] excludeIds, int size) {
-        String[] ids = getGoodsIdsByCondition(QueryBuilders.matchQuery("label", labels), excludeIds, 0, size);
+    public String[] getGoodsIdsByLabels(String labels, String[] excludeIds, int size, String... fieldNames) {
+        if (fieldNames.length == 0) {
+            fieldNames = new String[]{"label"};
+        }
+        String[] ids = getGoodsIdsByCondition(QueryBuilders.multiMatchQuery(labels, fieldNames), excludeIds, 0, size);
         logger.debug("labels:{}, goods ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
-    public String[] getGoodsIdsByLabels(String labels, int from, int size) {
-        String[] ids = getGoodsIdsByCondition(QueryBuilders.matchQuery("label", labels), new String[]{}, from, size);
+    public String[] getGoodsIdsByLabels(String labels, int from, int size,String... fieldNames) {
+        if (fieldNames.length == 0) {
+            fieldNames = new String[]{"label"};
+        }
+        String[] ids = getGoodsIdsByCondition(QueryBuilders.multiMatchQuery(labels, fieldNames), new String[]{}, from, size);
         logger.debug("labels:{}, goods ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }

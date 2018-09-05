@@ -36,11 +36,11 @@ public class PushedInfoKeys {
 
     public String getHashKeyByALVIndex(int index) {
         switch (index) {
-            case InfoALVArray.articleIndex:
+            case InfoALV.articleIndex:
                 return getArticleHashKey();
-            case InfoALVArray.liveIndex:
+            case InfoALV.liveIndex:
                 return getLiveHashKey();
-            case InfoALVArray.videoIndex:
+            case InfoALV.videoIndex:
                 return getVideoHashKey();
             default:
                 return null;
@@ -49,9 +49,9 @@ public class PushedInfoKeys {
 
     public List getALVHashKeys() {
         ArrayList<String> list = new ArrayList<>(3);
-        list.add(InfoALVArray.articleIndex, getArticleHashKey());
-        list.add(InfoALVArray.liveIndex, getLiveHashKey());
-        list.add(InfoALVArray.videoIndex, getVideoHashKey());
+        list.add(InfoALV.articleIndex, getArticleHashKey());
+        list.add(InfoALV.liveIndex, getLiveHashKey());
+        list.add(InfoALV.videoIndex, getVideoHashKey());
         return list;
     }
 

@@ -2,7 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
-import com.haozhuo.datag.model.InfoALVArray;
+import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -288,7 +288,7 @@ public class RcmdController {
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
         long beginTime = System.currentTimeMillis();
-        InfoALVArray result = infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
+        InfoALV result = infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
         logger.info("/mul/ALV/user_channel?userId={}&channelId={}&categoryId={}  cost: {}ms", userId, channelId, categoryId, System.currentTimeMillis() - beginTime);
         return result;
     }

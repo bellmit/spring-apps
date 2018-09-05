@@ -1,7 +1,7 @@
 package com.haozhuo.datag.service.biz;
 
 import com.haozhuo.datag.common.Tuple;
-import com.haozhuo.datag.model.InfoALVArray;
+import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.PushedInfoKeys;
 import com.haozhuo.datag.service.DataetlJdbcService;
 import com.haozhuo.datag.service.EsService;
@@ -65,10 +65,10 @@ public class InfoRcmdService {
     /**
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
-    public InfoALVArray channelRecommend(String channelId, String categoryId, String userId, int size) {
+    public InfoALV channelRecommend(String channelId, String categoryId, String userId, int size) {
         PushedInfoKeys pushedInfoKeys = new PushedInfoKeys(userId, channelId, categoryId);
-        InfoALVArray pushedALV = redisService.getPushedInfoALV(pushedInfoKeys);
-        InfoALVArray result = new InfoALVArray();
+        InfoALV pushedALV = redisService.getPushedInfoALV(pushedInfoKeys);
+        InfoALV result = new InfoALV();
 
         //获取用户不感兴趣的标签
         String hateTags = redisService.getHateTags(userId);

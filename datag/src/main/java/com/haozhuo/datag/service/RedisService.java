@@ -1,7 +1,7 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
-import com.haozhuo.datag.model.InfoALVArray;
+import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.PushedInfoKeys;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
@@ -46,27 +46,12 @@ public class RedisService {
     private final String hateTagsKey = "HateTags:%s";
     private final String loveTagsKey = "LoveTags:%s";
 
-//    private void setHash(String key, String hashKey, String value) {
-//        redisDB0.opsForHash().put(key, hashKey, value);
-//    }
-
-//    private String getHash(String key, String hashKey) {
-//        Object value = redisDB0.opsForHash().get(key, hashKey);
-//        if (value == null) {
-//            return "";
-//        } else {
-//            return value.toString();
-//        }
-//    }
-
-
     private void deleteHashKey(String key, String hashKey) {
         redisDB0.opsForHash().delete(key, hashKey);
     }
 
-
-    private InfoALVArray getInfoALVFromValues(List<Object> values, String key, List<String> hashKeys) {
-        InfoALVArray pushedIds = new InfoALVArray();
+    private InfoALV getInfoALVFromValues(List<Object> values, String key, List<String> hashKeys) {
+        InfoALV pushedIds = new InfoALV();
         String[] ids;
         for (int i = 0; i < hashKeys.size(); i++) {
             if (!JavaUtils.isEmpty(values.get(i))) {
@@ -89,14 +74,14 @@ public class RedisService {
         redisDB0.expire(pushedInfoKeys.getKey(), expireDays, TimeUnit.DAYS);
     }
 
-    public InfoALVArray getPushedInfoALV(PushedInfoKeys pushedInfoKeys) {
+    public InfoALV getPushedInfoALV(PushedInfoKeys pushedInfoKeys) {
         initHashIfNotExist(pushedInfoKeys);
         List avlHashKeys = pushedInfoKeys.getALVHashKeys();
         List<Object> values = redisDB0.opsForHash().multiGet(pushedInfoKeys.getKey(), avlHashKeys);
         return getInfoALVFromValues(values, pushedInfoKeys.getKey(), (List<String>) avlHashKeys);
     }
 
-    public void setPushedInfoALV(PushedInfoKeys pushedInfoKeys, InfoALVArray oldInfoALV, InfoALVArray newInfoALV) {
+    public void setPushedInfoALV(PushedInfoKeys pushedInfoKeys, InfoALV oldInfoALV, InfoALV newInfoALV) {
         if (newInfoALV.size() > 0) {
             Map map = new HashMap<String, String>();
             for (int i = 0; i < 3; i++) {
@@ -128,17 +113,6 @@ public class RedisService {
         return result.toString();
     }
 
-
-//    public void setPushedInfo(String userId, String hashKey, String value) {
-//        setHash(String.format(pushedInfoKey, userId), hashKey, value);
-//    }
-
-//    public void setPushedInfo(String userId, String hashKey, String[] oldIds, String[] newIds) {
-//        String value = org.springframework.util.StringUtils.arrayToCommaDelimitedString(ArrayUtils.addAll(oldIds, newIds));
-//        logger.debug("setPushedInfo  -- userId:{},hashKey:{},value:{}", userId, hashKey, value);
-//        setPushedInfo(userId, hashKey, value);
-//    }
-
     private synchronized void updateDateInfo() {
         lastNdays = JavaUtils.getLastNdaysArray(expireDays);
         curDate = JavaUtils.getToday();
@@ -150,7 +124,6 @@ public class RedisService {
             updateDateInfo();
         }
     }
-
 
     private String[] getPushedKeys(String userId, String key) {
         checkOrUpdateDateInfo();
@@ -239,40 +212,3 @@ public class RedisService {
         return map;
     }
 }
-//    /**
-//     * 将如
-//     * a:0:119962,a:0:127555,a:0:117354,a:0:118816,a:0:118330,v:0:59,a:0:119292,a:0:127676,a:0:124924,l:2:61
-//     * 的形式转换成RcmdResult
-//     *
-//     * @param rcmdInfo
-//     * @return
-//     */
-//    private InfoALV parseRcmdInfo(String rcmdInfo) {
-//        InfoALV rcmdResult = new InfoALV();
-//        for (String item : rcmdInfo.split(",")) {
-//            String[] array = item.split(":");
-//            if (array.length == 3) {
-//                if ("a".equals(array[0])) {
-//                    rcmdResult.getArticle().add(array[2]);
-//                } else if ("v".equals(array[0])) {
-//                    rcmdResult.getVideo().add(array[2]);
-//                } else if ("l".equals(array[0])) {
-//                    rcmdResult.getLive().add(array[2]);
-//                }
-//            }
-//        }
-//        return rcmdResult;
-//    }
-//
-//    public InfoALV getRcmdInfo(String userId, String categoryId) {
-//        String key = String.format("rcmdInfo:%s", userId);
-//        HashOperations<String, String, String> op = redisDB1.opsForHash();
-//        String value = op.get(key, categoryId);
-//        if (value == null) {
-//            value = "";
-//        } else {
-//            op.delete(key, categoryId);
-//        }
-//        logger.info("getRcmdInfo key -- {}; rcmdResult -- {}", key, value);
-//        return parseRcmdInfo(value);
-//    }

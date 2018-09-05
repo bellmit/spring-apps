@@ -3,6 +3,7 @@ package com.haozhuo.datag.model;
 import com.haozhuo.datag.common.JavaUtils;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -14,65 +15,65 @@ import java.util.Set;
 @Setter
 @Getter
 public class InfoALV {
-    Set<String> video = new HashSet<>(1);
-    Set<String> live = new HashSet<>(1);
-    Set<String> article = new HashSet<>(10);
+    public static final int articleIndex = 0;
+    public static final int liveIndex = 1;
+    public static final int videoIndex = 2;
 
-    public String[] getArrayVideo() {
-        return video.toArray(new String[]{});
-    }
-
-    public String[] getArrayLive() {
-        return live.toArray(new String[]{});
-    }
-
-    public String[] getArrayArticle() {
-        return article.toArray(new String[]{});
-    }
+    String[] video = new String[]{};
+    String[] live = new String[]{};
+    String[] article = new String[]{};
 
     public int size() {
-        return video.size() + live.size() + article.size();
+        return video.length + live.length + article.length;
     }
 
-    public void addArticles(List<String> ids) {
-        if (JavaUtils.isEmpty(ids)) return;
-        for (String id : ids) {
-            article.add(id);
+    public String[] getByIndex(int index) {
+        switch (index) {
+            case articleIndex:
+                return getArticle();
+            case liveIndex:
+                return getLive();
+            case videoIndex:
+                return getVideo();
+            default:
+                return null;
         }
     }
 
-    public void addArticles(String[] ids) {
-        if (JavaUtils.isEmpty(ids)) return;
-        for (String id : ids) {
-            article.add(id);
+    public void addByIndex(String[] ids, int index) {
+        switch (index) {
+            case articleIndex:
+                addArticle(ids);
+            case liveIndex:
+                addLive(ids);
+            case videoIndex:
+                addVideo(ids);
         }
     }
 
-    public void addVideos(List<String> ids) {
-        if (JavaUtils.isEmpty(ids)) return;
-        for (String id : ids) {
-            video.add(id);
+    public void setByIndex(String[] ids, int index) {
+        switch (index) {
+            case articleIndex:
+                setArticle(ids);
+            case liveIndex:
+                setLive(ids);
+            case videoIndex:
+                setVideo(ids);
         }
     }
 
-    public void addVideos(String[] ids) {
+    public void addArticle(String[] ids) {
         if (JavaUtils.isEmpty(ids)) return;
-        for (String id : ids) {
-            video.add(id);
-        }
+        article = (String[]) ArrayUtils.addAll(article, ids);
     }
 
-    public void addLives(String[] ids) {
+    public void addLive(String[] ids) {
         if (JavaUtils.isEmpty(ids)) return;
-        for (String id : ids) {
-            live.add(id);
-        }
+        live = (String[]) ArrayUtils.addAll(live, ids);
     }
 
-    public void addLives(List<String> ids) {
+    public void addVideo(String[] ids) {
         if (JavaUtils.isEmpty(ids)) return;
-        for (String id : ids) {
-            live.add(id);
-        }
+        video = (String[]) ArrayUtils.addAll(video, ids);
     }
 }

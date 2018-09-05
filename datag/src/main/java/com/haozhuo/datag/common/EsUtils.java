@@ -15,7 +15,7 @@ public class EsUtils {
     private static final Logger logger = LoggerFactory.getLogger(EsUtils.class);
 
     public static List<String> getDocIdsAsList(SearchRequestBuilder srb) {
-        logger.debug("getDocIdsAsList:{}", srb);
+        //logger.debug("getDocIdsAsList:{}", srb);
         SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
         List<String> list = new ArrayList<>();
         for (SearchHit hit : hits) {
@@ -25,7 +25,7 @@ public class EsUtils {
     }
 
     public static String[] getDocIdsAsArray(SearchRequestBuilder srb) {
-        logger.debug("getDocIdsAsList:{}", srb);
+       // logger.debug("getDocIdsAsList:{}", srb);
         SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
         String[] array = new String[hits.length];
 

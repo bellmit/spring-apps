@@ -13,10 +13,22 @@ import java.util.Set;
  */
 @Setter
 @Getter
-public class RcmdInfo {
+public class InfoALV {
     Set<String> video = new HashSet<>(1);
     Set<String> live = new HashSet<>(1);
     Set<String> article = new HashSet<>(10);
+
+    public String[] getArrayVideo() {
+        return video.toArray(new String[]{});
+    }
+
+    public String[] getArrayLive() {
+        return live.toArray(new String[]{});
+    }
+
+    public String[] getArrayArticle() {
+        return article.toArray(new String[]{});
+    }
 
     public int size() {
         return video.size() + live.size() + article.size();

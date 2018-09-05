@@ -51,10 +51,31 @@ public class JavaUtils {
     public static boolean isEmpty(String str) {
         return (str == null) || "".equals(str.trim());
     }
-    public static boolean isEmpty(Object[] array) {
-        return (array == null) || array.length==0;
+    public static boolean isEmpty(Object obj) {
+        return obj == null;
     }
+
+    public static boolean isNotEmpty(Object obj) {
+        return !isEmpty(obj);
+    }
+
+    public static boolean isNotEmpty(String str) {
+        return !isEmpty(str);
+    }
+
+    public static boolean isEmpty(Object[] array) {
+        return (array == null) || array.length == 0;
+    }
+
+    public static boolean isNotEmpty(Object[] array) {
+        return !isEmpty(array);
+    }
+
     public static boolean isEmpty(Collection collection) {
-        return (collection == null) || collection.size()==0;
+        return (collection == null) || collection.size() == 0;
+    }
+
+    public static boolean isNotEmpty(Collection collection) {
+        return !isEmpty(collection);
     }
 }

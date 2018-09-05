@@ -2,6 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
+import com.haozhuo.datag.model.InfoALVArray;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -108,6 +109,26 @@ public class RcmdController {
     }
 
     /**
+     * 根据
+     * 对应原来good-recommender项目中的GoodsRecomController中的getRecomList()方法。
+     * curl -X POST --header "ArticleInfo-Type: application/json" --header  "http://192.168.1.152:8087/goodsmatch/getRecom/list?healthReportId=2515473&pageSize=10&pageNum=1"
+     *
+     * @return
+     */
+    @GetMapping("/goods/labels/{labels}")
+    @ApiOperation(value = "根据标签返回推荐的商品  【新增】",
+            notes = "根据标签返回推荐的商品。  \n" +
+                    "业务逻辑：  \n" +
+                    "labels与ES中good索引的label字段进行匹配，得到推荐的商品id。")
+    public Object getGoodsIdsByLabels(
+            @PathVariable(value = "labels") String labels) {
+        long beginTime = System.currentTimeMillis();
+        String[] result = esService.getGoodsIdsByLabels(labels, new String[]{}, 10);
+        logger.info("/goods/labels/{}  cost: {}ms", labels, System.currentTimeMillis() - beginTime);
+        return result;
+    }
+
+    /**
      * 推荐视频列表
      * 旧接口：
      * video-recommender项目中的VideoRecomController中的getMatchContent()方法
@@ -153,31 +174,6 @@ public class RcmdController {
         logger.info("/video/userId/{}?size={}  cost: {}ms", userId, size, System.currentTimeMillis() - beginTime);
         return result;
     }
-
-
-//    /**
-//     * 搜索视频列表
-//     * 旧接口：
-//     * video-recommender项目中的VideoRecomController中的getSearchContent()方法
-//     * 请求是POST：
-//     * curl -X POST --header "ArticleInfo-Type: application/json"  "http://datanode2:9090/api/video-recommder/videomatch/search/all?keyword=%E9%AB%98%E8%A1%80%E5%8E%8B"
-//     * <p>
-//     * 新接口：
-//     */
-//    @GetMapping("/video/keyword/{keyword}")
-//    @ApiOperation(value = "根据关键词返回视频列表  【/videomatch/search/all】",
-//            notes = "根据输入的关键词，和视频的标题进行匹配，得到相应的视频id列表。  \n" +
-//                    "原接口: http://192.168.1.152:8089/swagger-ui.html#!/video-recom-controller/getSearchContentUsingPOST  \n" +
-//                    "业务逻辑:  \n" +
-//                    "将keyword与ES的video4的title进行匹配。返回相似度最高的size个视频Id")
-//    public Object getVideoListByKeyword(
-//            @PathVariable(value = "keyword") String keyword,
-//            @RequestParam(value = "size", defaultValue = "20") int size) {
-//        long beginTime = System.currentTimeMillis();
-//        String[] result = esService.getVideoIds(keyword, size, "title");
-//        logger.info("/video/keyword/{}?size={}  cost: {}ms", keyword, size, System.currentTimeMillis() - beginTime);
-//        return result;
-//    }
 
 
     /**
@@ -285,19 +281,17 @@ public class RcmdController {
                     "    点击行为+标签" +
                     "3.1.2 某频道下的所有(其他channelId,且categoryId==0,需要用户标签信息)  \n" +
                     "3.1.3 某频道下的某个分类(其他channelId,且categoryId>0,不需要用户标签信息)  \n"
-                 //                    "1.从Redis的'rcmdInfo:{userId}'这个Hash中获取HashKey为{categoryId}的推荐信息。这条推荐信息由flink-data-etl这个项目之前产生的。  \n" +
-//                    "2.如果Redis中获取不到相应的推荐信息,那么从mysql数据库中随机产生size条资讯进行推荐。  \n" +
-//                    "3.通过Kafka消息告知flink-data-etl项目产生新的推荐信息，供下次使用。"
     )
-    public Object getInfosByUserChannelId(
-            @RequestParam(value = "channelId") String channelId,
-            @RequestParam(value = "categoryId", defaultValue = "0") String categoryId,
+    public Object getInfosByUserChannel(
+            @RequestParam(value = "channelId", defaultValue = InfoRcmdService.channelRcmdId) String channelId,
+            @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        return infoRcmdService.process(channelId, categoryId, userId, size);
+        long beginTime = System.currentTimeMillis();
+        InfoALVArray result = infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
+        logger.info("/mul/ALV/user_channel?userId={}&channelId={}&categoryId={}  cost: {}ms", userId, channelId, categoryId, System.currentTimeMillis() - beginTime);
+        return result;
     }
-
-
 
 
     /**

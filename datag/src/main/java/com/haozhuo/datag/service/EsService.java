@@ -120,7 +120,7 @@ public class EsService {
         if (!JavaUtils.isEmpty(types)) {
             srb.setTypes(types);
         }
-        logger.debug(srb.toString());
+       // logger.debug(srb.toString());
         return EsUtils.getDocIdsAsArray(srb);
     }
 
@@ -153,7 +153,7 @@ public class EsService {
     public String[] commonRecommend(String index, String[] types, String hateTags, String[] pushedIds, int size) {
         String tagField = getTagField(index);
 
-        logger.debug(StringUtils.arrayToCommaDelimitedString(types));
+        //logger.debug(StringUtils.arrayToCommaDelimitedString(types));
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));

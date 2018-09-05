@@ -1,17 +1,17 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
-import com.haozhuo.datag.model.RcmdInfo;
-import com.mysql.jdbc.StringUtils;
+import com.haozhuo.datag.model.InfoALVArray;
+import com.haozhuo.datag.model.PushedInfoKeys;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -37,50 +37,76 @@ public class RedisService {
 
     @Value("${app.redis.pushed-key-max-size:200}")
     private int pushedKeyMaxSize;
-    @Value("${app.redis.expire-days:15}")
+    @Value("${app.redis.expire-days:7}")
     private int expireDays;
-
-    public int getPushedKeyMaxSize() {
-        return pushedKeyMaxSize;
-    }
 
     private final String videoPushedKey = "video-pushed:%s:%s";
     private final String goodsPushedKey = "goods-pushed:%s:%s";
-    private final String pushedInfoKey = "PushedInfo:%s";
+
     private final String hateTagsKey = "HateTags:%s";
     private final String loveTagsKey = "LoveTags:%s";
 
-    private void setHash(String key, String hashKey, String value) {
-        redisDB0.opsForHash().put(key, hashKey, value);
-        redisDB0.expire(key, expireDays, TimeUnit.DAYS);
-    }
+//    private void setHash(String key, String hashKey, String value) {
+//        redisDB0.opsForHash().put(key, hashKey, value);
+//    }
 
-    private String getHash(String key, String hashKey) {
-        redisDB0.expire(key, expireDays, TimeUnit.DAYS);
-        Object value = redisDB0.opsForHash().get(key, hashKey);
-        if (value == null) {
-            return "";
-        } else {
-            return value.toString();
-        }
-    }
+//    private String getHash(String key, String hashKey) {
+//        Object value = redisDB0.opsForHash().get(key, hashKey);
+//        if (value == null) {
+//            return "";
+//        } else {
+//            return value.toString();
+//        }
+//    }
+
 
     private void deleteHashKey(String key, String hashKey) {
         redisDB0.opsForHash().delete(key, hashKey);
     }
 
-    public String[] getPushedInfo(String userId, String hashKey, int maxSize) {
-        String key = String.format(pushedInfoKey, userId);
-        List<String> ids = new ArrayList<>();
-        for(String id:getHash(key, hashKey).split(",")){
-            if(!"".equals(id.trim())){
-                ids.add(id);
+
+    private InfoALVArray getInfoALVFromValues(List<Object> values, String key, List<String> hashKeys) {
+        InfoALVArray pushedIds = new InfoALVArray();
+        String[] ids;
+        for (int i = 0; i < hashKeys.size(); i++) {
+            if (!JavaUtils.isEmpty(values.get(i))) {
+                String strValue = values.get(i).toString();
+                if (JavaUtils.isNotEmpty(strValue)) {
+                    ids = strValue.split(",");
+                    pushedIds.setByIndex(ids, i);
+                    if (ids.length > pushedKeyMaxSize) deleteHashKey(key, hashKeys.get(i));
+                }
             }
         }
-        if (ids.size() > maxSize) {
-            deleteHashKey(key, hashKey);
+        return pushedIds;
+    }
+
+    public void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
+        if (redisDB0.hasKey(pushedInfoKeys.getKey()))
+            return;
+        logger.debug("redis create hash key:{}", pushedInfoKeys.getKey());
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), pushedInfoKeys.getChannelRcmdHashKey(), "");
+        redisDB0.expire(pushedInfoKeys.getKey(), expireDays, TimeUnit.DAYS);
+    }
+
+    public InfoALVArray getPushedInfoALV(PushedInfoKeys pushedInfoKeys) {
+        initHashIfNotExist(pushedInfoKeys);
+        List avlHashKeys = pushedInfoKeys.getALVHashKeys();
+        List<Object> values = redisDB0.opsForHash().multiGet(pushedInfoKeys.getKey(), avlHashKeys);
+        return getInfoALVFromValues(values, pushedInfoKeys.getKey(), (List<String>) avlHashKeys);
+    }
+
+    public void setPushedInfoALV(PushedInfoKeys pushedInfoKeys, InfoALVArray oldInfoALV, InfoALVArray newInfoALV) {
+        if (newInfoALV.size() > 0) {
+            Map map = new HashMap<String, String>();
+            for (int i = 0; i < 3; i++) {
+                if (JavaUtils.isNotEmpty(newInfoALV.getByIndex(i))) {
+                    map.put(pushedInfoKeys.getHashKeyByALVIndex(i),
+                            StringUtils.arrayToCommaDelimitedString(ArrayUtils.addAll(oldInfoALV.getByIndex(i), newInfoALV.getByIndex(i))));
+                }
+            }
+            redisDB0.opsForHash().putAll(pushedInfoKeys.getKey(), map);
         }
-        return ids.toArray(new String[]{});
     }
 
     public String getHateTags(String userId) {
@@ -103,16 +129,15 @@ public class RedisService {
     }
 
 
-    public void setPushedInfo(String userId, String hashKey, String value) {
-        setHash(String.format(pushedInfoKey, userId), hashKey, value);
-    }
+//    public void setPushedInfo(String userId, String hashKey, String value) {
+//        setHash(String.format(pushedInfoKey, userId), hashKey, value);
+//    }
 
-    public void setPushedInfo(String userId, String hashKey, String[] oldIds, String[] newIds) {
-
-        String value = org.springframework.util.StringUtils.arrayToCommaDelimitedString(ArrayUtils.addAll(oldIds, newIds));
-        logger.debug("setPushedInfo  -- userId:{},hashKey:{},value:{}", userId, hashKey, value);
-        setPushedInfo(userId, hashKey, value);
-    }
+//    public void setPushedInfo(String userId, String hashKey, String[] oldIds, String[] newIds) {
+//        String value = org.springframework.util.StringUtils.arrayToCommaDelimitedString(ArrayUtils.addAll(oldIds, newIds));
+//        logger.debug("setPushedInfo  -- userId:{},hashKey:{},value:{}", userId, hashKey, value);
+//        setPushedInfo(userId, hashKey, value);
+//    }
 
     private synchronized void updateDateInfo() {
         lastNdays = JavaUtils.getLastNdaysArray(expireDays);
@@ -222,8 +247,8 @@ public class RedisService {
 //     * @param rcmdInfo
 //     * @return
 //     */
-//    private RcmdInfo parseRcmdInfo(String rcmdInfo) {
-//        RcmdInfo rcmdResult = new RcmdInfo();
+//    private InfoALV parseRcmdInfo(String rcmdInfo) {
+//        InfoALV rcmdResult = new InfoALV();
 //        for (String item : rcmdInfo.split(",")) {
 //            String[] array = item.split(":");
 //            if (array.length == 3) {
@@ -239,7 +264,7 @@ public class RedisService {
 //        return rcmdResult;
 //    }
 //
-//    public RcmdInfo getRcmdInfo(String userId, String categoryId) {
+//    public InfoALV getRcmdInfo(String userId, String categoryId) {
 //        String key = String.format("rcmdInfo:%s", userId);
 //        HashOperations<String, String, String> op = redisDB1.opsForHash();
 //        String value = op.get(key, categoryId);

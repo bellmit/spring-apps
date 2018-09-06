@@ -37,6 +37,7 @@ public class InfoRcmdService {
 
     /**
      * 目前资讯的混推中只有推荐频道下才推直播
+     *
      * @return
      */
     private String[] getLiveIdsForInfo(String[] pushedLives, String channelId, String hateTags) {
@@ -48,17 +49,17 @@ public class InfoRcmdService {
         }
     }
 
-    public Tuple<String,String> getTagTuple(String userId, String channelId, String categoryId) {
-        if(allCategoryId.equals(categoryId)||channelLiveId.equals(channelId)){
+    public Tuple<String, String> getTagTuple(String userId, String channelId, String categoryId) {
+        if (allCategoryId.equals(categoryId) || channelLiveId.equals(channelId)) {
             //获取用户感兴趣的标签
             String loveTags = redisService.getLoveTags(userId);
             logger.debug("userId:{}, loveTags:{}", userId, loveTags);
             //获取用户报告标签
             String reportTags = dataetlJdbcService.getLabelStrByUserId(userId);
             logger.debug("userId:{}, reportTags:{}", userId, reportTags);
-            return new Tuple<>(loveTags,reportTags);
-        }else{
-            return new Tuple<>("","");
+            return new Tuple<>(loveTags, reportTags);
+        } else {
+            return new Tuple<>("", "");
         }
     }
 
@@ -66,6 +67,7 @@ public class InfoRcmdService {
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
     public InfoALV channelRecommend(String channelId, String categoryId, String userId, int size) {
+        long beginTime = System.currentTimeMillis();
         PushedInfoKeys pushedInfoKeys = new PushedInfoKeys(userId, channelId, categoryId);
         InfoALV pushedALV = redisService.getPushedInfoALV(pushedInfoKeys);
         InfoALV result = new InfoALV();
@@ -75,7 +77,7 @@ public class InfoRcmdService {
         String[] videoIds = new String[]{};
         String[] articleIds = new String[]{};
         String[] liveIds = new String[]{};
-        Tuple<String,String> tagTuple = getTagTuple(userId, channelId, categoryId);
+        Tuple<String, String> tagTuple = getTagTuple(userId, channelId, categoryId);
         //获取用户感兴趣的标签
         String loveTags = tagTuple.getT1();
         //获取用户报告标签
@@ -92,16 +94,16 @@ public class InfoRcmdService {
         } else if (channelVideoId.equals(channelId) && !allCategoryId.equals(categoryId)) {//视频频道下某个分类
             videoIds = esService.commonRecommend(esService.getVideoIndex(), new String[]{categoryId}, hateTags, pushedALV.getVideo(), size);
         } else if (channelLiveId.equals(channelId)) { //直播频道下所有
-            liveIds = esService.personalizedRecommend(esService.getLiveIndex(),  null, loveTags, reportTags, hateTags, pushedALV.getLive(), size);
+            liveIds = esService.personalizedRecommend(esService.getLiveIndex(), null, loveTags, reportTags, hateTags, pushedALV.getLive(), size);
             if (liveIds.length < size) {
-                String[] supplementsLiveIds = esService.commonRecommend(esService.getLiveIndex(),  null, hateTags, (String[]) ArrayUtils.addAll(liveIds, pushedALV.getLive()), size - liveIds.length);
+                String[] supplementsLiveIds = esService.commonRecommend(esService.getLiveIndex(), null, hateTags, (String[]) ArrayUtils.addAll(liveIds, pushedALV.getLive()), size - liveIds.length);
                 liveIds = (String[]) ArrayUtils.addAll(liveIds, supplementsLiveIds);
             }
         } else if (allCategoryId.equals(categoryId)) {  //推荐频道 || 资讯某个频道下所有
             //获取用户感兴趣的标签
             String[] esTypes = dataetlJdbcService.channelMap.get(channelId); //推荐 找不到channelId -> null -> 查找所有
             videoIds = esService.commonRecommend(esService.getVideoIndex(), esTypes, hateTags, pushedALV.getVideo(), 2);
-            liveIds = getLiveIdsForInfo(pushedALV.getLive(), categoryId, hateTags);
+            liveIds = getLiveIdsForInfo(pushedALV.getLive(), channelId, hateTags);
             articleIds = esService.personalizedRecommend(esService.getArticleIndex(), esTypes, loveTags, reportTags, hateTags, pushedALV.getArticle(), size - videoIds.length - liveIds.length);
             int nowSize = articleIds.length + videoIds.length + liveIds.length;
             if (nowSize < size) { //articleIdsByTags可能数量会比较少，所以随机补充文章
@@ -116,7 +118,14 @@ public class InfoRcmdService {
         result.setArticle(articleIds);
         result.setVideo(videoIds);
         result.setLive(liveIds);
-        redisService.setPushedInfoALV(pushedInfoKeys, pushedALV, result);
+
+        if (result.size() < size) { //表示已经推完了，下一次重新推
+            redisService.deleteHashKeyByPushedInfoKeys(pushedInfoKeys);
+        } else {
+            redisService.setPushedInfoALV(pushedInfoKeys, pushedALV, result);
+        }
+
+        logger.info("/mul/ALV/user_channel?userId={}&channelId={}&categoryId={}  cost: {}ms", userId, channelId, categoryId, System.currentTimeMillis() - beginTime);
 
         return result;
     }

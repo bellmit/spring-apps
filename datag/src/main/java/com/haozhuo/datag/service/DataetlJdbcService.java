@@ -84,27 +84,10 @@ public class DataetlJdbcService {
                 channelListMap.put(key, new ArrayList<String>(Arrays.asList(value)));
             }
         }
-        for(Map.Entry<String,List<String>> entry:channelListMap.entrySet()){
-            channelMap.put(entry.getKey(),entry.getValue().toArray(new String[]{}));
+        for (Map.Entry<String, List<String>> entry : channelListMap.entrySet()) {
+            channelMap.put(entry.getKey(), entry.getValue().toArray(new String[]{}));
         }
     }
-
-
-//    /**
-//     * 根据userId，获取动态的labelIds
-//     *
-//     * @param userId
-//     * @return
-//     */
-//    private List<String> getDynamicLabelIdList(String userId) {
-//        String dynamicLabelSql = String.format("select distinct label_id from dynamic_userid_label x where x.user_id = ? and x.update_time > ?");
-//        return dataetlDB.query(dynamicLabelSql, new Object[]{userId, JavaUtils.getNdaysAgo(30)}, new RowMapper<String>() {
-//            @Override
-//            public String mapRow(ResultSet resultSet, int i) throws SQLException {
-//                return resultSet.getString("label_id");
-//            }
-//        });
-//    }
 
     /**
      * 根据userId，获取最近一份报告的疾病labelIds
@@ -159,6 +142,29 @@ public class DataetlJdbcService {
             }
         }
         return labelNameSet;
+    }
+
+    public String getInfoTagsById(Long infoId) {
+        String tags = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            tags = dataetlDB.queryForObject(
+                    String.format("select title, ifnull(tags,'') as tags from %s x where x.information_id = ?", articleTable),
+                    new Object[]{infoId},
+                    new RowMapper<String>() {
+                        @Override
+                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                            String tmpTags = resultSet.getString("tags");
+                            if (JavaUtils.isEmpty(tmpTags.trim())) {
+                                tmpTags = resultSet.getString("title");
+                            }
+                            return tmpTags;
+                        }
+                    });
+        } catch (Exception ex) {
+            logger.debug("getInfoTagsById error", ex);
+        }
+        return tags;
     }
 
     /**
@@ -305,6 +311,5 @@ public class DataetlJdbcService {
     public void updatePermitUsers(long healthReportId, int flag) {
         String date = JavaUtils.getCurrent();
         dataetlDB.update("INSERT INTO `permit_users` (`date`,`health_report_id`,`flag`) VALUES (?, ?, ?) on duplicate key update date=?", date, healthReportId, flag, date);
-
     }
 }

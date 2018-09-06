@@ -269,28 +269,25 @@ public class RcmdController {
                     "当前接口参数:  \n" +
                     "userId可以不传，那么随机从这个频道中取出{size}条数据，否则会考虑用户标签进行推荐  \n" +
                     "业务逻辑:  \n" +
-                    "  \n" +
-                    "1 视频频道(channelId==20000):  \n" +
-                    "2 直播频道(channelId==30000):  \n" +
-                    "  \n" +
-                    "3 其他频道(其他的channelId):  \n" +
-                    "3.1 传userId(对推过的资讯进行缓存，一段时间内不再推):  \n" +
-                    "    步骤2.1中需要从Redis的PushedInfo:{userId}这个key中找到最近推荐过的视频和文章。  \n" +
-                    "    PushedInfo:{userId}是一个Hash。HashKey是{a/v_channelId_categoryId}   \n" +
-                    "3.1.1 推荐频道(channelId==10000,且categoryId==0,需要用户标签信息):  \n" +
-                    "    点击行为+标签" +
-                    "3.1.2 某频道下的所有(其他channelId,且categoryId==0,需要用户标签信息)  \n" +
-                    "3.1.3 某频道下的某个分类(其他channelId,且categoryId>0,不需要用户标签信息)  \n"
+                    "1 推荐频道(channelId==10000):  \n" +
+                    "  所有:需要用户标签  \n" +
+                    "2 视频频道(channelId==20000):  \n" +
+                    "  所有:需要用户标签  \n" +
+                    "  分类:不需要用户标签  \n" +
+                    "3 直播频道(channelId==30000):  \n" +
+                    "  所有:需要用户标签  \n" +
+                    "4 其他频道(其他的channelId):  \n" +
+                    "  所有:其他channelId,且categoryId==0,需要用户标签信息  \n" +
+                    "  分类:其他channelId,且categoryId>0,不需要用户标签信息  \n"
     )
     public Object getInfosByUserChannel(
             @RequestParam(value = "channelId", defaultValue = InfoRcmdService.channelRcmdId) String channelId,
             @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        long beginTime = System.currentTimeMillis();
-        InfoALV result = infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
-        logger.info("/mul/ALV/user_channel?userId={}&channelId={}&categoryId={}  cost: {}ms", userId, channelId, categoryId, System.currentTimeMillis() - beginTime);
-        return result;
+        if (InfoRcmdService.channelRcmdId.equals(channelId))  //推荐频道下没有分类
+            categoryId = InfoRcmdService.allCategoryId;
+        return infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
     }
 
 
@@ -332,7 +329,7 @@ public class RcmdController {
         }
 
         logger.debug("tags:{}", tags);
-        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, 10);
+        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, 5);
         map.put("g", Arrays.asList(goodsIds));
         logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
         return map;
@@ -519,15 +516,16 @@ public class RcmdController {
     }
 
 
-    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签【新增，待实现！】",
+    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签【新增】",
             notes = "业务逻辑:  \n" +
-                    "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的hateTag:{userId}中。")
+                    "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的HateTag:{userId}中。")
     @GetMapping(value = "/article/not_interested")
     public Object setNotInerestedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
-            @RequestParam(value = "InfoId") Long infoId) {
-        //TODO
-        return null;
+            @RequestParam(value = "infoId") Long infoId) {
+        redisService.addHateTags(userId, dataetlJdbcService.getInfoTagsById(infoId));
+        logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
+        return "success!";
     }
 
 

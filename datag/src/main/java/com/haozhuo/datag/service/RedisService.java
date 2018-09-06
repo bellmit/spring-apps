@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -35,7 +36,7 @@ public class RedisService {
 
     private String[] lastNdays;
 
-    @Value("${app.redis.pushed-key-max-size:200}")
+    @Value("${app.redis.pushed-key-max-size:400}")
     private int pushedKeyMaxSize;
     @Value("${app.redis.expire-days:7}")
     private int expireDays;
@@ -46,8 +47,8 @@ public class RedisService {
     private final String hateTagsKey = "HateTags:%s";
     private final String loveTagsKey = "LoveTags:%s";
 
-    private void deleteHashKey(String key, String hashKey) {
-        redisDB0.opsForHash().delete(key, hashKey);
+    private void deleteHashKey(String key, Object... hashKeys) {
+        redisDB0.opsForHash().delete(key, hashKeys);
     }
 
     private InfoALV getInfoALVFromValues(List<Object> values, String key, List<String> hashKeys) {
@@ -64,6 +65,10 @@ public class RedisService {
             }
         }
         return pushedIds;
+    }
+
+    public void deleteHashKeyByPushedInfoKeys(PushedInfoKeys pushedInfoKeys) {
+        deleteHashKey(pushedInfoKeys.getKey(), pushedInfoKeys.getALVHashKeys().toArray());
     }
 
     public void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
@@ -94,6 +99,16 @@ public class RedisService {
         }
     }
 
+    public void addHateTags(String userId, String hateTags) {
+        if(JavaUtils.isNotEmpty(hateTags)){
+            String key = String.format(hateTagsKey, userId);
+            ListOperations<String, String> oper = redisDB0.opsForList();
+            oper.leftPush(key, hateTags);
+            oper.trim(key, 0, 30); //只保存最近30条记录
+            redisDB0.expire(key, 90, TimeUnit.DAYS); //过期时间90天
+        }
+    }
+
     public String getHateTags(String userId) {
         return getTags(hateTagsKey, userId);
     }
@@ -104,7 +119,7 @@ public class RedisService {
 
     private String getTags(String keyFormat, String userId) {
         String key = String.format(keyFormat, userId);
-        redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
+        //redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
         List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
         StringBuffer result = new StringBuffer();
         for (String hateTags : tagsList) {

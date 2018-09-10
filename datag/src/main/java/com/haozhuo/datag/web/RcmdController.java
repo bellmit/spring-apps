@@ -2,7 +2,6 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
-import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -253,7 +252,7 @@ public class RcmdController {
     }
 
     /**
-     * 根据userId获取资讯、视频、直播的推荐列表
+     * 根据userId和channelId获取资讯、视频、直播的推荐列表
      * 旧接口：
      * recommender项目中的EsMatcherController中的enter(),getMatchContent()方法。这两个方法合并成一个。
      * ES 匹配时考虑不感兴趣的标签
@@ -262,8 +261,8 @@ public class RcmdController {
      * @return
      */
     @GetMapping("/mul/ALV/user_channel")
-    @ApiOperation(value = "根据userId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】",
-            notes = "根据userId获取资讯、视频、直播的推荐列表  \n" +
+    @ApiOperation(value = "userId和channelId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】",
+            notes = "userId和channelId获取资讯、视频、直播的推荐列表  \n" +
                     "es-matcher-controller中的四个方法合并成一个  \n" +
                     "原接口: http://192.168.1.152:8078/swagger-ui.html#/  \n" +
                     "当前接口参数:  \n" +
@@ -290,6 +289,21 @@ public class RcmdController {
         return infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
     }
 
+    /**
+     * 根据channelId获取资讯、视频、直播的推荐列表
+     * @return
+     */
+    @GetMapping("/mul/ALV/channel")
+    @ApiOperation(value = "根据channelId获取资讯、视频、直播的推荐列表  【新增】", notes = "根据channelId获取资讯、视频、直播的推荐列表")
+    public Object getInfosByChannel(
+            @RequestParam(value = "channelId", defaultValue = InfoRcmdService.channelRcmdId) String channelId,
+            @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
+            @RequestParam(value = "pageNo", defaultValue = "1") int pageNo,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+        if (InfoRcmdService.channelRcmdId.equals(channelId))  //推荐频道下没有分类
+            categoryId = InfoRcmdService.allCategoryId;
+        return infoRcmdService.channelRecommend(channelId, categoryId, pageNo, size);
+    }
 
     /**
      * 旧的接口：

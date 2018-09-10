@@ -4,6 +4,7 @@ import com.haozhuo.datag.common.EsUtils;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
+import com.haozhuo.datag.service.biz.InfoRcmdService;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -39,6 +40,14 @@ public class EsService {
     @Value("${app.es.article-index}")
     private String articleIndex;
 
+    @Value("${app.es.heat-article-index:heat_article}")
+    private String heatArticleIndex;
+
+    @Value("${app.es.heat-article-index:heat_video}")
+    private String heatVideoIndex;
+
+    private final int channelVideoId = Integer.parseInt(InfoRcmdService.channelVideoId);
+
     public String getVideoIndex() {
         return videoIndex;
     }
@@ -55,23 +64,33 @@ public class EsService {
         return articleIndex;
     }
 
+    public String getHeatArticleIndex() {
+        return heatArticleIndex;
+    }
+
+    public String getHeatVideoIndex() {
+        return heatVideoIndex;
+    }
+
     @Value("${app.es.reportlabel-index}")
     private String reportlabelIndex;
 
     @Autowired
     private TransportClient client;
-    private GaussDecayFunctionBuilder gaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "15d", 0.8D);
-    private GaussDecayFunctionBuilder gaussDecayFunctionPlayTime = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "15d", 0.8D);
+    private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8D);
+    private GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
+    private GaussDecayFunctionBuilder heatGaussDecayFunction =  ScoreFunctionBuilders.gaussDecayFunction("heat", "3000", "1000", "0", 0.8D);
+    private GaussDecayFunctionBuilder isPayGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("is_pay", "1", "1", "0", 0.8D);
 
     private String[] recommend(String index, String[] types, QueryBuilder query, int size) {
         SearchRequestBuilder srb = client.prepareSearch(index)
                 .setSize(size).setQuery(
-                        new FunctionScoreQueryBuilder(query, getGaussFunciton(index))
+                        new FunctionScoreQueryBuilder(query, getTimeGaussFunction(index))
                 );
         if (!JavaUtils.isEmpty(types)) {
             srb.setTypes(types);
         }
-       // logger.debug(srb.toString());
+        // logger.debug(srb.toString());
         return EsUtils.getDocIdsAsArray(srb);
     }
 
@@ -81,7 +100,7 @@ public class EsService {
     public String[] personalizedRecommend(String index, String[] types, String loveTags, String reportTags, String hateTags, String[] pushedIds, int size) {
         String tagField = getTagField(index);
         QueryBuilder query = QueryBuilders.boolQuery()
-                .mustNot(QueryBuilders.matchQuery(tagField , Utils.removeStopWords(hateTags)))
+                .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
                 .should(QueryBuilders.multiMatchQuery(Utils.removeStopWords(loveTags), "title", tagField).boost(3))
                 .should(QueryBuilders.multiMatchQuery(Utils.removeStopWords(reportTags), "title", tagField).boost(1));
@@ -96,11 +115,20 @@ public class EsService {
         }
     }
 
-    private GaussDecayFunctionBuilder getGaussFunciton(String index) {
-        if (videoIndex.equals(index) || articleIndex.equals(index)) {
-            return gaussDecayFunction;
-        } else {
-            return gaussDecayFunctionPlayTime;
+    private GaussDecayFunctionBuilder getTimeGaussFunction(String index) {
+        if(liveIndex.equals(index)) {
+            return playTimeGaussDecayFunction;
+        }else{
+            return createTimeGaussDecayFunction;
+        }
+    }
+
+
+    private GaussDecayFunctionBuilder getHeatGaussFunction(String index) {
+        if(liveIndex.equals(index)) {
+            return isPayGaussDecayFunction;
+        }else{
+            return heatGaussDecayFunction;
         }
     }
 
@@ -112,6 +140,28 @@ public class EsService {
                 .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
         return recommend(index, types, query, size);
+    }
+
+
+    public String[] heatRecommend(String index, int pageNo, int size, String... types) {
+        SearchRequestBuilder srb = client.prepareSearch(index)
+                .setSize(size)
+                .setFrom((pageNo - 1) * size);
+        if (types.length > 0) {
+            srb.setTypes(types);
+        }
+
+        srb.setQuery(
+                new FunctionScoreQueryBuilder(
+                        new FunctionScoreQueryBuilder(
+                                QueryBuilders.matchAllQuery(),
+                                getTimeGaussFunction(index)
+                        ),
+                        getHeatGaussFunction(index)
+                )
+        );
+        logger.debug(srb.toString());
+        return EsUtils.getDocIdsAsArray(srb);
     }
 
     private String[] getVideoIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
@@ -180,6 +230,8 @@ public class EsService {
         return getLivesIds(labels, new String[]{}, size, fieldNames);
     }
 
+
+
     public String[] getArticleIds(String text, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"title", "tags"};
@@ -202,7 +254,7 @@ public class EsService {
         return ids;
     }
 
-    public String[] getGoodsIdsByLabels(String labels, int from, int size,String... fieldNames) {
+    public String[] getGoodsIdsByLabels(String labels, int from, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"label"};
         }
@@ -333,10 +385,12 @@ public class EsService {
      */
     public void deleteVideo(long id) {
         deleteIdByQuery(videoIndex, String.valueOf(id));
+        deleteIdByQuery(heatVideoIndex, String.valueOf(id));
     }
 
     public void deleteArticle(long id) {
         deleteIdByQuery(articleIndex, String.valueOf(id));
+        deleteIdByQuery(heatArticleIndex, String.valueOf(id));
     }
 
     private void deleteIdByQuery(String index, String id) {
@@ -376,6 +430,18 @@ public class EsService {
         map.put("basic_label", goods.getBasicLabel());
         map.put("second_label", goods.getSecondLabel());
         client.prepareIndex(goodsIndex, "docs", goods.getContentId().toString()).setSource(map).get();
+    }
+
+
+    public void updateInfoHeat(InfoHeat infoHeat) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("heat", infoHeat.getHeat());
+        map.put("create_time", infoHeat.getCreateTime());
+        String index = heatArticleIndex;
+        if (infoHeat.getChannelId() == channelVideoId) {
+            index = heatVideoIndex;
+        }
+        client.prepareIndex(index, String.valueOf(infoHeat.getCategoryId()), String.valueOf(infoHeat.getInfoId())).setSource(map).get();
     }
 
     public void deleteGoods(long id) {

@@ -73,6 +73,7 @@ public class TableSynController {
         long beginTime = System.currentTimeMillis();
         dataetlJdbcService.deleteArticle(id);
         esService.deleteArticle(id);
+
         logger.info("DELETE /article/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
@@ -133,5 +134,15 @@ public class TableSynController {
         logger.info("DELETE /goods/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
+
+    @PostMapping("/infoHeat")
+    @ApiOperation(value = "资讯热度接口")
+    public Object updateInfoHeat(@RequestBody InfoHeat infoHeat) {
+        long beginTime = System.currentTimeMillis();
+        esService.updateInfoHeat(infoHeat);
+        logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
 
 }

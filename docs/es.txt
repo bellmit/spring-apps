@@ -1,0 +1,117 @@
+curl -XDELETE 'http://192.168.1.152:9200/heat_article'
+
+curl -XPUT 'http://192.168.1.152:9200/heat_article?pretty' -H 'Content-Type: application/json'  -d '{
+    "settings": {
+        "index": {
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "heat": {
+                    "type": "integer"
+                },
+				"create_time": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                }
+            }
+        }
+    }
+}';
+
+curl -XPUT 'http://192.168.1.152:9200/heat_video?pretty' -H 'Content-Type: application/json'  -d '{
+    "settings": {
+        "index": {
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "heat": {
+                    "type": "integer"
+                },
+				"create_time": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                }
+            }
+        }
+    }
+}';
+
+
+curl -XPUT 'http://192.168.1.152:9200/video4?pretty' -H 'Content-Type: application/json'  -d '{
+    "settings": {
+        "index": {
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "title": {
+                    "type": "text",
+                    "analyzer": "ik_smart"
+                },
+                "tags": {
+                    "type": "text",
+                    "analyzer": "ik_smart"
+                },
+				"description":{
+					"type":"text",
+					"analyzer":"ik_smart"
+				},
+				"create_time": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                },
+				"update_time": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                }
+            }
+        }
+    }
+}';
+
+curl -XPUT 'http://192.168.1.152:9200/article4?pretty' -H 'Content-Type: application/json'  -d '{
+    "settings": {
+        "index": {
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "title": {
+                    "type": "text",
+                    "analyzer": "ik_smart"
+                },
+
+                "tags": {
+                    "type": "text",
+                    "analyzer": "ik_smart"
+                },
+				"content":{
+					"type":"text",
+					"analyzer":"ik_smart"
+				},
+				"create_time": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                },
+				"update_time": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                }
+            }
+        }
+    }
+}';

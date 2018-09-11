@@ -42,8 +42,7 @@ public class InfoRcmdService {
      */
     private String[] getLiveIdsForInfo(String[] pushedLives, String channelId, String hateTags) {
         if (channelRcmdId.equals(channelId)) { //如果是推荐，推一篇直播
-            String[] result = esService.commonRecommend(esService.getLiveIndex(), null, hateTags, pushedLives, 1);
-            return result;
+            return esService.commonRecommend(esService.getLiveIndex(), hateTags, pushedLives, 1);
         } else {
             return new String[]{};
         }
@@ -86,34 +85,34 @@ public class InfoRcmdService {
         logger.debug("userId:{}, hateTags:{}", userId, hateTags);
 
         if (channelVideoId.equals(channelId) && allCategoryId.equals(categoryId)) {//视频频道下所有
-            videoIds = esService.personalizedRecommend(esService.getVideoIndex(), null, loveTags, reportTags, hateTags, pushedALV.getVideo(), size);
+            videoIds = esService.personalizedRecommend(esService.getVideoIndex(), loveTags, reportTags, hateTags, pushedALV.getVideo(), size);
             if (videoIds.length < size) {
-                String[] supplementsVideoIds = esService.commonRecommend(esService.getVideoIndex(), null, hateTags, (String[]) ArrayUtils.addAll(videoIds, pushedALV.getVideo()), size - videoIds.length);
+                String[] supplementsVideoIds = esService.commonRecommend(esService.getVideoIndex(),  hateTags, (String[]) ArrayUtils.addAll(videoIds, pushedALV.getVideo()), size - videoIds.length);
                 videoIds = (String[]) ArrayUtils.addAll(videoIds, supplementsVideoIds);
             }
         } else if (channelVideoId.equals(channelId) && !allCategoryId.equals(categoryId)) {//视频频道下某个分类
-            videoIds = esService.commonRecommend(esService.getVideoIndex(), new String[]{categoryId}, hateTags, pushedALV.getVideo(), size);
+            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), size, categoryId);
         } else if (channelLiveId.equals(channelId)) { //直播频道下所有
-            liveIds = esService.personalizedRecommend(esService.getLiveIndex(), null, loveTags, reportTags, hateTags, pushedALV.getLive(), size);
+            liveIds = esService.personalizedRecommend(esService.getLiveIndex(), loveTags, reportTags, hateTags, pushedALV.getLive(), size);
             if (liveIds.length < size) {
-                String[] supplementsLiveIds = esService.commonRecommend(esService.getLiveIndex(), null, hateTags, (String[]) ArrayUtils.addAll(liveIds, pushedALV.getLive()), size - liveIds.length);
+                String[] supplementsLiveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, (String[]) ArrayUtils.addAll(liveIds, pushedALV.getLive()), size - liveIds.length);
                 liveIds = (String[]) ArrayUtils.addAll(liveIds, supplementsLiveIds);
             }
         } else if (allCategoryId.equals(categoryId)) {  //推荐频道 || 资讯某个频道下所有
             //获取用户感兴趣的标签
             String[] esTypes = dataetlJdbcService.channelMap.get(channelId); //推荐 找不到channelId -> null -> 查找所有
-            videoIds = esService.commonRecommend(esService.getVideoIndex(), esTypes, hateTags, pushedALV.getVideo(), 2);
+            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2, esTypes);
             liveIds = getLiveIdsForInfo(pushedALV.getLive(), channelId, hateTags);
-            articleIds = esService.personalizedRecommend(esService.getArticleIndex(), esTypes, loveTags, reportTags, hateTags, pushedALV.getArticle(), size - videoIds.length - liveIds.length);
+            articleIds = esService.personalizedRecommend(esService.getArticleIndex(), loveTags, reportTags, hateTags, pushedALV.getArticle(), size - videoIds.length - liveIds.length, esTypes);
             int nowSize = articleIds.length + videoIds.length + liveIds.length;
             if (nowSize < size) { //articleIdsByTags可能数量会比较少，所以随机补充文章
-                String[] supplementsArticleIds = esService.commonRecommend(esService.getArticleIndex(), esTypes, hateTags, (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), size - nowSize);
+                String[] supplementsArticleIds = esService.commonRecommend(esService.getArticleIndex(),  hateTags, (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), size - nowSize, esTypes);
                 articleIds = (String[]) ArrayUtils.addAll(articleIds, supplementsArticleIds);
             }
         } else { //资讯某个频道下的某个类别
             String[] esTypes = new String[]{categoryId};
-            videoIds = esService.commonRecommend(esService.getVideoIndex(), esTypes, hateTags, pushedALV.getVideo(), 2);
-            articleIds = esService.commonRecommend(esService.getArticleIndex(), esTypes, hateTags, pushedALV.getArticle(), size - videoIds.length);
+            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2, esTypes);
+            articleIds = esService.commonRecommend(esService.getArticleIndex(), hateTags, pushedALV.getArticle(), size - videoIds.length, esTypes);
         }
         result.setArticle(articleIds);
         result.setVideo(videoIds);

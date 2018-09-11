@@ -1,7 +1,6 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.EsUtils;
-import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
@@ -24,6 +23,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Stream;
+
+import static java.util.Arrays.stream;
 
 @Component
 public class EsService {
@@ -82,12 +83,12 @@ public class EsService {
     private GaussDecayFunctionBuilder heatGaussDecayFunction =  ScoreFunctionBuilders.gaussDecayFunction("heat", "3000", "1000", "0", 0.8D);
     private GaussDecayFunctionBuilder isPayGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("is_pay", "1", "1", "0", 0.8D);
 
-    private String[] recommend(String index, String[] types, QueryBuilder query, int size) {
+    private String[] recommend(String index, QueryBuilder query, int size, String... types) {
         SearchRequestBuilder srb = client.prepareSearch(index)
                 .setSize(size).setQuery(
                         new FunctionScoreQueryBuilder(query, getTimeGaussFunction(index))
                 );
-        if (!JavaUtils.isEmpty(types)) {
+        if (types.length>0) {
             srb.setTypes(types);
         }
         // logger.debug(srb.toString());
@@ -97,14 +98,14 @@ public class EsService {
     /**
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
-    public String[] personalizedRecommend(String index, String[] types, String loveTags, String reportTags, String hateTags, String[] pushedIds, int size) {
+    public String[] personalizedRecommend(String index, String loveTags, String reportTags, String hateTags, String[] pushedIds, int size, String... types) {
         String tagField = getTagField(index);
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
                 .should(QueryBuilders.multiMatchQuery(Utils.removeStopWords(loveTags), "title", tagField).boost(3))
                 .should(QueryBuilders.multiMatchQuery(Utils.removeStopWords(reportTags), "title", tagField).boost(1));
-        return recommend(index, types, query, size);
+        return recommend(index, query, size, types);
     }
 
     private String getTagField(String index) {
@@ -132,14 +133,14 @@ public class EsService {
         }
     }
 
-    public String[] commonRecommend(String index, String[] types, String hateTags, String[] pushedIds, int size) {
+    public String[] commonRecommend(String index,  String hateTags, String[] pushedIds, int size,String... types) {
         String tagField = getTagField(index);
 
         //logger.debug(StringUtils.arrayToCommaDelimitedString(types));
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
-        return recommend(index, types, query, size);
+        return recommend(index, query, size, types);
     }
 
 
@@ -280,14 +281,8 @@ public class EsService {
                 .setQuery(QueryBuilders.matchQuery("healthReportId", reportId.trim()));
         logger.debug(srb.toString());
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
-        String result = "";
-        if (searchHits.length == 1) {
-            Object obj = searchHits[0].getSource().get("label");
-            if (obj != null) {
-                result = obj.toString();
-            }
-        }
-        return result;
+        return stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString();
+
     }
 
     private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param, String... fieldNames) {
@@ -328,7 +323,7 @@ public class EsService {
         //如果不够数 就随机地补充几个
         if (size > result.length && isComplement) {
             String[] randomArticleIds = getArticleIdsRandomly(result, size - result.length);
-            result = Stream.concat(Arrays.stream(result), Arrays.stream(randomArticleIds))
+            result = Stream.concat(stream(result), stream(randomArticleIds))
                     .toArray(String[]::new);
         }
         return result;

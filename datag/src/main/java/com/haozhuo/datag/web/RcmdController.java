@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.*;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
+
 /**
  * Created by Lucius on 8/16/18.
  */
@@ -291,6 +294,7 @@ public class RcmdController {
 
     /**
      * 根据channelId获取资讯、视频、直播的推荐列表
+     *
      * @return
      */
     @GetMapping("/mul/ALV/channel")
@@ -432,7 +436,6 @@ public class RcmdController {
         result.addAll(addTypeForIds(Arrays.asList(liveIds), "live"));
         result.addAll(addTypeForIds(Arrays.asList(articleIds), "article"));
         logger.info("/mul/ALV/videoInfo?tags={}&excludeVideoId={}&pageSize={}  cost: {}ms", tags, excludeVideoId, size, System.currentTimeMillis() - beginTime);
-
         return result;
     }
 
@@ -472,11 +475,7 @@ public class RcmdController {
     }
 
     private List<String> addTypeForIds(List<String> ids, String type) {
-        List<String> result = new ArrayList<>(ids.size());
-        for (String id : ids) {
-            result.add(String.format("%s:%s", id, type));
-        }
-        return result;
+        return ids.stream().map(id->String.format("%s:%s", id, type)).collect(toList());
     }
 
 
@@ -519,12 +518,7 @@ public class RcmdController {
     @GetMapping(value = "/existKeywords/{keywordArray}")
     public List<String> getExistsKwList(@PathVariable(value = "keywordArray") String[] keywordArray) {
         long beginTime = System.currentTimeMillis();
-        List<String> list = new ArrayList<>();
-        for (String keyword : keywordArray) {
-            if (esService.isExistKeyword(keyword)) {
-                list.add(keyword);
-            }
-        }
+        List<String> list = stream(keywordArray).filter(keyword -> esService.isExistKeyword(keyword)).collect(toList());
         logger.info("/existKeywords/{}  cost:{} ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return list;
     }
@@ -537,8 +531,9 @@ public class RcmdController {
     public Object setNotInerestedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
-        redisService.addHateTags(userId, dataetlJdbcService.getInfoTagsById(infoId));
-        logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
+        String tags = dataetlJdbcService.getInfoTagsById(infoId);
+        redisService.addHateTags(userId, tags);
+        logger.info("/article/not_interested?userId={}&infoId={}  tags:{}", userId, infoId, tags);
         return "success!";
     }
 

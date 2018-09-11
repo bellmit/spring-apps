@@ -13,6 +13,10 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Spring boot配置多个redis数据库。
@@ -53,13 +57,8 @@ public class RedisConfig {
     protected int timeout;
 
     public RedisSentinelConfiguration redisSentinelConfiguration() {
-        String[] nodes = sentinelNodes.split(",");
-        Set<String> setNodes = new HashSet<String>();
-        for (String n : nodes) {
-            setNodes.add(n.trim());
-        }
-        RedisSentinelConfiguration configuration = new RedisSentinelConfiguration(sentinelMaster, setNodes);
-        return configuration;
+        Set<String> setNodes = stream(sentinelNodes.split(",")).map(x -> x.trim()).collect(toSet());
+        return new RedisSentinelConfiguration(sentinelMaster, setNodes);
     }
 
     public JedisPoolConfig jedisPoolConfig() {

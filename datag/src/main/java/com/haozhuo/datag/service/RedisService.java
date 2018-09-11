@@ -3,7 +3,6 @@ package com.haozhuo.datag.service;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.PushedInfoKeys;
-import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,10 +11,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Created by Lucius on 8/17/18.
@@ -47,6 +51,8 @@ public class RedisService {
     private final String hateTagsKey = "HateTags:%s";
     private final String loveTagsKey = "LoveTags:%s";
 
+    private final List<Object> avlHashKeys = Arrays.asList("a", "v", "l");
+
     private void deleteHashKey(String key, Object... hashKeys) {
         redisDB0.opsForHash().delete(key, hashKeys);
     }
@@ -64,6 +70,7 @@ public class RedisService {
                 }
             }
         }
+
         return pushedIds;
     }
 
@@ -88,19 +95,22 @@ public class RedisService {
 
     public void setPushedInfoALV(PushedInfoKeys pushedInfoKeys, InfoALV oldInfoALV, InfoALV newInfoALV) {
         if (newInfoALV.size() > 0) {
-            Map map = new HashMap<String, String>();
-            for (int i = 0; i < 3; i++) {
-                if (JavaUtils.isNotEmpty(newInfoALV.getByIndex(i))) {
-                    map.put(pushedInfoKeys.getHashKeyByALVIndex(i),
-                            StringUtils.arrayToCommaDelimitedString(ArrayUtils.addAll(oldInfoALV.getByIndex(i), newInfoALV.getByIndex(i))));
-                }
-            }
+            Map map = IntStream.range(0, 3)
+                    .filter(i -> JavaUtils.isNotEmpty(newInfoALV.getByIndex(i)))
+                    .boxed().collect(
+                            toMap(
+                                    i -> pushedInfoKeys.getHashKeyByALVIndex(i),
+                                    i -> Stream.concat(stream(oldInfoALV.getByIndex(i)), stream(newInfoALV.getByIndex(i))).collect(joining(","))
+                            )
+                    );
+
             redisDB0.opsForHash().putAll(pushedInfoKeys.getKey(), map);
         }
     }
 
+
     public void addHateTags(String userId, String hateTags) {
-        if(JavaUtils.isNotEmpty(hateTags)){
+        if (JavaUtils.isNotEmpty(hateTags)) {
             String key = String.format(hateTagsKey, userId);
             ListOperations<String, String> oper = redisDB0.opsForList();
             oper.leftPush(key, hateTags);
@@ -140,15 +150,12 @@ public class RedisService {
         }
     }
 
-    private String[] getPushedKeys(String userId, String key) {
-        checkOrUpdateDateInfo();
-        Set<String> result = new HashSet<>();
-        for (String day : lastNdays) {
-            result.addAll(redisDB0.opsForSet().members(String.format(key, userId, day)));
-        }
-        return result.toArray(new String[0]);
-    }
 
+    private String[] getPushedKeys(String userId, String key) {
+        return stream(lastNdays)
+                .flatMap(day -> redisDB0.opsForSet().members(String.format(key, userId, day)).stream())
+                .toArray(String[]::new);
+    }
 
     public String[] getPushedVideos(String userId) {
         return getPushedKeys(userId, videoPushedKey);
@@ -170,21 +177,17 @@ public class RedisService {
     }
 
     public void setPushedVideos(String userId, String[] pushedVideoIds) {
-        String realKey = String.format(videoPushedKey, userId, curDate);
-        setSets(realKey, pushedVideoIds);
+        setSets(String.format(videoPushedKey, userId, curDate), pushedVideoIds);
     }
 
     public void setPushedGoods(String userId, String[] pushedGoodsIds) {
-        String realKey = String.format(goodsPushedKey, userId, curDate);
-        setSets(realKey, pushedGoodsIds);
+        setSets(String.format(goodsPushedKey, userId, curDate), pushedGoodsIds);
     }
 
     private void deletePushedKey(String userId, String key) {
-        List<String> keys = new ArrayList<>();
-        for (String day : lastNdays) {
-            keys.add(String.format(key, userId, day));
-        }
-        redisDB0.delete(keys);
+        redisDB0.delete(
+                stream(lastNdays).map(day -> String.format(key, userId, day)).collect(toList())
+        );
     }
 
     public void deleteVideoPushedKey(String userId) {
@@ -200,30 +203,15 @@ public class RedisService {
      * 249163: 0.23237589, 221388: 0.19470099, 249617: 0.18869004, 197323: 0.18331973, 209836: 0.17684466, 205834: 0.16972847
      */
     private List<String> parseSimValue(String value) {
-        List<String> result = new ArrayList<String>();
-        if ("".equals(value.trim()))
-            return result;
-        try {
-            for (String item : value.toString().split(",")) {
-                result.add(item.split(":")[0].trim());
-            }
-        } catch (Exception e) {
-            logger.error("parseSimiValue error:{}", e);
-        }
-        return result;
+        return stream(value.split(",")).filter(x -> !"".equals(x.trim())).map(item -> item.split(":")[0].trim())
+                .collect(toList());
     }
 
     public Map<String, List<String>> getSimByInfoId(String infoId) {
-        String hashKey = String.format("simi_%s", infoId);
-        Map<String, List<String>> map = new HashMap<>();
-        for (String valueKey : new String[]{"a", "v", "l"}) {
-            Object valueOrNull = redisDB0.opsForHash().get(hashKey, valueKey);
-            List<String> idList = new ArrayList<>();
-            if (valueOrNull != null) {
-                idList = parseSimValue(valueOrNull.toString().replaceAll("'", "")); //Redis中有数据有问题：'289': 0.43851748, '190': 0.33565181，带了单引号
-            }
-            map.put(valueKey, idList);
-        }
-        return map;
+        List<Object> hashValues = redisDB0.opsForHash().multiGet(String.format("simi_%s", infoId), avlHashKeys);
+        return IntStream.range(0, avlHashKeys.size()).boxed().collect(toMap(
+                i -> avlHashKeys.get(i).toString(),
+                i -> parseSimValue(Optional.ofNullable(hashValues.get(i)).orElse("").toString().replaceAll("'", ""))
+        ));
     }
 }

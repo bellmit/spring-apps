@@ -11,6 +11,10 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Stream;
+
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Created by Lucius on 8/27/18.
@@ -68,16 +72,11 @@ public class GluService {
     }
 
     private String findIndex(String checkIndexName, String resultValue, String textRef) {
-        String result = "";
-        for (Map.Entry<String, String> entry : checkIndexRegexMap.entrySet()) {
-            String checkIndexNameStd = entry.getKey();
-            String checkIndexNameRegex = entry.getValue();
-            if (isLegalCheckIndexName(checkIndexName, checkIndexNameRegex) && isLegalValue(checkIndexNameStd, resultValue, textRef)) {
-                result = entry.getKey();
-                break;
-            }
-        }
-        return result;
+        return checkIndexRegexMap.entrySet().stream()
+                .filter(x -> isLegalCheckIndexName(checkIndexName, x.getKey()) && isLegalValue(x.getValue(), resultValue, textRef))
+                .map(Map.Entry::getKey)
+                .findFirst().orElse("");
+
     }
 
     private boolean isLegalValueTextRef(String checkIndexNameStd, String textRef, String resultValue) {
@@ -111,25 +110,19 @@ public class GluService {
     }
 
     private List<Double> findDoubles(String text) {
-        List<Double> result = new ArrayList<>(2);
-        for (String x : text.split("[^\\d\\.]")) {
-            if (!"".equals(x)) {
-                result.add(Double.parseDouble(x));
-            }
-        }
-        return result;
+        return stream(text.split("[^\\d\\.]"))
+                .filter(x -> !"".equals(x))
+                .mapToDouble(x -> Double.parseDouble(x))
+                .boxed().collect(toList());
     }
 
     private boolean reportIsLegal(Report report) {
-        List<String> legalCheckIndexList = new ArrayList<>();
-        for (CheckItem checkItem : report.getCheckItems()) {
-            for (CheckResult checkResult : checkItem.getCheckResults()) {
-                String checkIndex = findIndex(checkResult.getCheckIndexName(), checkResult.getResultValue(), checkResult.getTextRef());
-                if (!"".equals(checkIndex)) {
-                    legalCheckIndexList.add(checkIndex);
-                }
-            }
-        }
+        List<String> legalCheckIndexList = stream(report.getCheckItems())
+                .flatMap(checkItem -> stream(checkItem.getCheckResults()))
+                .map(checkResult -> findIndex(checkResult.getCheckIndexName(), checkResult.getResultValue(), checkResult.getTextRef()))
+                .filter(checkIndex -> !"".equals(checkIndex))
+                .collect(toList());
+
         Set<String> legalCheckIndexSet = new HashSet(legalCheckIndexList);
         logger.info(legalCheckIndexSet.toString());
         return (legalCheckIndexList.size() == legalCheckIndexSet.size()) && legalCheckIndexSet.size() == checkIndexRegexMap.size();

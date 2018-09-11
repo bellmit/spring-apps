@@ -1,10 +1,13 @@
 package com.haozhuo.datag.common;
 
 
+import org.springframework.util.StringUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.stream.IntStream;
 
 /**
  * Created by Lucius on 8/18/18.
@@ -28,11 +31,11 @@ public class JavaUtils {
     }
 
     public static String[] getLastNdaysArray(int n) {
-        String[] days = new String[n];
-        for (int i = 0; i < n; i++) {
-            days[i] = getNdaysAgo(i);
-        }
-        return days;
+        return IntStream.range(0, n).boxed().map(i -> getNdaysAgo(i)).toArray(String[]::new);
+    }
+    public static void main(String[] args) {
+        System.out.println(StringUtils.arrayToCommaDelimitedString(getLastNdaysArray(10)));
+        StringUtils.arrayToCommaDelimitedString(getLastNdaysArray(10));
     }
 
     public static String getCurrentFormat(String format) {
@@ -51,6 +54,7 @@ public class JavaUtils {
     public static boolean isEmpty(String str) {
         return (str == null) || "".equals(str.trim());
     }
+
     public static boolean isEmpty(Object obj) {
         return obj == null;
     }

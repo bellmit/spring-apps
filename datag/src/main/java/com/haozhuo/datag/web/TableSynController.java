@@ -143,6 +143,4 @@ public class TableSynController {
         logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
-
-
 }

@@ -1,13 +1,12 @@
 package com.haozhuo.datag.model;
 
-import com.haozhuo.datag.common.JavaUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
+import java.util.Optional;
+import java.util.stream.Stream;
+import static java.util.Arrays.stream;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Lucius on 8/16/18.
@@ -62,18 +61,16 @@ public class InfoALV {
         }
     }
 
-    public void addArticle(String[] ids) {
-        if (JavaUtils.isEmpty(ids)) return;
-        article = (String[]) ArrayUtils.addAll(article, ids);
+    public void addArticle(String[] newIds) {
+        //和下面addLive和addVideo的效果一样
+        Optional.ofNullable(newIds).ifPresent(ids -> article = Stream.concat(stream(article), stream(ids)).toArray(String[]::new));
     }
 
-    public void addLive(String[] ids) {
-        if (JavaUtils.isEmpty(ids)) return;
-        live = (String[]) ArrayUtils.addAll(live, ids);
+    public void addLive(String[] newIds) {
+        Optional.ofNullable(newIds).ifPresent(ids -> live = (String[]) ArrayUtils.addAll(live, ids));
     }
 
-    public void addVideo(String[] ids) {
-        if (JavaUtils.isEmpty(ids)) return;
-        video = (String[]) ArrayUtils.addAll(video, ids);
+    public void addVideo(String[] newIds) {
+        Optional.ofNullable(newIds).ifPresent(ids -> video = (String[]) ArrayUtils.addAll(video, ids));
     }
 }

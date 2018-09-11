@@ -88,7 +88,7 @@ public class EsService {
                 .setSize(size).setQuery(
                         new FunctionScoreQueryBuilder(query, getTimeGaussFunction(index))
                 );
-        if (types.length>0) {
+        if (types!=null && types.length>0) {
             srb.setTypes(types);
         }
         // logger.debug(srb.toString());
@@ -148,7 +148,7 @@ public class EsService {
         SearchRequestBuilder srb = client.prepareSearch(index)
                 .setSize(size)
                 .setFrom((pageNo - 1) * size);
-        if (types.length > 0) {
+        if (types != null && types.length > 0) {
             srb.setTypes(types);
         }
 

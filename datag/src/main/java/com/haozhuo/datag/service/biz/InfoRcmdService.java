@@ -168,5 +168,4 @@ public class InfoRcmdService {
         logger.info("/mul/ALV/channel?channelId={}&categoryId={}&pageNo={}  cost: {}ms", channelId, categoryId, pageNo, System.currentTimeMillis() - beginTime);
         return result;
     }
-
 }

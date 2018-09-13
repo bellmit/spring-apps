@@ -20,4 +20,5 @@ public class Article {
     private String tags;
     private String createTime;
     private String updateTime;
+
 }

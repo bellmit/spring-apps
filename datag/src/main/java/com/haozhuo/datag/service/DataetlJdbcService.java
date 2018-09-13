@@ -6,7 +6,6 @@ import com.haozhuo.datag.model.Article;
 import com.haozhuo.datag.model.Channel;
 import com.haozhuo.datag.model.LiveInfo;
 import com.haozhuo.datag.model.Video;
-import org.apache.lucene.analysis.CharArrayMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,7 +30,7 @@ import static java.util.stream.Collectors.*;
 public class DataetlJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(DataetlJdbcService.class);
 
-    public final Map<String, String[]> channelMap;
+    public final Map<String, String[]> channelEsTypeMap;
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String liveTable;
@@ -49,7 +47,8 @@ public class DataetlJdbcService {
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
-        channelMap = getChannelMap();
+        channelEsTypeMap = getChannelEsTypeMap();
+        logger.debug("channelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x->x.getKey()+"->"+stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
         initLabelMap();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
@@ -68,14 +67,15 @@ public class DataetlJdbcService {
         }
     }
 
-    private Map<String, String[]> getChannelMap() {
-        List<Tuple<String, String>> list = dataetlDB.query("select parent_id, channel_id from channel where parent_id >0", new RowMapper<Tuple<String, String>>() {
+    private Map<String, String[]> getChannelEsTypeMap() {
+        List<Tuple<String, String>> list = dataetlDB.query("select parent_id as channelId, channel_id as categoryId  from channel where parent_id >0 union \n" +
+                "select  channel_id as channelId,parent_id as categoryId from channel where parent_id = 0", new RowMapper<Tuple<String, String>>() {
             @Override
             public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Tuple<>(resultSet.getString("parent_id"), resultSet.getString("channel_id"));
+                return new Tuple<>(resultSet.getString("channelId"), resultSet.getString("categoryId"));
             }
         });
-        return list.stream().collect(groupingBy(Tuple::getT1, mapping(Tuple::getT2, toList())))
+        return list.stream().collect(groupingBy(Tuple::getT1, mapping(x->x.getT1()+"_"+x.getT2(), toList())))
                 .entrySet().stream().collect(toMap(x -> x.getKey(), x -> x.getValue().stream().toArray(String[]::new)));
     }
 

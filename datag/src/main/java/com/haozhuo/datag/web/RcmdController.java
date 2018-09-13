@@ -271,25 +271,25 @@ public class RcmdController {
                     "当前接口参数:  \n" +
                     "userId可以不传，那么随机从这个频道中取出{size}条数据，否则会考虑用户标签进行推荐  \n" +
                     "业务逻辑:  \n" +
-                    "1 推荐频道(channelId==10000):  \n" +
+                    "1 推荐频道(channelType==R):  \n" +
                     "  所有:需要用户标签  \n" +
-                    "2 视频频道(channelId==20000):  \n" +
+                    "2 视频频道(channelType==V):  \n" +
                     "  所有:需要用户标签  \n" +
-                    "  分类:不需要用户标签  \n" +
-                    "3 直播频道(channelId==30000):  \n" +
+                    "3 直播频道(channelType==L):  \n" +
                     "  所有:需要用户标签  \n" +
-                    "4 其他频道(其他的channelId):  \n" +
-                    "  所有:其他channelId,且categoryId==0,需要用户标签信息  \n" +
-                    "  分类:其他channelId,且categoryId>0,不需要用户标签信息  \n"
+                    "4 文章频道(channelType==A):  \n" +
+                    "       categoryId==0,该频道下的所有,需要用户标签信息 \n" +
+                    "       categoryId>0,该频道下的分类,不需要用户标签信息  \n"
     )
     public Object getInfosByUserChannel(
-            @RequestParam(value = "channelId", defaultValue = InfoRcmdService.channelRcmdId) String channelId,
+            @RequestParam(value = "channelType", defaultValue = "R") String channelType,
+            @RequestParam(value = "channelId", defaultValue = "0") String channelId,
             @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        if (InfoRcmdService.channelRcmdId.equals(channelId))  //推荐频道下没有分类
+        if ("R".equalsIgnoreCase(channelType))  //推荐频道下没有分类
             categoryId = InfoRcmdService.allCategoryId;
-        return infoRcmdService.channelRecommend(channelId, categoryId, userId, size);
+        return infoRcmdService.channelRecommend(channelType, channelId, categoryId, userId, size);
     }
 
     /**
@@ -300,13 +300,14 @@ public class RcmdController {
     @GetMapping("/mul/ALV/channel")
     @ApiOperation(value = "根据channelId获取资讯、视频、直播的推荐列表  【新增】", notes = "根据channelId获取资讯、视频、直播的推荐列表")
     public Object getInfosByChannel(
-            @RequestParam(value = "channelId", defaultValue = InfoRcmdService.channelRcmdId) String channelId,
+            @RequestParam(value = "channelType", defaultValue = "R") String channelType,
+            @RequestParam(value = "channelId", defaultValue = "0") String channelId,
             @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "pageNo", defaultValue = "1") int pageNo,
             @RequestParam(value = "size", defaultValue = "10") int size) {
         if (InfoRcmdService.channelRcmdId.equals(channelId))  //推荐频道下没有分类
             categoryId = InfoRcmdService.allCategoryId;
-        return infoRcmdService.channelRecommend(channelId, categoryId, pageNo, size);
+        return infoRcmdService.channelRecommend(channelType, channelId, categoryId, pageNo, size);
     }
 
     /**

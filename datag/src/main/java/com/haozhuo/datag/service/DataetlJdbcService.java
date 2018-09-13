@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.*;
 public class DataetlJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(DataetlJdbcService.class);
 
-    public final Map<String, String[]> channelEsTypeMap;
+    public  Map<String, String[]> channelEsTypeMap;
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String liveTable;
@@ -47,8 +47,7 @@ public class DataetlJdbcService {
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
-        channelEsTypeMap = getChannelEsTypeMap();
-        logger.debug("channelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x->x.getKey()+"->"+stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
+        updateChannelEsTypeMap();
         initLabelMap();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
@@ -67,7 +66,7 @@ public class DataetlJdbcService {
         }
     }
 
-    private Map<String, String[]> getChannelEsTypeMap() {
+    private void updateChannelEsTypeMap() {
         List<Tuple<String, String>> list = dataetlDB.query("select parent_id as channelId, channel_id as categoryId  from channel where parent_id >0 union \n" +
                 "select  channel_id as channelId,parent_id as categoryId from channel where parent_id = 0", new RowMapper<Tuple<String, String>>() {
             @Override
@@ -75,8 +74,10 @@ public class DataetlJdbcService {
                 return new Tuple<>(resultSet.getString("channelId"), resultSet.getString("categoryId"));
             }
         });
-        return list.stream().collect(groupingBy(Tuple::getT1, mapping(x->x.getT1()+"_"+x.getT2(), toList())))
+        channelEsTypeMap = list.stream().collect(groupingBy(Tuple::getT1, mapping(x->x.getT1()+"_"+x.getT2(), toList())))
                 .entrySet().stream().collect(toMap(x -> x.getKey(), x -> x.getValue().stream().toArray(String[]::new)));
+        logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
+
     }
 
     /**
@@ -258,6 +259,7 @@ public class DataetlJdbcService {
         dataetlDB.update(query, channel.getChannelId(), channel.getName(), channel.getSortNum(), channel.getParentId(), channel.getCreateTime(),
                 channel.getCreateOperator(), channel.getUpdateOperator(), channel.getUpdateTime(), channel.getName(), channel.getSortNum(),
                 channel.getParentId(), channel.getCreateTime(), channel.getCreateOperator(), channel.getUpdateOperator(), channel.getUpdateTime());
+        updateChannelEsTypeMap();
     }
 
     public void updateLive(LiveInfo liveInfo) {
@@ -285,6 +287,7 @@ public class DataetlJdbcService {
 
     public void deleteChannel(long id) {
         dataetlDB.update("delete from channel where channel_id = ?", id);
+        updateChannelEsTypeMap();
     }
 
     public void updatePermitUsers(long healthReportId, int flag) {

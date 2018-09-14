@@ -31,6 +31,9 @@ public class TableSynController {
             notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public String updateVideo(@RequestBody Video video) {
         long beginTime = System.currentTimeMillis();
+        if(video.getStatus()!=1){ //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
+            video.setStatus(0);
+        }
         video.setUpdateTime(JavaUtils.getCurrent());
         dataetlJdbcService.updateVideo(video);
         if (video.getStatus() == 1) { //只有状态是1的才认为是发布的视频。其他一切状态都认为是删除
@@ -55,8 +58,13 @@ public class TableSynController {
     @PostMapping("/article")
     @ApiOperation(value = "资讯更新接口")
     public Object updateArticle(@RequestBody Article article) {
+
         article.setUpdateTime(JavaUtils.getCurrent());
         long beginTime = System.currentTimeMillis();
+        if(article.getStatus()!=1){ //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
+            article.setStatus(0);
+        }
+        article.setUpdateTime(JavaUtils.getCurrent());
         dataetlJdbcService.updateArticle(article);
         if (article.getStatus() == 1) { //只有状态是1的才认为是发布的文章。其他一切状态都认为是删除
             esService.updateArticle(article);

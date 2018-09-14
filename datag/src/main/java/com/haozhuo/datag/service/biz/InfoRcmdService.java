@@ -103,7 +103,7 @@ public class InfoRcmdService {
             }
         } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道下所有
             logger.debug("推荐频道下所有");
-            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2);
+            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 1);
             liveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, pushedALV.getLive(), 1);
             articleIds = esService.personalizedRecommend(esService.getArticleIndex(), loveTags, reportTags, hateTags, pushedALV.getArticle(), size - videoIds.length - liveIds.length);
             int nowSize = articleIds.length + videoIds.length + liveIds.length;
@@ -155,7 +155,7 @@ public class InfoRcmdService {
             videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, size);
         } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道
             logger.debug("推荐频道");
-            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2);
+            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 1);
             liveIds = esService.heatRecommend(esService.getLiveIndex(), pageNo, 1);
             articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length - liveIds.length);
         } else if (allCategoryId.equals(categoryId)) { //文章频道下所有

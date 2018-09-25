@@ -7,11 +7,13 @@ import com.haozhuo.datag.service.DataetlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.RedisService;
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.Random;
+import java.util.stream.IntStream;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
@@ -65,6 +67,19 @@ public class InfoRcmdService {
         }
     }
 
+    Random rand = new Random();
+
+    private String[] getRcmdIds(String tags, int size, String esIndex, String hateTags, String[] pushedIds, String... esTypes) {
+        String[] tagArray = tags.split(",");
+        int s = size;
+        if (tagArray.length > size) {
+            tags = IntStream.range(0, size).boxed().map(i -> tagArray[rand.nextInt(tagArray.length)]).collect(joining(","));
+        } else {
+            s = tagArray.length;
+        }
+        return esService.personalizedRecommend(esIndex, tags, hateTags, pushedIds, s, esTypes);
+    }
+
     /**
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
@@ -89,14 +104,17 @@ public class InfoRcmdService {
 
         if (channelTypeVideo.equalsIgnoreCase(channelType)) {//视频频道下所有
             logger.debug("视频频道下所有");
-            videoIds = esService.personalizedRecommend(esService.getVideoIndex(), loveTags, reportTags, hateTags, pushedALV.getVideo(), size);
+
+            videoIds = getRcmdIds(loveTags + "," + reportTags, 10, esService.getVideoIndex(), hateTags, pushedALV.getVideo());
+            //videoIds = esService.personalizedRecommend(esService.getVideoIndex(), tag, hateTags, pushedIds, 1, esTypes);
             if (videoIds.length < size) {
                 String[] supplementsVideoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, (String[]) ArrayUtils.addAll(videoIds, pushedALV.getVideo()), size - videoIds.length);
                 videoIds = (String[]) ArrayUtils.addAll(videoIds, supplementsVideoIds);
             }
         } else if (channelTypeLive.equalsIgnoreCase(channelType)) { //直播频道下所有
             logger.debug("直播频道下所有");
-            liveIds = esService.personalizedRecommend(esService.getLiveIndex(), loveTags, reportTags, hateTags, pushedALV.getLive(), size);
+            liveIds = getRcmdIds(loveTags + "," + reportTags, 10, esService.getLiveIndex(), hateTags, pushedALV.getLive());
+
             if (liveIds.length < size) {
                 String[] supplementsLiveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, (String[]) ArrayUtils.addAll(liveIds, pushedALV.getLive()), size - liveIds.length);
                 liveIds = (String[]) ArrayUtils.addAll(liveIds, supplementsLiveIds);
@@ -105,8 +123,11 @@ public class InfoRcmdService {
             logger.debug("推荐频道下所有");
             videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 1);
             liveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, pushedALV.getLive(), 1);
-            articleIds = esService.personalizedRecommend(esService.getArticleIndex(), loveTags, reportTags, hateTags, pushedALV.getArticle(), size - videoIds.length - liveIds.length);
+
+            articleIds = getRcmdIds(loveTags + "," + reportTags, 8, esService.getArticleIndex(), hateTags, pushedALV.getArticle());
+
             int nowSize = articleIds.length + videoIds.length + liveIds.length;
+            System.out.println("articleIds size:" + articleIds.length);
             if (nowSize < size) { //articleIdsByTags可能数量会比较少，所以随机补充文章
                 String[] supplementsArticleIds = esService.commonRecommend(esService.getArticleIndex(), hateTags, (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), size - nowSize);
                 articleIds = (String[]) ArrayUtils.addAll(articleIds, supplementsArticleIds);
@@ -114,10 +135,12 @@ public class InfoRcmdService {
         } else if (allCategoryId.equals(categoryId)) {  //文章某个频道下所有
             logger.debug("文章某个频道下所有");
             //获取用户感兴趣的标签
-            String[] esTypes = dataetlJdbcService.channelEsTypeMap.get(channelId); //推荐 找不到channelId -> null -> 查找所有
+            String[] esTypes = dataetlJdbcService.channelEsTypeMap.get(channelId);
             logger.debug("文章某个频道下所有,esTypes:{}", stream(esTypes).collect(joining(",")));
             videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2, esTypes);
-            articleIds = esService.personalizedRecommend(esService.getArticleIndex(), loveTags, reportTags, hateTags, pushedALV.getArticle(), size - videoIds.length - liveIds.length, esTypes);
+
+            articleIds = getRcmdIds(loveTags + "," + reportTags, 8, esService.getArticleIndex(), hateTags, pushedALV.getArticle(), esTypes);
+
             int nowSize = articleIds.length + videoIds.length + liveIds.length;
             if (nowSize < size) { //articleIdsByTags可能数量会比较少，所以随机补充文章
                 String[] supplementsArticleIds = esService.commonRecommend(esService.getArticleIndex(), hateTags, (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), size - nowSize, esTypes);

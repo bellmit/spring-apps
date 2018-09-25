@@ -76,6 +76,7 @@ public class DataetlJdbcService {
         });
         channelEsTypeMap = list.stream().collect(groupingBy(Tuple::getT1, mapping(x->x.getT1()+"_"+x.getT2(), toList())))
                 .entrySet().stream().collect(toMap(x -> x.getKey(), x -> x.getValue().stream().toArray(String[]::new)));
+
         logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
 
     }

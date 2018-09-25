@@ -4,8 +4,10 @@ import com.haozhuo.datag.common.EsUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
+import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
@@ -98,15 +100,16 @@ public class EsService {
     /**
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
-    public String[] personalizedRecommend(String index, String loveTags, String reportTags, String hateTags, String[] pushedIds, int size, String... types) {
+    public String[] personalizedRecommend(String index, String tags, String hateTags, String[] pushedIds, int size, String... types) {
         String tagField = getTagField(index);
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
-                .should(QueryBuilders.multiMatchQuery(Utils.removeStopWords(loveTags), "title", tagField).boost(3))
-                .should(QueryBuilders.multiMatchQuery(Utils.removeStopWords(reportTags), "title", tagField).boost(1));
+                .should(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(tags)).boost(3));
+
         return recommend(index, query, size, types);
     }
+
 
     private String getTagField(String index) {
         if (videoIndex.equals(index) || articleIndex.equals(index)) {
@@ -194,11 +197,11 @@ public class EsService {
 
 
     /**
-     * 如果fieldNames不输入，默认设为"title", "tags"
+     * 如果fieldNames不输入，默认设为 "tags"
      */
     public String[] getVideoIds(String text, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
-            fieldNames = new String[]{"title", "tags"};
+            fieldNames = new String[]{"tags"};
         }
         String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
         logger.debug("labels:{}, video ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
@@ -206,7 +209,7 @@ public class EsService {
     }
 
     /**
-     * 如果fieldNames不输入，默认设为"title", "tags"
+     * 如果fieldNames不输入，默认设为"tags"
      *
      * @param labels
      * @param size
@@ -219,7 +222,7 @@ public class EsService {
 
     public String[] getLivesIds(String labels, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
-            fieldNames = new String[]{"keywords", "labels", "title"};
+            fieldNames = new String[]{"keywords", "labels"};
         }
         String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(labels, fieldNames), excludeIds, 0, size);
         logger.debug("labels:{}, live ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
@@ -233,7 +236,7 @@ public class EsService {
 
     public String[] getArticleIds(String text, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
-            fieldNames = new String[]{"title", "tags"};
+            fieldNames = new String[]{"tags"};
         }
         String[] ids = getArticleIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
         logger.debug("text:{}, article ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
@@ -284,37 +287,45 @@ public class EsService {
     }
 
     private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param, String... fieldNames) {
-        return QueryBuilders.boolQuery().should(QueryBuilders.multiMatchQuery(param.getExceptionItemName(), fieldNames).boost(80))
-                .should(QueryBuilders.multiMatchQuery(param.getExceptionItemAlias(), fieldNames).boost(60))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleDiseases(), fieldNames).boost(40))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleDiseaseAlias(), fieldNames).boost(10))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleSymptoms(), fieldNames).boost(5))
-                .should(QueryBuilders.multiMatchQuery(param.getPossibleSymptomAlias(), fieldNames));
+        BoolQueryBuilder builder = QueryBuilders.boolQuery();
+        if (param.getExceptionItemName() != null)
+            builder.should(QueryBuilders.multiMatchQuery(param.getExceptionItemName(), fieldNames).boost(80));
+        if (param.getExceptionItemAlias() != null)
+            builder.should(QueryBuilders.multiMatchQuery(param.getExceptionItemAlias(), fieldNames).boost(60));
+        if (param.getPossibleDiseases() != null)
+            builder.should(QueryBuilders.multiMatchQuery(param.getPossibleDiseases(), fieldNames).boost(40));
+        if (param.getPossibleDiseaseAlias() != null)
+            builder.should(QueryBuilders.multiMatchQuery(param.getPossibleDiseaseAlias(), fieldNames).boost(10));
+        if (param.getPossibleSymptoms() != null)
+            builder.should(QueryBuilders.multiMatchQuery(param.getPossibleSymptoms(), fieldNames).boost(5));
+        if (param.getPossibleSymptomAlias() != null)
+            builder.should(QueryBuilders.multiMatchQuery(param.getPossibleSymptomAlias(), fieldNames));
+        return builder;
     }
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(liveIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "title", "labels", "keywords")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param, "labels", "keywords")).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
     public List<String> getVideoIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(videoIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "title", "tags")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param, "tags")).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
     public List<String> getArticleIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(articleIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "title", "tags")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param, "tags")).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
     public String[] getArticleIdsByAbnormStr(String abnormialStr, String abnormialAliasStr, int size, boolean isComplement) {
         SearchRequestBuilder srb = client.prepareSearch(articleIndex).setQuery(
                 QueryBuilders.boolQuery()
-                        .should(QueryBuilders.multiMatchQuery(abnormialStr, "title", "tags").boost(100)) // abnormialStr的优先级高于abnormialAliasStr
-                        .should(QueryBuilders.multiMatchQuery(abnormialAliasStr, "title", "tags").boost(20))
+                        .should(QueryBuilders.multiMatchQuery(abnormialStr, "tags").boost(100)) // abnormialStr的优先级高于abnormialAliasStr
+                        .should(QueryBuilders.multiMatchQuery(abnormialAliasStr, "tags").boost(20))
         ).setSize(size);
         String[] result = EsUtils.getDocIdsAsArray(srb);
         logger.debug("getArticleIdsByAbnormStr compSize:{}", size - result.length);

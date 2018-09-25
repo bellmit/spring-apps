@@ -335,10 +335,11 @@ public class RcmdController {
     @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
     public Object getMulAlvgByInfoId(
             @PathVariable(value = "infoId") String infoId,
-            @RequestParam(value = "version", defaultValue = "1") int version) {
+            @RequestParam(value = "size", defaultValue = "5") int size,
+            @RequestParam(value = "version", defaultValue = "2") int version) {
         long beginTime = System.currentTimeMillis();
-        //资讯、视频、直播的结果
-        Map<String, List<String>> map = redisService.getSimByInfoId(infoId);
+//        //资讯、视频、直播的结果
+//        Map<String, List<String>> map = redisService.getSimByInfoId(infoId);
         //商品的结果
         String tags;
         if (version == 1) {
@@ -346,9 +347,15 @@ public class RcmdController {
         } else {
             tags = dataetlJdbcService.getTagsByInfoId(infoId);
         }
-
+        Map<String, List<String>> map = new HashMap<>();
         logger.debug("tags:{}", tags);
-        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, 5);
+        String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
+        String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
+        String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
+        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, size);
+        map.put("a", Arrays.asList(articleIds));
+        map.put("l", Arrays.asList(liveIds));
+        map.put("v", Arrays.asList(videoIds));
         map.put("g", Arrays.asList(goodsIds));
         logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
         return map;
@@ -476,7 +483,7 @@ public class RcmdController {
     }
 
     private List<String> addTypeForIds(List<String> ids, String type) {
-        return ids.stream().map(id->String.format("%s:%s", id, type)).collect(toList());
+        return ids.stream().map(id -> String.format("%s:%s", id, type)).collect(toList());
     }
 
 
@@ -529,7 +536,7 @@ public class RcmdController {
             notes = "业务逻辑:  \n" +
                     "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的HateTag:{userId}中。")
     @GetMapping(value = "/article/not_interested")
-    public Object setNotInerestedTagsByInfoId(
+    public Object setNotInterstedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
         String tags = dataetlJdbcService.getInfoTagsById(infoId);
@@ -537,6 +544,4 @@ public class RcmdController {
         logger.info("/article/not_interested?userId={}&infoId={}  tags:{}", userId, infoId, tags);
         return "success!";
     }
-
-
 }

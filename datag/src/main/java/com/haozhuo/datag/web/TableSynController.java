@@ -4,6 +4,9 @@ import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.DataetlJdbcService;
+import com.haozhuo.datag.service.RedisService;
+import com.haozhuo.datag.service.textspilt.SimpleArticle;
+import com.haozhuo.datag.service.textspilt.TFIDF;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +25,8 @@ public class TableSynController {
     private EsService esService;
     @Autowired
     private DataetlJdbcService dataetlJdbcService;
+    @Autowired
+    private RedisService redisService;
 
     /**
      * 对应原来developer-api项目中的InsertEntityController中的
@@ -31,7 +36,7 @@ public class TableSynController {
             notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public String updateVideo(@RequestBody Video video) {
         long beginTime = System.currentTimeMillis();
-        if(video.getStatus()!=1){ //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
+        if (video.getStatus() != 1) { //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
             video.setStatus(0);
         }
         video.setUpdateTime(JavaUtils.getCurrent());
@@ -61,19 +66,45 @@ public class TableSynController {
 
         article.setUpdateTime(JavaUtils.getCurrent());
         long beginTime = System.currentTimeMillis();
-        if(article.getStatus()!=1){ //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
+        if (article.getStatus() != 1) { //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
             article.setStatus(0);
         }
         article.setUpdateTime(JavaUtils.getCurrent());
+
+        // must delete first!
+        redisService.deleteKeywordsOfArticleInRedis(String.valueOf(article.getInformationId()));
+
         dataetlJdbcService.updateArticle(article);
         if (article.getStatus() == 1) { //只有状态是1的才认为是发布的文章。其他一切状态都认为是删除
             esService.updateArticle(article);
+            SimpleArticle simpleArticle = getSimpleArticle(article);
+            redisService.setKeywordsOfArticleInRedis(simpleArticle);
+            dataetlJdbcService.updateKeywordsOfArticle(simpleArticle);
         } else {
             esService.deleteArticle(article.getInformationId());
+            // already deleted in the redis!
         }
         logger.info("POST /article  id:{}  cost:{} ms", article.getInformationId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
+
+    // 与离线程序统一
+    private SimpleArticle getSimpleArticle(Article article) {
+        SimpleArticle simpleArticle = new SimpleArticle();
+        simpleArticle.setChannelId(String.valueOf(article.getChannelId()));
+        simpleArticle.setInformationId(String.valueOf(article.getInformationId()));
+        simpleArticle.setKeywords(TFIDF.getMyKeywords(article.getTitle(), article.getContent()));
+        return simpleArticle;
+    }
+
+
+
+
+//    @GetMapping(value = "/article_test/{text}")
+//    @ApiOperation(value = "资讯更新接口")
+//    public Object updateArticletest(@PathVariable(value = "text") String text) {
+//        return TFIDF.getMyKeywords(text,"");
+//    }
 
     @DeleteMapping("/article/{id}")
     @ApiOperation(value = "资讯删除接口", notes = "mysql中的article4表中的status字段设置为0,ES中删除article4中的该文档")
@@ -81,7 +112,7 @@ public class TableSynController {
         long beginTime = System.currentTimeMillis();
         dataetlJdbcService.deleteArticle(id);
         esService.deleteArticle(id);
-
+        redisService.deleteKeywordsOfArticleInRedis(String.valueOf(id));
         logger.info("DELETE /article/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
@@ -151,4 +182,6 @@ public class TableSynController {
         logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
+
+
 }

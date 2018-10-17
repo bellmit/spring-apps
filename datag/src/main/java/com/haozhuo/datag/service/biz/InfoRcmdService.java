@@ -121,8 +121,12 @@ public class InfoRcmdService {
             }
         } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道下所有
             logger.debug("推荐频道下所有");
-            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 1);
-            liveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, pushedALV.getLive(), 1);
+            videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2);
+            liveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, pushedALV.getLive(), 2);
+            if (liveIds.length + videoIds.length >= 3) {
+                videoIds = new String[]{videoIds[0]};
+                liveIds = new String[]{liveIds[0]};
+            }
 
             articleIds = getRcmdIds(loveTags + "," + reportTags, 8, esService.getArticleIndex(), hateTags, pushedALV.getArticle());
 

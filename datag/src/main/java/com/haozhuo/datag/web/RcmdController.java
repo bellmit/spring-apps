@@ -110,13 +110,7 @@ public class RcmdController {
         return result;
     }
 
-    /**
-     * 根据
-     * 对应原来good-recommender项目中的GoodsRecomController中的getRecomList()方法。
-     * curl -X POST --header "ArticleInfo-Type: application/json" --header  "http://192.168.1.152:8087/goodsmatch/getRecom/list?healthReportId=2515473&pageSize=10&pageNum=1"
-     *
-     * @return
-     */
+
     @GetMapping("/goods/labels/{labels}")
     @ApiOperation(value = "根据标签返回推荐的商品  【新增】",
             notes = "根据标签返回推荐的商品。  \n" +
@@ -335,18 +329,9 @@ public class RcmdController {
     @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
     public Object getMulAlvgByInfoId(
             @PathVariable(value = "infoId") String infoId,
-            @RequestParam(value = "size", defaultValue = "5") int size,
-            @RequestParam(value = "version", defaultValue = "2") int version) {
+            @RequestParam(value = "size", defaultValue = "5") int size) {
         long beginTime = System.currentTimeMillis();
-//        //资讯、视频、直播的结果
-//        Map<String, List<String>> map = redisService.getSimByInfoId(infoId);
-        //商品的结果
-        String tags;
-        if (version == 1) {
-            tags = dataetlJdbcService.getLabelsByInfoId(infoId); //TODO 大改版之后将这个条件去掉！！！！
-        } else {
-            tags = dataetlJdbcService.getTagsByInfoId(infoId);
-        }
+        String tags = dataetlJdbcService.getTagsByInfoId(infoId);
         Map<String, List<String>> map = new HashMap<>();
         logger.debug("tags:{}", tags);
         String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
@@ -540,7 +525,8 @@ public class RcmdController {
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
         String tags = dataetlJdbcService.getInfoTagsById(infoId);
-        redisService.addHateTags(userId, tags);
+        redisService.addHateTags(userId, tags); //推荐系统升级之后，这个方法可以去掉
+        redisService.clearHateKeywords(userId, String.valueOf(infoId));
         logger.info("/article/not_interested?userId={}&infoId={}  tags:{}", userId, infoId, tags);
         return "success!";
     }

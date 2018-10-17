@@ -3,8 +3,12 @@ package com.haozhuo.datag.service;
 import com.haozhuo.datag.common.EsUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
+import com.haozhuo.datag.model.crm.UserIdTagsId;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.MultiGetItemResponse;
+import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -303,6 +307,23 @@ public class EsService {
         return builder;
     }
 
+    public List<UserIdTagsId> getPortraitIds(String[] userIds) {
+        MultiGetResponse multiGetItemResponses = client.prepareMultiGet()
+                .add("portrait", "docs", userIds)
+                .get();
+
+        List<UserIdTagsId> list = new ArrayList<>(userIds.length);
+        for (MultiGetItemResponse itemResponse : multiGetItemResponses) {
+            GetResponse response = itemResponse.getResponse();
+            if (response.isExists()) {
+                UserIdTagsId userIdTagsId = new UserIdTagsId();
+                userIdTagsId.setUserId(response.getId());
+                userIdTagsId.setTagIds(response.getSource().get("tagIds"));
+                list.add(userIdTagsId);
+            }
+        }
+        return list;
+    }
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(liveIndex)
                 .setQuery(getLiveOrVideoBasicBuilder(param, "labels", "keywords")).setSize(size);

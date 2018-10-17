@@ -6,6 +6,7 @@ import com.haozhuo.datag.model.Article;
 import com.haozhuo.datag.model.Channel;
 import com.haozhuo.datag.model.LiveInfo;
 import com.haozhuo.datag.model.Video;
+import com.haozhuo.datag.service.textspilt.SimpleArticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +31,14 @@ import static java.util.stream.Collectors.*;
 public class DataetlJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(DataetlJdbcService.class);
 
-    public  Map<String, String[]> channelEsTypeMap;
+    public Map<String, String[]> channelEsTypeMap;
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String liveTable;
     private final String videoTable;
     private final String articleTable;
+    public final static List<String> stopwords = new ArrayList<>();
+
 
     @Qualifier("dataetlJdbc") //选择jdbc连接池
     private final JdbcTemplate dataetlDB;
@@ -49,6 +52,7 @@ public class DataetlJdbcService {
         articleTable = env.getProperty("app.mysql.article");
         updateChannelEsTypeMap();
         initLabelMap();
+        initStopwords();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
     }
@@ -66,6 +70,16 @@ public class DataetlJdbcService {
         }
     }
 
+    private void initStopwords() {
+        List<String> list = dataetlDB.query("select name from stop_words;", new RowMapper<String>() {
+            @Override
+            public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                return resultSet.getString("name");
+            }
+        });
+        stopwords.addAll(list);
+    }
+
     private void updateChannelEsTypeMap() {
         List<Tuple<String, String>> list = dataetlDB.query("select parent_id as channelId, channel_id as categoryId  from channel where parent_id >0 union \n" +
                 "select  channel_id as channelId,parent_id as categoryId from channel where parent_id = 0", new RowMapper<Tuple<String, String>>() {
@@ -74,7 +88,7 @@ public class DataetlJdbcService {
                 return new Tuple<>(resultSet.getString("channelId"), resultSet.getString("categoryId"));
             }
         });
-        channelEsTypeMap = list.stream().collect(groupingBy(Tuple::getT1, mapping(x->x.getT1()+"_"+x.getT2(), toList())))
+        channelEsTypeMap = list.stream().collect(groupingBy(Tuple::getT1, mapping(x -> x.getT1() + "_" + x.getT2(), toList())))
                 .entrySet().stream().collect(toMap(x -> x.getKey(), x -> x.getValue().stream().toArray(String[]::new)));
 
         logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
@@ -129,6 +143,21 @@ public class DataetlJdbcService {
                 .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
                 .filter(x -> x != null)
                 .collect(Collectors.toSet());
+    }
+
+    public Map<String, String> getPortraitMap() {
+        List<Tuple<String, String>> list = dataetlDB.query("select id, name from portrait_tag union select id,label as name from disease_label", new RowMapper<Tuple<String, String>>() {
+            @Override
+            public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
+                return new Tuple<String, String>(resultSet.getString("name"), resultSet.getString("id"));
+            }
+        });
+        Map<String, String> result = new HashMap<>();
+        for (Tuple<String, String> tuple : list) {
+            result.put(tuple.getT1(), tuple.getT2());
+
+        }
+        return result;
     }
 
     public String getInfoTagsById(Long infoId) {
@@ -250,6 +279,11 @@ public class DataetlJdbcService {
                 article.getContent(), article.getChannelId(), article.getCategoryId(), article.getTags(), article.getCreateTime(), article.getUpdateTime(),
                 article.getStatus(), article.getTitle(), article.getImage(), article.getImages(), article.getContent(), article.getChannelId(), article.getCategoryId(),
                 article.getTags(), article.getCreateTime(), article.getUpdateTime());
+    }
+
+    public void updateKeywordsOfArticle(SimpleArticle article) {
+        String query = String.format("UPDATE `%s` SET keywords = ? WHERE information_id = ?", articleTable);
+        dataetlDB.update(query, article.getStrKeywords(), article.getInformationId());
     }
 
 

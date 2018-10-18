@@ -27,16 +27,15 @@ public class KafkaService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Value("${app.kafka.topic.article-process-request}")
-    private String articleRcmdRequestTopic;
+    @Value("${app.kafka.topic.news-rcmd-request: news-rcmd-request}")
+    private String newsRcmdRequestTopic;
 
     public void sendRcmdRequestMsg(RcmdRequestMsg msg) {
         try {
             logger.debug("send msg:{}", msg);
-            kafkaTemplate.send(articleRcmdRequestTopic, objectMapper.writeValueAsString(msg));
+            kafkaTemplate.send(newsRcmdRequestTopic, objectMapper.writeValueAsString(msg));
         } catch (JsonProcessingException e) {
             logger.error("发送Kafka消息{}失败:{}",msg,e);
         }
-
     }
 }

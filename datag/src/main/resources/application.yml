@@ -14,7 +14,8 @@ app:
     pushed-key-max-size: 200
   kafka:
     topic:
-      article-rcmd-request: article-process-request
+      news-rcmd-request: news-rcmd-request
+
   rest:
     glu: http://192.168.1.178:10011/getReportContent?healthReportId=%s
 
@@ -48,7 +49,7 @@ spring:
       password: yjkdatag
       maximum-pool-size: 2
   kafka:
-    bootstrap-servers: 192.168.1.152:9092,192.168.1.153:9092
+    bootstrap-servers: 192.168.1.153:9092
   data:
     elasticsearch:
       cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300

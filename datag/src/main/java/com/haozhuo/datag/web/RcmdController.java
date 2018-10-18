@@ -2,6 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
+import com.haozhuo.datag.model.RcmdRequestMsg;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -521,13 +522,18 @@ public class RcmdController {
             notes = "业务逻辑:  \n" +
                     "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的HateTag:{userId}中。")
     @GetMapping(value = "/article/not_interested")
-    public Object setNotInterstedTagsByInfoId(
+    public Object setNotInterestedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
-        String tags = dataetlJdbcService.getInfoTagsById(infoId);
-        redisService.addHateTags(userId, tags); //推荐系统升级之后，这个方法可以去掉
-        redisService.clearHateKeywords(userId, String.valueOf(infoId));
-        logger.info("/article/not_interested?userId={}&infoId={}  tags:{}", userId, infoId, tags);
+        String tags = dataetlJdbcService.getInfoTagsById(infoId); //TODO: 推荐系统升级之后，这个方法去掉
+        redisService.addHateTags(userId, tags); //TODO: 推荐系统升级之后，这个方法去掉
+
+        String channelId = redisService.clearHateKeywords(userId, String.valueOf(infoId));
+        //发送消息请求一波推荐
+        if (channelId != null) {
+            kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, channelId));
+        }
+        logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";
     }
 }

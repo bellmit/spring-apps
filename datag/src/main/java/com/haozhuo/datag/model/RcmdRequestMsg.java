@@ -10,13 +10,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RcmdRequestMsg {
     String userId;
-    int rcmdType;
+    String channelId;
 
     @Override
     public String toString() {
         return "RcmdRequestMsg{" +
                 "userId='" + userId + '\'' +
-                ", rcmdType=" + rcmdType +
+                ", channelId=" + channelId +
                 '}';
     }
 }

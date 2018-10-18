@@ -23,9 +23,4 @@ public class TFIDF {
                         .collect(toList());
         return myKeywords;
     }
-
-    public static void main(String[] args) {
-        List<Keyword> keywords = kwc.computeArticleTfidf("", "");
-        System.out.println(keywords.size());
-    }
 }

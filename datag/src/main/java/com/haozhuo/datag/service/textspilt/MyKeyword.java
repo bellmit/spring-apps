@@ -1,7 +1,6 @@
 package com.haozhuo.datag.service.textspilt;
 
 import java.io.Serializable;
-import java.util.Comparator;
 
 /**
  * Created by Lucius on 10/17/18.
@@ -9,6 +8,11 @@ import java.util.Comparator;
 public class MyKeyword implements Serializable{
     String name;
     int score;
+
+    public MyKeyword(String name, int score) {
+        this.name = name;
+        this.score = score;
+    }
 
     public int getScore() {
         return score;
@@ -25,11 +29,5 @@ public class MyKeyword implements Serializable{
     public void setName(String name) {
         this.name = name;
     }
-
-    public MyKeyword(String name, int score) {
-        this.name = name;
-        this.score = score;
-    }
-
 
 }

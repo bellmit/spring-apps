@@ -98,14 +98,6 @@ public class TableSynController {
     }
 
 
-
-
-//    @GetMapping(value = "/article_test/{text}")
-//    @ApiOperation(value = "资讯更新接口")
-//    public Object updateArticletest(@PathVariable(value = "text") String text) {
-//        return TFIDF.getMyKeywords(text,"");
-//    }
-
     @DeleteMapping("/article/{id}")
     @ApiOperation(value = "资讯删除接口", notes = "mysql中的article4表中的status字段设置为0,ES中删除article4中的该文档")
     public Object deleteArticle(@PathVariable(value = "id") long id) {
@@ -182,6 +174,4 @@ public class TableSynController {
         logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
-
-
 }

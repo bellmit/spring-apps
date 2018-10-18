@@ -241,16 +241,18 @@ public class RedisService {
                 ));
     }
 
-    public void clearHateKeywords(String userId, String infoId) {
+    public String clearHateKeywords(String userId, String infoId) {
         HashOperations ho = redisDB0.opsForHash();
         SimpleArticle simpleArticle = getNewsKeywords(ho, infoId);
         List<MyKeyword> userPrefList = getUserPref(ho, userId, simpleArticle.getChannelId());
 
-        if (userPrefList == null || userPrefList.size() == 0) return;
+        if (userPrefList == null || userPrefList.size() == 0)
+            return null;
 
         List<String> keywordNameList = simpleArticle.getKeywordNameList();
         List<MyKeyword> filteredPrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
         setUserPref(ho, userId, simpleArticle.getChannelId(), filteredPrefList);
+        return simpleArticle.getChannelId();
     }
 
     private List<MyKeyword> getUserPref(HashOperations ho, String userId, String channelId) {

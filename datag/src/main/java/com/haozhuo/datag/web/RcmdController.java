@@ -2,13 +2,15 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
-import com.haozhuo.datag.model.RcmdRequestMsg;
+import com.haozhuo.datag.model.InfoALV;
+import com.haozhuo.datag.model.NewsRcmdMsg;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,13 +41,16 @@ public class RcmdController {
 
     private ObjectMapper mapper = new ObjectMapper();
 
+    @Value("${app.biz.version:1}")
+    private int version;
+
     @Autowired
     public RcmdController(EsService esService, RedisService redisService, KafkaService kafkaService, DataetlJdbcService dataetlJdbcService) {
         this.esService = esService;
         this.redisService = redisService;
         this.kafkaService = kafkaService;
         this.dataetlJdbcService = dataetlJdbcService;
-        infoRcmdService = new InfoRcmdService(esService, redisService, dataetlJdbcService);
+        infoRcmdService = new InfoRcmdService(esService, redisService, dataetlJdbcService, kafkaService);
     }
 
     /**
@@ -282,10 +287,19 @@ public class RcmdController {
             @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        if ("R".equalsIgnoreCase(channelType))  //推荐频道下没有分类
-            categoryId = InfoRcmdService.allCategoryId;
-        return infoRcmdService.channelRecommend(channelType, channelId, categoryId, userId, size);
+        if (version == 1) {
+            if ("R".equalsIgnoreCase(channelType))  //推荐频道下没有分类
+                categoryId = InfoRcmdService.allCategoryId;
+            return infoRcmdService.channelRecommend(channelType, channelId, categoryId, userId, size);
+        } else {
+            logger.info("new recommder");
+
+
+            return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
+        }
+
     }
+
 
     /**
      * 根据channelId获取资讯、视频、直播的推荐列表
@@ -293,7 +307,7 @@ public class RcmdController {
      * @return
      */
     @GetMapping("/mul/ALV/channel")
-    @ApiOperation(value = "根据channelId获取资讯、视频、直播的推荐列表  【新增】", notes = "根据channelId获取资讯、视频、直播的推荐列表")
+    @ApiOperation(value = "根据channelId获取资讯、视频、直播的推荐列表", notes = "根据channelId获取资讯、视频、直播的推荐列表")
     public Object getInfosByChannel(
             @RequestParam(value = "channelType", defaultValue = "R") String channelType,
             @RequestParam(value = "channelId", defaultValue = "0") String channelId,
@@ -397,7 +411,7 @@ public class RcmdController {
      * abnormal-recommder的ArticleRecomController中的getRecomByVideoALL()方法
      * curl -X POST --header "Content-Type: application/json" --header  "http://47.98.165.120:8002/getRecom/videoTags?userId=c63fc45c-35d1-43d5-b864-2bdb82542dfd&pageSize=10&jsonStr=%7B%22labels%22%3A%22%E8%82%BE%E5%8A%9F%E8%83%BD%E9%9A%9C%E7%A2%8D%22%2C%22keywords%22%3A%20%22%E8%82%BE%E7%97%85%2C%E8%82%BE%E5%8A%9F%E8%83%BD%2C%E8%A1%80%E5%8E%8B%2C%E8%82%BE%E8%A1%B0%22%2C%22title%22%3A%22%E5%89%8D%E5%88%97%E8%85%BA%E9%92%99%E5%8C%96%E6%98%AF%E6%80%8E%E4%B9%88%E5%9B%9E%E4%BA%8B-%E6%9D%8E%E6%B5%B7%E6%9D%BE%22%7D"
      * jsonStr的格式: {"labels":"肾功能障碍","keywords": "肾病,肾功能,血压,肾衰","title":"前列腺钙化是怎么回事-李海松"}
-     * TODO 注意：新的接口和旧的接口对jsonStr进行了变更
+     * 注意：新的接口和旧的接口对jsonStr进行了变更
      * 原来的
      * jsonStr : {"labels":"肾功能障碍", "keywords": "肾病,肾功能,血压,肾衰", "title":"前列腺钙化是怎么回事-李海松"}
      * 变更成请求参数，用excludeVideoId替换上面的title。
@@ -525,13 +539,15 @@ public class RcmdController {
     public Object setNotInterestedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
-        String tags = dataetlJdbcService.getInfoTagsById(infoId); //TODO: 推荐系统升级之后，这个方法去掉
-        redisService.addHateTags(userId, tags); //TODO: 推荐系统升级之后，这个方法去掉
+        //为视频、直播推荐
+        String tags = dataetlJdbcService.getInfoTagsById(infoId);
+        redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
 
-        String channelId = redisService.clearHateKeywords(userId, String.valueOf(infoId));
-        //发送消息请求一波推荐
+
+        //为文章推荐
+        String channelId = redisService.setHateKeywords(userId, String.valueOf(infoId));
         if (channelId != null) {
-            kafkaService.sendRcmdRequestMsg(new RcmdRequestMsg(userId, channelId));
+            kafkaService.sendRcmdRequestMsg(new NewsRcmdMsg(userId, channelId, 2));
         }
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";

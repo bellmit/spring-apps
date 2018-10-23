@@ -15,7 +15,8 @@ app:
   kafka:
     topic:
       news-rcmd-request: news-rcmd-request
-
+  biz:
+    version: 2
   rest:
     glu: http://192.168.1.178:10011/getReportContent?healthReportId=%s
 

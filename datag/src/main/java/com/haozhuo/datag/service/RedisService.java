@@ -1,8 +1,10 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
+import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.PushedInfoKeys;
+import com.haozhuo.datag.model.RcmdNewsInfo;
 import com.haozhuo.datag.service.textspilt.MyKeyword;
 import com.haozhuo.datag.service.textspilt.SimpleArticle;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 /**
  * Created by Lucius on 8/17/18.
@@ -58,9 +59,16 @@ public class RedisService {
     @Deprecated
     private final String loveTagsKey = "LoveTags:%s";
 
+    @Value("${app.biz.negativeCoefficient:-5}")
+    private int negativeCoefficient;
+
+    private int[] queueRcmdNumArray = {4, 3, 3, 2, 2};
     private final String newsKeywordsKey = "news_keywords";
     private final String newsIndexKeyFormat = "news_ind:%s:%s";
     private final String userPrefsKeyFormat = "user_prefs:%s";
+    private final String newsRcmdKeyFormat = "news_rcmd:%s:%s";
+    private final String newsPushedKeyFormat = "news_pushed:%s:%s";
+    private final String newsRcmdChannelsKey = "news_rcmd_channels";
 
     private final List<Object> avlHashKeys = Arrays.asList("a", "v", "l");
 
@@ -88,6 +96,7 @@ public class RedisService {
         deleteHashKey(pushedInfoKeys.getKey(), pushedInfoKeys.getALVHashKeys().toArray());
     }
 
+    @Deprecated
     public void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
         if (redisDB0.hasKey(pushedInfoKeys.getKey()))
             return;
@@ -102,6 +111,7 @@ public class RedisService {
         List<Object> values = redisDB0.opsForHash().multiGet(pushedInfoKeys.getKey(), avlHashKeys);
         return getInfoALVFromValues(values, pushedInfoKeys.getKey(), (List<String>) avlHashKeys);
     }
+
 
     public void setPushedInfoALV(PushedInfoKeys pushedInfoKeys, InfoALV oldInfoALV, InfoALV newInfoALV) {
         if (newInfoALV.size() > 0) {
@@ -129,7 +139,7 @@ public class RedisService {
         }
     }
 
-
+    @Deprecated
     public String getHateTags(String userId) {
         return getTags(hateTagsKey, userId);
     }
@@ -241,39 +251,126 @@ public class RedisService {
                 ));
     }
 
-    public String clearHateKeywords(String userId, String infoId) {
+    public String setHateKeywords(String userId, String infoId) {
         HashOperations ho = redisDB0.opsForHash();
         SimpleArticle simpleArticle = getNewsKeywords(ho, infoId);
-        List<MyKeyword> userPrefList = getUserPref(ho, userId, simpleArticle.getChannelId());
+
+        List<MyKeyword> userPrefList = getUserPref(userId, simpleArticle.getChannelId());
 
         if (userPrefList == null || userPrefList.size() == 0)
             return null;
 
         List<String> keywordNameList = simpleArticle.getKeywordNameList();
-        List<MyKeyword> filteredPrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
-        setUserPref(ho, userId, simpleArticle.getChannelId(), filteredPrefList);
+        List<MyKeyword> positivePrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
+        List<MyKeyword> negativePrefList = simpleArticle.getKeywords().stream().map(kwc -> {
+            kwc.setScore(kwc.getScore() * negativeCoefficient);
+            return kwc;
+        }).collect(toList());
+        positivePrefList.addAll(negativePrefList);
+        setUserPref(ho, userId, simpleArticle.getChannelId(), positivePrefList);
         return simpleArticle.getChannelId();
     }
 
-    private List<MyKeyword> getUserPref(HashOperations ho, String userId, String channelId) {
-        Object obj = ho.get(String.format(userPrefsKeyFormat, userId), channelId);
-        if (obj == null) return null;
-        return parseKeywordList(obj.toString());
+    public List<MyKeyword> getUserPref(String userId, String channelId) {
+        Object obj = redisDB0.opsForHash().get(String.format(userPrefsKeyFormat, userId), channelId);
+        return MyKeyword.parseKeywordsFromString((String) obj);
     }
 
     private void setUserPref(HashOperations ho, String userId, String channelId, List<MyKeyword> prefList) {
         String strPref = prefList.stream()
-               // .sorted()
                 .map(kw -> kw.getName() + ":" + kw.getScore()).collect(joining(","));
         ho.put(String.format(userPrefsKeyFormat, userId), channelId, strPref);
     }
 
-    private List<MyKeyword> parseKeywordList(String strKeywords) {
-        return stream(strKeywords.split(","))
-                .map(x -> x.split(":"))
-                .map(kw -> new MyKeyword(kw[0], Integer.parseInt(kw[1])))
-                .collect(toList());
+//    public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
+//        return getRcmdNewsByChannel(userId, channelId, count, true);
+//    }
+
+//    public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
+//
+//        Tuple<List<String>, Boolean> newsAndRequest = getNewsByUserAndChannel(userId, channelId, count);
+//
+//        return info;
+//    }
+
+    private Tuple<List<String>, Boolean> getNewsByUserAndChannel(String userId, String channelId, int count) {
+        String rcmdKey = String.format(newsRcmdKeyFormat, userId, channelId);
+        SetOperations so = redisDB0.opsForSet();
+        List<String> news = so.pop(rcmdKey, count);
+        boolean requestRcmd = false;
+        if (so.size(rcmdKey) < 50) {
+            requestRcmd = true;
+        }
+        addPushedNewsSet(userId, channelId, news);
+        return new Tuple<>(news, requestRcmd);
     }
+
+
+    public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
+        Tuple<List<String>, Boolean> tup = getNewsByUserAndChannel(userId, channelId, count);
+        RcmdNewsInfo rcmdNewsInfo = new RcmdNewsInfo();
+        rcmdNewsInfo.setInitAllChannels(tup.getT1().size() <= 0);
+        rcmdNewsInfo.addNews(tup.getT1());
+        if (tup.getT2()) {
+            rcmdNewsInfo.addRcmdChannelId(channelId);
+        }
+        return rcmdNewsInfo;
+    }
+
+
+    public RcmdNewsInfo getRcmdNews(String userId, int count) {
+        Object queue = redisDB0.opsForHash().get(newsRcmdChannelsKey, userId);
+        RcmdNewsInfo info = new RcmdNewsInfo();
+
+        if (queue == null) {
+            info.setInitAllChannels(true);
+        } else {
+            String[] queueChannelIds = queue.toString().split(",");
+            List<Tuple> randomNumQueue = randomTake(count);
+            for (Tuple tup : randomNumQueue) {
+                try {
+                    String channelId = queueChannelIds[(int) tup.getT1()];
+                    int subCount = (int) tup.getT2();
+                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount);
+                    if (tmp.getT2()) {
+                        info.addRcmdChannelId(channelId);
+                    }
+                    info.addNews(tmp.getT1());
+                } catch (Exception ex) {
+
+                }
+            }
+            if (info.getNews().size() < count) {
+                info.setInitAllChannels(true);
+            }
+        }
+        return info;
+    }
+
+    public void addPushedNewsSet(String userId, String channelId, List<String> values) {
+        if (values == null || values.size() == 0) {
+            return;
+        }
+        String pushedNewsKey = String.format(newsPushedKeyFormat, userId, channelId);
+        redisDB0.opsForSet().add(pushedNewsKey, values.toArray(new String[]{}));
+        redisDB0.expire(pushedNewsKey, 7, TimeUnit.DAYS);
+    }
+
+    private List<Tuple> randomTake(int count) {
+        int length = queueRcmdNumArray.length;
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < length; i++) {
+            for (int j = 0; j < queueRcmdNumArray[i]; j++) {
+                list.add(i);
+            }
+        }
+        Collections.shuffle(list);
+        return list.subList(0, count < list.size() ? count : list.size()).stream()
+                .map(x1 -> new Tuple(x1, 1))
+                .collect(groupingBy(Tuple::getT1)).entrySet().stream()
+                .map(x -> new Tuple(x.getKey(), x.getValue().size())).collect(toList());
+    }
+
 
     private SimpleArticle getNewsKeywords(HashOperations ho, String informationId) {
         SimpleArticle simpleArticle = new SimpleArticle();
@@ -287,7 +384,7 @@ public class RedisService {
         String[] infoArray = newsInfo.split(";");
 
         String channelId = infoArray[0];
-        List<MyKeyword> keywords = parseKeywordList(infoArray[1]);
+        List<MyKeyword> keywords = MyKeyword.parseKeywordsFromString(infoArray[1]);
         simpleArticle.setInformationId(informationId);
         simpleArticle.setChannelId(channelId);
         simpleArticle.setKeywords(keywords);

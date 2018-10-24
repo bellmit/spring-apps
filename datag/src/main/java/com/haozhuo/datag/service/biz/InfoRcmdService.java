@@ -272,7 +272,7 @@ public class InfoRcmdService {
     private void checkIfRequestRcmd(RcmdNewsInfo rcmdNewsInfo, String userId) {
         List<String> channelIds = rcmdNewsInfo.getRequestRcmdChannels();
         if (rcmdNewsInfo.isInitAllChannels()) {
-            channelIds = RcmdNewsInfo.getAllChannelIds();
+            channelIds.addAll(RcmdNewsInfo.getAllChannelIds()) ;
         }
         channelIds.forEach(channelId -> kafkaService.sendRcmdRequestMsg(new NewsRcmdMsg(userId, channelId, 1)));
 

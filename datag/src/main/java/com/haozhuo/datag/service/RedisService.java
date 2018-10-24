@@ -59,16 +59,17 @@ public class RedisService {
     @Deprecated
     private final String loveTagsKey = "LoveTags:%s";
 
-    @Value("${app.biz.negativeCoefficient:-5}")
-    private int negativeCoefficient;
+    @Value("${app.biz.negativeCoefficient:-0.5}")
+    private double negativeCoefficient;
 
-    private int[] queueRcmdNumArray = {4, 3, 3, 2, 2};
+    private int[] queueRcmdNumArray = {5, 4, 4, 3, 2, 2};
     private final String newsKeywordsKey = "news_keywords";
     private final String newsIndexKeyFormat = "news_ind:%s:%s";
     private final String userPrefsKeyFormat = "user_prefs:%s";
     private final String newsRcmdKeyFormat = "news_rcmd:%s:%s";
     private final String newsPushedKeyFormat = "news_pushed:%s:%s";
     private final String newsRcmdChannelsKey = "news_rcmd_channels";
+    private final String newsLockFormat = "news_lock:%s";
 
     private final List<Object> avlHashKeys = Arrays.asList("a", "v", "l");
 
@@ -263,7 +264,7 @@ public class RedisService {
         List<String> keywordNameList = simpleArticle.getKeywordNameList();
         List<MyKeyword> positivePrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
         List<MyKeyword> negativePrefList = simpleArticle.getKeywords().stream().map(kwc -> {
-            kwc.setScore(kwc.getScore() * negativeCoefficient);
+            kwc.setScore((int) (kwc.getScore() * negativeCoefficient));
             return kwc;
         }).collect(toList());
         positivePrefList.addAll(negativePrefList);
@@ -298,7 +299,7 @@ public class RedisService {
         SetOperations so = redisDB0.opsForSet();
         List<String> news = so.pop(rcmdKey, count);
         boolean requestRcmd = false;
-        if (so.size(rcmdKey) < 50) {
+        if (so.size(rcmdKey) < 10) {
             requestRcmd = true;
         }
         addPushedNewsSet(userId, channelId, news);
@@ -309,7 +310,7 @@ public class RedisService {
     public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
         Tuple<List<String>, Boolean> tup = getNewsByUserAndChannel(userId, channelId, count);
         RcmdNewsInfo rcmdNewsInfo = new RcmdNewsInfo();
-        rcmdNewsInfo.setInitAllChannels(tup.getT1().size() <= 0);
+        // rcmdNewsInfo.setInitAllChannels(tup.getT1().size() <= 0);
         rcmdNewsInfo.addNews(tup.getT1());
         if (tup.getT2()) {
             rcmdNewsInfo.addRcmdChannelId(channelId);
@@ -317,21 +318,34 @@ public class RedisService {
         return rcmdNewsInfo;
     }
 
+    public boolean unLocked(String userId) {
+        return redisDB0.getExpire(String.format(newsLockFormat, userId)) <= 0;
+    }
+
+    public void setLocked(String userId) {
+        redisDB0.opsForValue().set(String.format(newsLockFormat, userId), "1", 15, TimeUnit.SECONDS);
+    }
 
     public RcmdNewsInfo getRcmdNews(String userId, int count) {
         Object queue = redisDB0.opsForHash().get(newsRcmdChannelsKey, userId);
         RcmdNewsInfo info = new RcmdNewsInfo();
 
         if (queue == null) {
-            info.setInitAllChannels(true);
+            queue = "1";
+        }
+        String[] queueChannelIds = queue.toString().split(",");
+        if (queueChannelIds.length < queueRcmdNumArray.length) {
+            if (unLocked(userId)) {
+                info.setInitAllChannels(true);
+                setLocked(userId);
+            }
         } else {
-            String[] queueChannelIds = queue.toString().split(",");
             List<Tuple> randomNumQueue = randomTake(count);
             for (Tuple tup : randomNumQueue) {
                 try {
                     String channelId = queueChannelIds[(int) tup.getT1()];
                     int subCount = (int) tup.getT2();
-                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount);
+                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount + 2);
                     if (tmp.getT2()) {
                         info.addRcmdChannelId(channelId);
                     }
@@ -340,8 +354,10 @@ public class RedisService {
 
                 }
             }
-            if (info.getNews().size() < count) {
-                info.setInitAllChannels(true);
+
+            if (count < info.getNews().size()) {
+                Collections.shuffle(info.getNews());
+                info.setNews(info.getNews().subList(0, count));
             }
         }
         return info;

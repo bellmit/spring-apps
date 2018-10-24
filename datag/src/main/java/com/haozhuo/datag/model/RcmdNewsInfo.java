@@ -47,4 +47,7 @@ public class RcmdNewsInfo {
     public void addNews(List<String> some) {
         this.news.addAll(some);
     }
+    public void setNews(List<String> some) {
+        this.news = some;
+    }
 }

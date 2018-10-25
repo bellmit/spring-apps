@@ -148,7 +148,12 @@ public class EsService {
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
         return recommend(index, query, size, types);
     }
-
+    public String[] commonRecommend(String index, String[] pushedIds, int size, String... types) {
+        //logger.debug(StringUtils.arrayToCommaDelimitedString(types));
+        QueryBuilder query = QueryBuilders.boolQuery()
+                .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
+        return recommend(index, query, size, types);
+    }
 
     public String[] heatRecommend(String index, int pageNo, int size, String... types) {
         SearchRequestBuilder srb = client.prepareSearch(index)

@@ -216,7 +216,7 @@ public class InfoRcmdService {
                 liveIds = new String[]{liveIds[0]};
             }
 
-            int compSize = size - videoIds.length - liveIds.length;
+            int compSize = size - 2;
             RcmdNewsInfo rcmdNewsInfo = redisService.getRcmdNews(userId, compSize);
 
             checkIfRequestRcmd(rcmdNewsInfo, userId);
@@ -235,15 +235,15 @@ public class InfoRcmdService {
             //获取用户感兴趣的标签
             String[] esTypes = dataetlJdbcService.channelEsTypeMap.get(channelId);
             videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2, esTypes);
-            int compSize = size - videoIds.length;
+            int compSize = size - 2;
 
             RcmdNewsInfo rcmdNewsInfo = redisService.getRcmdNewsByChannel(userId, channelId, size - videoIds.length);
 
             checkIfRequestRcmd(rcmdNewsInfo, userId);
             articleIds = rcmdNewsInfo.getNews().stream().toArray(String[]::new);
-            if (articleIds.length == 0) {
+            if (articleIds.length < compSize) {
                 logger.info("用户 {} 的 channelId {}:Redis中没有数据，从ES中取数据", userId, channelId);
-                articleIds = esService.commonRecommend(esService.getArticleIndex(), hateTags, (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), compSize, esTypes);
+                articleIds = esService.commonRecommend(esService.getArticleIndex(), (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), compSize, esTypes);
             } else {
                 logger.info("从Redis中频道: {} 用户:{} 取出{}条数据", channelId, userId, articleIds.length);
             }

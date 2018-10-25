@@ -1,4 +1,4 @@
-package com.haozhuo.datag.service.textspilt;
+package com.haozhuo.datag.model.textspilt;
 
 import com.haozhuo.datag.service.DataetlJdbcService;
 import org.ansj.app.keyword.Keyword;

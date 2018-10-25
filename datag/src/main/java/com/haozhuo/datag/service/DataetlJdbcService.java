@@ -6,7 +6,7 @@ import com.haozhuo.datag.model.Article;
 import com.haozhuo.datag.model.Channel;
 import com.haozhuo.datag.model.LiveInfo;
 import com.haozhuo.datag.model.Video;
-import com.haozhuo.datag.service.textspilt.SimpleArticle;
+import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,8 +145,14 @@ public class DataetlJdbcService {
                 .collect(Collectors.toSet());
     }
 
-    public Map<String, String> getPortraitMap() {
-        List<Tuple<String, String>> list = dataetlDB.query("select id, name from portrait_tag union select id,label as name from disease_label", new RowMapper<Tuple<String, String>>() {
+    public Map<String, String> getPortraitMap(int type) {
+        String sql;
+        if(type == 1){
+            sql = "select id, name from portrait_tag union select id,label as name from disease_label";
+        }else {
+            sql = "select id,label as name from disease_label";
+        }
+        List<Tuple<String, String>> list = dataetlDB.query(sql, new RowMapper<Tuple<String, String>>() {
             @Override
             public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
                 return new Tuple<String, String>(resultSet.getString("name"), resultSet.getString("id"));

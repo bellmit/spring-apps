@@ -1,6 +1,5 @@
 package com.haozhuo.datag.service.biz;
 
-import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.NewsRcmdMsg;
 import com.haozhuo.datag.model.PushedInfoKeys;
@@ -9,7 +8,7 @@ import com.haozhuo.datag.service.DataetlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.KafkaService;
 import com.haozhuo.datag.service.RedisService;
-import com.haozhuo.datag.service.textspilt.MyKeyword;
+import com.haozhuo.datag.model.textspilt.MyKeyword;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

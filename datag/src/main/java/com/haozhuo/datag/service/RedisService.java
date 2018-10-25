@@ -5,8 +5,8 @@ import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.PushedInfoKeys;
 import com.haozhuo.datag.model.RcmdNewsInfo;
-import com.haozhuo.datag.service.textspilt.MyKeyword;
-import com.haozhuo.datag.service.textspilt.SimpleArticle;
+import com.haozhuo.datag.model.textspilt.MyKeyword;
+import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,10 +59,13 @@ public class RedisService {
     @Deprecated
     private final String loveTagsKey = "LoveTags:%s";
 
-    @Value("${app.biz.negativeCoefficient:-0.5}")
+    @Value("${app.biz.negativeCoefficient:-1}")
     private double negativeCoefficient;
 
-    private int[] queueRcmdNumArray = {5, 4, 4, 3, 2, 2};
+    @Value("${app.biz.queueRcmdNum:5,4,3,2}")
+    private String queueRcmdNumStr;
+    private Integer[] queueRcmdNumArray;
+
     private final String newsKeywordsKey = "news_keywords";
     private final String newsIndexKeyFormat = "news_ind:%s:%s";
     private final String userPrefsKeyFormat = "user_prefs:%s";
@@ -326,10 +329,16 @@ public class RedisService {
         redisDB0.opsForValue().set(String.format(newsLockFormat, userId), "1", 15, TimeUnit.SECONDS);
     }
 
+    private Integer[] getRcmdNumArray() {
+        if(queueRcmdNumArray == null) {
+            queueRcmdNumArray = stream(queueRcmdNumStr.split(",")).map(x -> Integer.parseInt(x)).toArray(Integer[]::new);
+        }
+        return queueRcmdNumArray;
+    }
     public RcmdNewsInfo getRcmdNews(String userId, int count) {
         Object queue = redisDB0.opsForHash().get(newsRcmdChannelsKey, userId);
+        Integer[] queueRcmdNumArray = getRcmdNumArray();
         RcmdNewsInfo info = new RcmdNewsInfo();
-
         if (queue == null) {
             queue = "1";
         }
@@ -340,12 +349,11 @@ public class RedisService {
                 setLocked(userId);
             }
         } else {
-            List<Tuple> randomNumQueue = randomTake(count);
-            for (Tuple tup : randomNumQueue) {
+            for (int i = 0; i < queueRcmdNumArray.length; i++) {
                 try {
-                    String channelId = queueChannelIds[(int) tup.getT1()];
-                    int subCount = (int) tup.getT2();
-                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount + 2);
+                    String channelId = queueChannelIds[i];
+                    int subCount = queueRcmdNumArray[i];
+                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount);
                     if (tmp.getT2()) {
                         info.addRcmdChannelId(channelId);
                     }
@@ -354,11 +362,29 @@ public class RedisService {
 
                 }
             }
-
             if (count < info.getNews().size()) {
                 Collections.shuffle(info.getNews());
                 info.setNews(info.getNews().subList(0, count));
             }
+//            List<Tuple> randomNumQueue = randomTake(count);
+//            for (Tuple tup : randomNumQueue) {
+//                try {
+//                    String channelId = queueChannelIds[(int) tup.getT1()];
+//                    int subCount = (int) tup.getT2();
+//                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount + 2);
+//                    if (tmp.getT2()) {
+//                        info.addRcmdChannelId(channelId);
+//                    }
+//                    info.addNews(tmp.getT1());
+//                } catch (Exception ex) {
+//
+//                }
+//            }
+//
+//            if (count < info.getNews().size()) {
+//                Collections.shuffle(info.getNews());
+//                info.setNews(info.getNews().subList(0, count));
+//            }
         }
         return info;
     }
@@ -371,21 +397,21 @@ public class RedisService {
         redisDB0.opsForSet().add(pushedNewsKey, values.toArray(new String[]{}));
         redisDB0.expire(pushedNewsKey, 7, TimeUnit.DAYS);
     }
-
-    private List<Tuple> randomTake(int count) {
-        int length = queueRcmdNumArray.length;
-        List<Integer> list = new ArrayList<>();
-        for (int i = 0; i < length; i++) {
-            for (int j = 0; j < queueRcmdNumArray[i]; j++) {
-                list.add(i);
-            }
-        }
-        Collections.shuffle(list);
-        return list.subList(0, count < list.size() ? count : list.size()).stream()
-                .map(x1 -> new Tuple(x1, 1))
-                .collect(groupingBy(Tuple::getT1)).entrySet().stream()
-                .map(x -> new Tuple(x.getKey(), x.getValue().size())).collect(toList());
-    }
+//
+//    private List<Tuple> randomTake(int count) {
+//        int length = queueRcmdNumArray.length;
+//        List<Integer> list = new ArrayList<>();
+//        for (int i = 0; i < length; i++) {
+//            for (int j = 0; j < queueRcmdNumArray[i]; j++) {
+//                list.add(i);
+//            }
+//        }
+//        Collections.shuffle(list);
+//        return list.subList(0, count < list.size() ? count : list.size()).stream()
+//                .map(x1 -> new Tuple(x1, 1))
+//                .collect(groupingBy(Tuple::getT1)).entrySet().stream()
+//                .map(x -> new Tuple(x.getKey(), x.getValue().size())).collect(toList());
+//    }
 
 
     private SimpleArticle getNewsKeywords(HashOperations ho, String informationId) {

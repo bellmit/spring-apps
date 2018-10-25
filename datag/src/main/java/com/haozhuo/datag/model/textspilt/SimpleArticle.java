@@ -1,4 +1,4 @@
-package com.haozhuo.datag.service.textspilt;
+package com.haozhuo.datag.model.textspilt;
 
 import java.util.List;
 

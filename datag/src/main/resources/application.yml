@@ -15,6 +15,7 @@ app:
   kafka:
     topic:
       news-rcmd-request: news-rcmd-request
+      prefs-update: prefs-update
   biz:
     version: 2
     queueRcmdNum: 5,4,3,2

@@ -59,8 +59,8 @@ public class RedisService {
     @Deprecated
     private final String loveTagsKey = "LoveTags:%s";
 
-    @Value("${app.biz.negativeCoefficient:-1}")
-    private double negativeCoefficient;
+//    @Value("${app.biz.negativeCoefficient:-1}")
+//    private double negativeCoefficient;
 
     @Value("${app.biz.queueRcmdNum:5,4,3,2}")
     private String queueRcmdNumStr;
@@ -177,6 +177,7 @@ public class RedisService {
 
 
     private String[] getPushedKeys(String userId, String key) {
+        checkOrUpdateDateInfo();
         return stream(lastNdays)
                 .flatMap(day -> redisDB0.opsForSet().members(String.format(key, userId, day)).stream())
                 .toArray(String[]::new);
@@ -210,6 +211,7 @@ public class RedisService {
     }
 
     private void deletePushedKey(String userId, String key) {
+        checkOrUpdateDateInfo();
         redisDB0.delete(
                 stream(lastNdays).map(day -> String.format(key, userId, day)).collect(toList())
         );
@@ -255,25 +257,25 @@ public class RedisService {
                 ));
     }
 
-    public String setHateKeywords(String userId, String infoId) {
-        HashOperations ho = redisDB0.opsForHash();
-        SimpleArticle simpleArticle = getNewsKeywords(ho, infoId);
-
-        List<MyKeyword> userPrefList = getUserPref(userId, simpleArticle.getChannelId());
-
-        if (userPrefList == null || userPrefList.size() == 0)
-            return null;
-
-        List<String> keywordNameList = simpleArticle.getKeywordNameList();
-        List<MyKeyword> positivePrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
-        List<MyKeyword> negativePrefList = simpleArticle.getKeywords().stream().map(kwc -> {
-            kwc.setScore((int) (kwc.getScore() * negativeCoefficient));
-            return kwc;
-        }).collect(toList());
-        positivePrefList.addAll(negativePrefList);
-        setUserPref(ho, userId, simpleArticle.getChannelId(), positivePrefList);
-        return simpleArticle.getChannelId();
-    }
+//    public String setHateKeywords(String userId, String infoId) {
+//        HashOperations ho = redisDB0.opsForHash();
+//        SimpleArticle simpleArticle = getNewsKeywords(ho, infoId);
+//
+//        List<MyKeyword> userPrefList = getUserPref(userId, simpleArticle.getChannelId());
+//
+//        if (userPrefList == null || userPrefList.size() == 0)
+//            return null;
+//
+//        List<String> keywordNameList = simpleArticle.getKeywordNameList();
+//        List<MyKeyword> positivePrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
+//        List<MyKeyword> negativePrefList = simpleArticle.getKeywords().stream().map(kwc -> {
+//            kwc.setScore((int) (kwc.getScore() * negativeCoefficient));
+//            return kwc;
+//        }).collect(toList());
+//        positivePrefList.addAll(negativePrefList);
+//        setUserPref(ho, userId, simpleArticle.getChannelId(), positivePrefList);
+//        return simpleArticle.getChannelId();
+//    }
 
     public List<MyKeyword> getUserPref(String userId, String channelId) {
         Object obj = redisDB0.opsForHash().get(String.format(userPrefsKeyFormat, userId), channelId);
@@ -366,25 +368,6 @@ public class RedisService {
                 Collections.shuffle(info.getNews());
                 info.setNews(info.getNews().subList(0, count));
             }
-//            List<Tuple> randomNumQueue = randomTake(count);
-//            for (Tuple tup : randomNumQueue) {
-//                try {
-//                    String channelId = queueChannelIds[(int) tup.getT1()];
-//                    int subCount = (int) tup.getT2();
-//                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount + 2);
-//                    if (tmp.getT2()) {
-//                        info.addRcmdChannelId(channelId);
-//                    }
-//                    info.addNews(tmp.getT1());
-//                } catch (Exception ex) {
-//
-//                }
-//            }
-//
-//            if (count < info.getNews().size()) {
-//                Collections.shuffle(info.getNews());
-//                info.setNews(info.getNews().subList(0, count));
-//            }
         }
         return info;
     }
@@ -397,21 +380,6 @@ public class RedisService {
         redisDB0.opsForSet().add(pushedNewsKey, values.toArray(new String[]{}));
         redisDB0.expire(pushedNewsKey, 7, TimeUnit.DAYS);
     }
-//
-//    private List<Tuple> randomTake(int count) {
-//        int length = queueRcmdNumArray.length;
-//        List<Integer> list = new ArrayList<>();
-//        for (int i = 0; i < length; i++) {
-//            for (int j = 0; j < queueRcmdNumArray[i]; j++) {
-//                list.add(i);
-//            }
-//        }
-//        Collections.shuffle(list);
-//        return list.subList(0, count < list.size() ? count : list.size()).stream()
-//                .map(x1 -> new Tuple(x1, 1))
-//                .collect(groupingBy(Tuple::getT1)).entrySet().stream()
-//                .map(x -> new Tuple(x.getKey(), x.getValue().size())).collect(toList());
-//    }
 
 
     private SimpleArticle getNewsKeywords(HashOperations ho, String informationId) {

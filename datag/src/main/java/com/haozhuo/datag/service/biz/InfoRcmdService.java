@@ -237,7 +237,7 @@ public class InfoRcmdService {
             videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 2, esTypes);
             int compSize = size - 2;
 
-            RcmdNewsInfo rcmdNewsInfo = redisService.getRcmdNewsByChannel(userId, channelId, size - videoIds.length);
+            RcmdNewsInfo rcmdNewsInfo = redisService.getRcmdNewsByChannel(userId, channelId, compSize);
 
             checkIfRequestRcmd(rcmdNewsInfo, userId);
             articleIds = rcmdNewsInfo.getNews().stream().toArray(String[]::new);

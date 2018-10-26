@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
 import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.NewsRcmdMsg;
+import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -545,10 +546,12 @@ public class RcmdController {
 
 
         //为文章推荐
-        String channelId = redisService.setHateKeywords(userId, String.valueOf(infoId));
-        if (channelId != null) {
-            kafkaService.sendRcmdRequestMsg(new NewsRcmdMsg(userId, channelId, 2));
-        }
+//        String channelId = redisService.setHateKeywords(userId, String.valueOf(infoId));
+//        if (channelId != null) {
+//            kafkaService.sendRcmdRequestMsg(new NewsRcmdMsg(userId, channelId, 2));
+//        }
+
+        kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString(), "", false, true, 2));
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";
     }

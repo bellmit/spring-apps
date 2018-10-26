@@ -3,6 +3,7 @@ package com.haozhuo.datag.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.NewsRcmdMsg;
+import com.haozhuo.datag.model.PrefUpdateMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,10 @@ public class KafkaService {
     @Value("${app.kafka.topic.news-rcmd-request: news-rcmd-request}")
     private String newsRcmdRequestTopic;
 
+
+    @Value("${app.kafka.topic.prefs-update: prefs-update}")
+    private String prefUpdateTopic;
+
     public void sendRcmdRequestMsg(NewsRcmdMsg msg) {
         try {
             logger.debug("send msg:{}", msg);
@@ -38,4 +43,15 @@ public class KafkaService {
             logger.error("发送Kafka消息{}失败:{}",msg,e);
         }
     }
+
+    public void sendPrefUpdateMsg(PrefUpdateMsg msg) {
+        try {
+            logger.debug("send msg:{}", msg);
+            kafkaTemplate.send(prefUpdateTopic, objectMapper.writeValueAsString(msg));
+        } catch (JsonProcessingException e) {
+            logger.error("发送Kafka消息{}失败:{}",msg,e);
+        }
+    }
+
+
 }

@@ -10,16 +10,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @Data
-public class LiveInfo {
+public class Live {
     private Long id;
     private String title;
-    private String oneLevelTag;
-    private String twoLevelTag;
-    private String labels;
-    private String labelIds;
-    private String keywords;
-    private String basicTags;
-    private String category;
+    private int status;
+    private String description;
+    private int channelId;
+    private int categoryId;
+    private String tags;
     private int isPay;
     private String playTime;
+    private String updateTime;
 }

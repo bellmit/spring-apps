@@ -257,26 +257,6 @@ public class RedisService {
                 ));
     }
 
-//    public String setHateKeywords(String userId, String infoId) {
-//        HashOperations ho = redisDB0.opsForHash();
-//        SimpleArticle simpleArticle = getNewsKeywords(ho, infoId);
-//
-//        List<MyKeyword> userPrefList = getUserPref(userId, simpleArticle.getChannelId());
-//
-//        if (userPrefList == null || userPrefList.size() == 0)
-//            return null;
-//
-//        List<String> keywordNameList = simpleArticle.getKeywordNameList();
-//        List<MyKeyword> positivePrefList = userPrefList.stream().filter(kw -> !keywordNameList.contains(kw.getName())).collect(toList());
-//        List<MyKeyword> negativePrefList = simpleArticle.getKeywords().stream().map(kwc -> {
-//            kwc.setScore((int) (kwc.getScore() * negativeCoefficient));
-//            return kwc;
-//        }).collect(toList());
-//        positivePrefList.addAll(negativePrefList);
-//        setUserPref(ho, userId, simpleArticle.getChannelId(), positivePrefList);
-//        return simpleArticle.getChannelId();
-//    }
-
     public List<MyKeyword> getUserPref(String userId, String channelId) {
         Object obj = redisDB0.opsForHash().get(String.format(userPrefsKeyFormat, userId), channelId);
         return MyKeyword.parseKeywordsFromString((String) obj);
@@ -287,17 +267,6 @@ public class RedisService {
                 .map(kw -> kw.getName() + ":" + kw.getScore()).collect(joining(","));
         ho.put(String.format(userPrefsKeyFormat, userId), channelId, strPref);
     }
-
-//    public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
-//        return getRcmdNewsByChannel(userId, channelId, count, true);
-//    }
-
-//    public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
-//
-//        Tuple<List<String>, Boolean> newsAndRequest = getNewsByUserAndChannel(userId, channelId, count);
-//
-//        return info;
-//    }
 
     private Tuple<List<String>, Boolean> getNewsByUserAndChannel(String userId, String channelId, int count) {
         String rcmdKey = String.format(newsRcmdKeyFormat, userId, channelId);

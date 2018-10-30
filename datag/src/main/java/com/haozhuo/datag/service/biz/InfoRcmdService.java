@@ -277,41 +277,41 @@ public class InfoRcmdService {
 
     }
 
-    public InfoALV channelRecommend(String channelType, String channelId, String categoryId, int pageNo, int size) {
-        long beginTime = System.currentTimeMillis();
-        String[] videoIds;
-        String[] liveIds = new String[]{};
-        String[] articleIds = new String[]{};
-        InfoALV result = new InfoALV();
-        if (channelTypeVideo.equalsIgnoreCase(channelType)) {//视频频道下所有
-            logger.debug("视频频道下所有");
-            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, size);
-        } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道
-            logger.debug("推荐频道");
-            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 1);
-            liveIds = esService.heatRecommend(esService.getLiveIndex(), pageNo, 1);
-            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length - liveIds.length);
-        } else if (allCategoryId.equals(categoryId)) { //文章频道下所有
-            logger.debug("其他频道下所有");
-            String[] categories = dataetlJdbcService.channelEsTypeMap.get(channelId);
-            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2, categories);
-            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length, categories);
-            if (articleIds.length == 0) { //如果文章都到底了，那么就不推视频了
-                videoIds = new String[]{};
-            }
-        } else {//文章某个频道下所有某个类别
-            logger.debug("其他频道下某个分类");
-            String esType = channelId + "_" + categoryId;
-            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2, esType);
-            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length, esType);
-            if (articleIds.length == 0) {
-                videoIds = new String[]{};
-            }
-        }
-        result.setArticle(articleIds);
-        result.setVideo(videoIds);
-        result.setLive(liveIds);
-        logger.info("/mul/ALV/channel?channelType={}&channelId={}&categoryId={}&pageNo={}  cost: {}ms", channelType, channelId, categoryId, pageNo, System.currentTimeMillis() - beginTime);
-        return result;
-    }
+//    public InfoALV channelRecommend(String channelType, String channelId, String categoryId, int pageNo, int size) {
+//        long beginTime = System.currentTimeMillis();
+//        String[] videoIds;
+//        String[] liveIds = new String[]{};
+//        String[] articleIds = new String[]{};
+//        InfoALV result = new InfoALV();
+//        if (channelTypeVideo.equalsIgnoreCase(channelType)) {//视频频道下所有
+//            logger.debug("视频频道下所有");
+//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, size);
+//        } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道
+//            logger.debug("推荐频道");
+//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 1);
+//            liveIds = esService.heatRecommend(esService.getLiveIndex(), pageNo, 1);
+//            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length - liveIds.length);
+//        } else if (allCategoryId.equals(categoryId)) { //文章频道下所有
+//            logger.debug("其他频道下所有");
+//            String[] categories = dataetlJdbcService.channelEsTypeMap.get(channelId);
+//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2, categories);
+//            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length, categories);
+//            if (articleIds.length == 0) { //如果文章都到底了，那么就不推视频了
+//                videoIds = new String[]{};
+//            }
+//        } else {//文章某个频道下所有某个类别
+//            logger.debug("其他频道下某个分类");
+//            String esType = channelId + "_" + categoryId;
+//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2, esType);
+//            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length, esType);
+//            if (articleIds.length == 0) {
+//                videoIds = new String[]{};
+//            }
+//        }
+//        result.setArticle(articleIds);
+//        result.setVideo(videoIds);
+//        result.setLive(liveIds);
+//        logger.info("/mul/ALV/channel?channelType={}&channelId={}&categoryId={}&pageNo={}  cost: {}ms", channelType, channelId, categoryId, pageNo, System.currentTimeMillis() - beginTime);
+//        return result;
+//    }
 }

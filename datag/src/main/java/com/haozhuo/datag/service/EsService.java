@@ -48,11 +48,11 @@ public class EsService {
     @Value("${app.es.article-index}")
     private String articleIndex;
 
-    @Value("${app.es.heat-article-index:heat_article}")
-    private String heatArticleIndex;
-
-    @Value("${app.es.heat-article-index:heat_video}")
-    private String heatVideoIndex;
+//    @Value("${app.es.heat-article-index:heat_article}")
+//    private String heatArticleIndex;
+//
+//    @Value("${app.es.heat-article-index:heat_video}")
+//    private String heatVideoIndex;
 
     @Value("${app.es.portrait-index:portrait}")
     private String portraitIndex;
@@ -75,13 +75,13 @@ public class EsService {
         return articleIndex;
     }
 
-    public String getHeatArticleIndex() {
-        return heatArticleIndex;
-    }
-
-    public String getHeatVideoIndex() {
-        return heatVideoIndex;
-    }
+//    public String getHeatArticleIndex() {
+//        return heatArticleIndex;
+//    }
+//
+//    public String getHeatVideoIndex() {
+//        return heatVideoIndex;
+//    }
 
     @Value("${app.es.reportlabel-index}")
     private String reportlabelIndex;
@@ -90,8 +90,8 @@ public class EsService {
     private TransportClient client;
     private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8D);
     private GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
-    private GaussDecayFunctionBuilder heatGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("heat", "3000", "1000", "0", 0.8D);
-    private GaussDecayFunctionBuilder isPayGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("is_pay", "1", "1", "0", 0.8D);
+    //private GaussDecayFunctionBuilder heatGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("heat", "3000", "1000", "0", 0.8D);
+    //private GaussDecayFunctionBuilder isPayGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("is_pay", "1", "1", "0", 0.8D);
 
     private String[] recommend(String index, QueryBuilder query, int size, String... types) {
         SearchRequestBuilder srb = client.prepareSearch(index)
@@ -135,14 +135,14 @@ public class EsService {
         }
     }
 
-
-    private GaussDecayFunctionBuilder getHeatGaussFunction(String index) {
-        if (liveIndex.equals(index)) {
-            return isPayGaussDecayFunction;
-        } else {
-            return heatGaussDecayFunction;
-        }
-    }
+//
+//    private GaussDecayFunctionBuilder getHeatGaussFunction(String index) {
+//        if (liveIndex.equals(index)) {
+//            return isPayGaussDecayFunction;
+//        } else {
+//            return heatGaussDecayFunction;
+//        }
+//    }
 
     public String[] commonRecommend(String index, String hateTags, String[] pushedIds, int size, String... types) {
         String tagField = getTagField(index);
@@ -152,6 +152,7 @@ public class EsService {
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
         return recommend(index, query, size, types);
     }
+
     public String[] commonRecommend(String index, String[] pushedIds, int size, String... types) {
         //logger.debug(StringUtils.arrayToCommaDelimitedString(types));
         QueryBuilder query = QueryBuilders.boolQuery()
@@ -159,26 +160,26 @@ public class EsService {
         return recommend(index, query, size, types);
     }
 
-    public String[] heatRecommend(String index, int pageNo, int size, String... types) {
-        SearchRequestBuilder srb = client.prepareSearch(index)
-                .setSize(size)
-                .setFrom((pageNo - 1) * size);
-        if (types != null && types.length > 0) {
-            srb.setTypes(types);
-        }
-
-        srb.setQuery(
-                new FunctionScoreQueryBuilder(
-                        new FunctionScoreQueryBuilder(
-                                QueryBuilders.matchAllQuery(),
-                                getTimeGaussFunction(index)
-                        ),
-                        getHeatGaussFunction(index)
-                )
-        );
-        logger.debug(srb.toString());
-        return EsUtils.getDocIdsAsArray(srb);
-    }
+//    public String[] heatRecommend(String index, int pageNo, int size, String... types) {
+//        SearchRequestBuilder srb = client.prepareSearch(index)
+//                .setSize(size)
+//                .setFrom((pageNo - 1) * size);
+//        if (types != null && types.length > 0) {
+//            srb.setTypes(types);
+//        }
+//
+//        srb.setQuery(
+//                new FunctionScoreQueryBuilder(
+//                        new FunctionScoreQueryBuilder(
+//                                QueryBuilders.matchAllQuery(),
+//                                getTimeGaussFunction(index)
+//                        ),
+//                        getHeatGaussFunction(index)
+//                )
+//        );
+//        logger.debug(srb.toString());
+//        return EsUtils.getDocIdsAsArray(srb);
+//    }
 
     private String[] getVideoIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
         return getIndexByCondition(videoIndex, condition, excludeIds, from, size);
@@ -317,7 +318,8 @@ public class EsService {
     }
 
     /**
-     *   lv03,jbg02|159|zc03,jbg11,61
+     * lv03,jbg02|159|zc03,jbg11,61
+     *
      * @param strTagIds
      * @return
      */
@@ -325,33 +327,23 @@ public class EsService {
 
         String fieldName = "tagIds";
         BoolQueryBuilder builder = QueryBuilders.boolQuery();
-        for(String oneLevelTagIds: strTagIds.split("\\|")) {
+        for (String oneLevelTagIds : strTagIds.split("\\|")) {
             BoolQueryBuilder builder2 = QueryBuilders.boolQuery();
-            for(String tagId: oneLevelTagIds.split(",")) {
+            for (String tagId : oneLevelTagIds.split(",")) {
                 builder2.must(QueryBuilders.termQuery(fieldName, tagId));
             }
             builder.should(builder2);
         }
         return builder;
-//        stream().forEach(groupTags -> {
-//
-//
-////            for (String tagId : tagIdList) {
-////                builder.must(QueryBuilders.termQuery(fieldName, tagId));
-////            }
-//
-//        });
-//
-
     }
 
-    public List<String> getUserIdsByPortraitTagIds(String strTagIds, String searchAfterUid,int size) {
+    public List<String> getUserIdsByPortraitTagIds(String strTagIds, String searchAfterUid, int size) {
 
         SearchRequestBuilder srb = client.prepareSearch(portraitIndex)
                 .setSize(size)
                 .setQuery(getQueryBuilderForPortrait(strTagIds))
                 .addSort("_uid", SortOrder.DESC);
-        if(JavaUtils.isNotEmpty(searchAfterUid) && !"null".equals(searchAfterUid)) {
+        if (JavaUtils.isNotEmpty(searchAfterUid) && !"null".equals(searchAfterUid)) {
             srb.searchAfter(new String[]{"docs#" + searchAfterUid});
         }
         System.out.println(srb);
@@ -376,6 +368,7 @@ public class EsService {
         }
         return list;
     }
+
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(liveIndex)
                 .setQuery(getLiveOrVideoBasicBuilder(param, "labels", "keywords")).setSize(size);
@@ -443,6 +436,42 @@ public class EsService {
         client.prepareIndex(articleIndex, article.getChannelId() + "_" + article.getCategoryId(), String.valueOf(article.getInformationId())).setSource(map).get();
     }
 
+    /**
+     * 由于document的type未知。不能使用类似
+     * curl -X DELETE "datanode153:9200/article4/_doc/1"的删除方式，
+     * 所以采用以下删除方式：
+     * curl -X POST "datanode153:9200/article4/_delete_by_query?" -H 'Content-Type: application/json' -d'{"query": {"ids" : {"values" : ["1"]}}}'
+     *
+     * @param id
+     */
+    public void deleteVideo(long id) {
+        deleteIdByQuery(videoIndex, String.valueOf(id));
+        //deleteIdByQuery(heatVideoIndex, String.valueOf(id));
+    }
+
+    public void deleteArticle(long id) {
+        deleteIdByQuery(articleIndex, String.valueOf(id));
+        //deleteIdByQuery(heatArticleIndex, String.valueOf(id));
+    }
+
+    private void deleteIdByQuery(String index, String id) {
+        BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
+                .filter(QueryBuilders.idsQuery().addIds(String.valueOf(id)))
+                .source(index).get();
+        response.getDeleted();
+    }
+
+    public void updateLive(Live liveInfo) {
+        deleteIdByQuery(liveIndex, String.valueOf(String.valueOf(liveInfo.getId())));
+        Map<String, Object> map = new HashMap<>();
+        map.put("tags", liveInfo.getTags());
+        map.put("description", liveInfo.getDescription());
+        map.put("title", liveInfo.getTitle());
+        map.put("is_pay", liveInfo.getIsPay());
+        map.put("play_time", liveInfo.getPlayTime());
+        client.prepareIndex(liveIndex, liveInfo.getChannelId() + "_" + liveInfo.getCategoryId(), liveInfo.getId().toString()).setSource(map).get();
+    }
+
     public void updateVideo(Video video) {
         deleteIdByQuery(videoIndex, String.valueOf(String.valueOf(video.getId())));
         Map<String, Object> map = new HashMap<>();
@@ -455,48 +484,9 @@ public class EsService {
         client.prepareIndex(videoIndex, video.getChannelId() + "_" + video.getCategoryId(), String.valueOf(video.getId())).setSource(map).get();
     }
 
-    /**
-     * 由于document的type未知。不能使用类似
-     * curl -X DELETE "datanode153:9200/article4/_doc/1"的删除方式，
-     * 所以采用以下删除方式：
-     * curl -X POST "datanode153:9200/article4/_delete_by_query?" -H 'Content-Type: application/json' -d'{"query": {"ids" : {"values" : ["1"]}}}'
-     *
-     * @param id
-     */
-    public void deleteVideo(long id) {
-        deleteIdByQuery(videoIndex, String.valueOf(id));
-        deleteIdByQuery(heatVideoIndex, String.valueOf(id));
-    }
-
-    public void deleteArticle(long id) {
-        deleteIdByQuery(articleIndex, String.valueOf(id));
-        deleteIdByQuery(heatArticleIndex, String.valueOf(id));
-    }
-
-    private void deleteIdByQuery(String index, String id) {
-        BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-                .filter(QueryBuilders.idsQuery().addIds(String.valueOf(id)))
-                .source(index).get();
-        response.getDeleted();
-    }
-
-    public void updateLive(LiveInfo liveInfo) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("keywords", liveInfo.getKeywords());
-        map.put("two_level_tag", liveInfo.getTwoLevelTag());
-        map.put("one_level_tag", liveInfo.getOneLevelTag());
-        map.put("basic_tags", liveInfo.getBasicTags());
-        map.put("title", liveInfo.getTitle());
-        map.put("category", liveInfo.getCategory());
-        map.put("labels", liveInfo.getLabels());
-        map.put("label_ids", liveInfo.getLabelIds());
-        map.put("is_pay", liveInfo.getIsPay());
-        map.put("play_time", liveInfo.getPlayTime());
-        client.prepareIndex(liveIndex, "docs", liveInfo.getId().toString()).setSource(map).get();
-    }
-
     public void deleteLive(long id) {
-        client.prepareDelete(liveIndex, "docs", String.valueOf(id)).get();
+        deleteIdByQuery(liveIndex, String.valueOf(id));
+//        client.prepareDelete(liveIndex, "docs", String.valueOf(id)).get();
     }
 
     public void updateGoods(Goods goods) {
@@ -513,18 +503,18 @@ public class EsService {
     }
 
 
-    public void updateInfoHeat(InfoHeat infoHeat) {
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("heat", infoHeat.getHeat());
-        map.put("create_time", infoHeat.getCreateTime());
-        String index = heatArticleIndex;
-        if (infoHeat.getChannelId() == channelVideoId) {
-            index = heatVideoIndex;
-        }
-        deleteIdByQuery(index, String.valueOf(infoHeat.getInfoId()));
-        client.prepareIndex(index, infoHeat.getChannelId() + "_" + infoHeat.getCategoryId(), String.valueOf(infoHeat.getInfoId())).setSource(map).get();
-    }
+//    public void updateInfoHeat(InfoHeat infoHeat) {
+//
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("heat", infoHeat.getHeat());
+//        map.put("create_time", infoHeat.getCreateTime());
+//        String index = heatArticleIndex;
+//        if (infoHeat.getChannelId() == channelVideoId) {
+//            index = heatVideoIndex;
+//        }
+//        deleteIdByQuery(index, String.valueOf(infoHeat.getInfoId()));
+//        client.prepareIndex(index, infoHeat.getChannelId() + "_" + infoHeat.getCategoryId(), String.valueOf(infoHeat.getInfoId())).setSource(map).get();
+//    }
 
     public void deleteGoods(long id) {
         client.prepareDelete(goodsIndex, "docs", String.valueOf(id)).get();

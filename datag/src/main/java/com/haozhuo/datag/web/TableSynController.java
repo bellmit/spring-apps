@@ -50,15 +50,7 @@ public class TableSynController {
         return "success!";
     }
 
-    @DeleteMapping("/video/{id}")
-    @ApiOperation(value = "视频删除接口")
-    public Object deleteVideo(@PathVariable(value = "id") long id) {
-        long beginTime = System.currentTimeMillis();
-        dataetlJdbcService.deleteVideo(id);
-        esService.deleteVideo(id);
-        logger.info("DELETE /video/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
-        return "success!";
-    }
+
 
     @PostMapping("/article")
     @ApiOperation(value = "资讯更新接口")
@@ -129,12 +121,22 @@ public class TableSynController {
 
     @PostMapping("/live")
     @ApiOperation(value = "直播更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
-    public Object updateLive(@RequestBody LiveInfo liveInfo) {
+    public Object updateLive(@RequestBody Live liveInfo) {
         long beginTime = System.currentTimeMillis();
-        liveInfo.setLabelIds(dataetlJdbcService.getLabelIdsByNames(liveInfo.getLabels()));
+        //liveInfo.setLabelIds(dataetlJdbcService.getLabelIdsByNames(liveInfo.getLabels()));
         dataetlJdbcService.updateLive(liveInfo);
         esService.updateLive(liveInfo);
-        logger.info("POST /live  goodsId:{}  cost:{} ms", liveInfo.getId(), System.currentTimeMillis() - beginTime);
+        logger.info("POST /live  id:{}  cost:{} ms", liveInfo.getId(), System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
+    @DeleteMapping("/video/{id}")
+    @ApiOperation(value = "视频删除接口")
+    public Object deleteVideo(@PathVariable(value = "id") long id) {
+        long beginTime = System.currentTimeMillis();
+        dataetlJdbcService.deleteVideo(id);
+        esService.deleteVideo(id);
+        logger.info("DELETE /video/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
@@ -166,12 +168,12 @@ public class TableSynController {
         return "success!";
     }
 
-    @PostMapping("/infoHeat")
-    @ApiOperation(value = "资讯热度接口")
-    public Object updateInfoHeat(@RequestBody InfoHeat infoHeat) {
-        long beginTime = System.currentTimeMillis();
-        esService.updateInfoHeat(infoHeat);
-        logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
-        return "success!";
-    }
+//    @PostMapping("/infoHeat")
+//    @ApiOperation(value = "资讯热度接口")
+//    public Object updateInfoHeat(@RequestBody InfoHeat infoHeat) {
+//        long beginTime = System.currentTimeMillis();
+//        esService.updateInfoHeat(infoHeat);
+//        logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
+//        return "success!";
+//    }
 }

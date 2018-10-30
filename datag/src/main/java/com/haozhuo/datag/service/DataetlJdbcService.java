@@ -4,7 +4,7 @@ import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.Article;
 import com.haozhuo.datag.model.Channel;
-import com.haozhuo.datag.model.LiveInfo;
+import com.haozhuo.datag.model.Live;
 import com.haozhuo.datag.model.Video;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import org.slf4j.Logger;
@@ -147,9 +147,9 @@ public class DataetlJdbcService {
 
     public Map<String, String> getPortraitMap(int type) {
         String sql;
-        if(type == 1){
+        if (type == 1) {
             sql = "select id, name from portrait_tag union select id,label as name from disease_label";
-        }else {
+        } else {
             sql = "select id,label as name from disease_label";
         }
         List<Tuple<String, String>> list = dataetlDB.query(sql, new RowMapper<Tuple<String, String>>() {
@@ -303,15 +303,17 @@ public class DataetlJdbcService {
         updateChannelEsTypeMap();
     }
 
-    public void updateLive(LiveInfo liveInfo) {
-        String query = String.format("INSERT INTO `%s` (`id`, `title`, `one_level_tag`, `two_level_tag`, `labels`, " +
-                " `label_ids`, `keywords`, `basic_tags`, `category`,`is_pay`,`play_time`) " +
-                " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE `title` = ?, `one_level_tag` = ?, " +
-                " `two_level_tag` = ?, `labels` = ?, `label_ids` = ?, `keywords` = ?, `basic_tags` = ?, `category` = ?,`is_pay` = ?, `play_time` = ?", liveTable);
-        dataetlDB.update(query, liveInfo.getId(), liveInfo.getTitle(), liveInfo.getOneLevelTag(), liveInfo.getTwoLevelTag(),
-                liveInfo.getLabels(), liveInfo.getLabelIds(), liveInfo.getKeywords(), liveInfo.getBasicTags(), liveInfo.getCategory(),
-                liveInfo.getIsPay(), liveInfo.getPlayTime(), liveInfo.getTitle(), liveInfo.getOneLevelTag(), liveInfo.getTwoLevelTag(), liveInfo.getLabels(),
-                liveInfo.getLabelIds(), liveInfo.getKeywords(), liveInfo.getBasicTags(), liveInfo.getCategory(), liveInfo.getIsPay(), liveInfo.getPlayTime());
+    public void updateLive(Live liveInfo) {
+        String query = String.format("INSERT INTO `%s` (`id`, `title`, `status`, `description`, `channel_id`,`category_id`, " +
+                " `tags`, `is_pay`, `play_time`, `update_time`)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  " +
+                " ON DUPLICATE KEY UPDATE  `title`=?, `status`=?, `description`=?, `channel_id`=?,`category_id`=?," +
+                "`tags`=?,`is_pay`=?, `play_time`=?, `update_time`=?", liveTable);
+        dataetlDB.update(query, liveInfo.getId(), liveInfo.getTitle(), liveInfo.getStatus(),liveInfo.getDescription(),
+                liveInfo.getChannelId(), liveInfo.getCategoryId(), liveInfo.getTags(), liveInfo.getIsPay(),
+                liveInfo.getPlayTime(), liveInfo.getUpdateTime(), liveInfo.getTitle(), liveInfo.getStatus(),
+                liveInfo.getDescription(),liveInfo.getChannelId(), liveInfo.getCategoryId(), liveInfo.getTags(),
+                liveInfo.getIsPay(), liveInfo.getPlayTime(), liveInfo.getUpdateTime());
+
     }
 
     public void deleteVideo(long id) {

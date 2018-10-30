@@ -1,11 +1,11 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.EsUtils;
+import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.crm.UserIdTagsId;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
@@ -20,6 +20,7 @@ import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,9 @@ public class EsService {
 
     @Value("${app.es.heat-article-index:heat_video}")
     private String heatVideoIndex;
+
+    @Value("${app.es.portrait-index:portrait}")
+    private String portraitIndex;
 
     private final int channelVideoId = Integer.parseInt(InfoRcmdService.channelVideoId);
 
@@ -312,9 +316,52 @@ public class EsService {
         return builder;
     }
 
+    /**
+     *   lv03,jbg02|159|zc03,jbg11,61
+     * @param strTagIds
+     * @return
+     */
+    private BoolQueryBuilder getQueryBuilderForPortrait(String strTagIds) {
+
+        String fieldName = "tagIds";
+        BoolQueryBuilder builder = QueryBuilders.boolQuery();
+        for(String oneLevelTagIds: strTagIds.split("\\|")) {
+            BoolQueryBuilder builder2 = QueryBuilders.boolQuery();
+            for(String tagId: oneLevelTagIds.split(",")) {
+                builder2.must(QueryBuilders.termQuery(fieldName, tagId));
+            }
+            builder.should(builder2);
+        }
+        return builder;
+//        stream().forEach(groupTags -> {
+//
+//
+////            for (String tagId : tagIdList) {
+////                builder.must(QueryBuilders.termQuery(fieldName, tagId));
+////            }
+//
+//        });
+//
+
+    }
+
+    public List<String> getUserIdsByPortraitTagIds(String strTagIds, String searchAfterUid,int size) {
+
+        SearchRequestBuilder srb = client.prepareSearch(portraitIndex)
+                .setSize(size)
+                .setQuery(getQueryBuilderForPortrait(strTagIds))
+                .addSort("_uid", SortOrder.DESC);
+        if(JavaUtils.isNotEmpty(searchAfterUid) && !"null".equals(searchAfterUid)) {
+            srb.searchAfter(new String[]{"docs#" + searchAfterUid});
+        }
+        System.out.println(srb);
+        return EsUtils.getDocIdsAsList(srb);
+
+    }
+
     public List<UserIdTagsId> getPortraitIds(String[] userIds) {
         MultiGetResponse multiGetItemResponses = client.prepareMultiGet()
-                .add("portrait", "docs", userIds)
+                .add(portraitIndex, "docs", userIds)
                 .get();
 
         List<UserIdTagsId> list = new ArrayList<>(userIds.length);

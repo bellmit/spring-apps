@@ -544,13 +544,6 @@ public class RcmdController {
         String tags = dataetlJdbcService.getInfoTagsById(infoId);
         redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
 
-
-        //为文章推荐
-//        String channelId = redisService.setHateKeywords(userId, String.valueOf(infoId));
-//        if (channelId != null) {
-//            kafkaService.sendRcmdRequestMsg(new NewsRcmdMsg(userId, channelId, 2));
-//        }
-
         kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString(), "", false, true, 2));
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";

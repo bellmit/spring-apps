@@ -42,4 +42,20 @@ public class CrmController {
         logger.info("/portrait/tagsMap  cost: {}ms", System.currentTimeMillis() - beginTime);
         return result;
     }
+
+    @GetMapping("/portrait/getUserIdsByPortraitTagIds")
+    @ApiOperation(value = "",
+            notes = "tagIds的意思:   \n  " +
+                    "sex01,jbg02|age01|bgs02,pay01,jbg03 表示：\n  " +
+                    "(sex01 and jbg02) or (age01) or (bgs02 and pay01 and jbg03)  ")
+    public Object getUserIdsByPortraitTagIds(
+            @RequestParam(value = "tagIds") String tagIds,
+            @RequestParam(value = "searchAfterUid",defaultValue = "null") String searchAfterUid,
+            @RequestParam(value = "size",defaultValue = "10") int size
+    ) {
+        long beginTime = System.currentTimeMillis();
+        List<String> result = esService.getUserIdsByPortraitTagIds(tagIds,searchAfterUid,size);
+        logger.info("/portrait/getUserIdsByPortraitTagIds  cost: {}ms", System.currentTimeMillis() - beginTime);
+        return result;
+    }
 }

@@ -346,9 +346,15 @@ public class EsService {
         if (JavaUtils.isNotEmpty(searchAfterUid) && !"null".equals(searchAfterUid)) {
             srb.searchAfter(new String[]{"docs#" + searchAfterUid});
         }
-        System.out.println(srb);
         return EsUtils.getDocIdsAsList(srb);
 
+    }
+
+    public long getCountByPortraitTagIds(String strTagIds) {
+        SearchRequestBuilder srb = client.prepareSearch(portraitIndex)
+                .setSize(1)
+                .setQuery(getQueryBuilderForPortrait(strTagIds));
+        return srb.execute().actionGet().getHits().getTotalHits();
     }
 
     public List<UserIdTagsId> getPortraitIds(String[] userIds) {

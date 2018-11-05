@@ -1,5 +1,5 @@
 curl -XDELETE 'http://192.168.1.152:9200/live4'
-curl -XPUT 'http://192.168.1.152:9200/live4?pretty' -H 'Content-Type: application/json'  -d '{
+curl -XPUT 'http://es1:9200/live4?pretty' -H 'Content-Type: application/json'  -d '{
     "settings": {
         "index": {
             "number_of_shards": 5,

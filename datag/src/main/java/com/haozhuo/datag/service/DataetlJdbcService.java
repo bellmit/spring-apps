@@ -325,7 +325,7 @@ public class DataetlJdbcService {
     }
 
     public void deleteLive(long id) {
-        dataetlDB.update(String.format("update %s set status = 0 where id = ?", liveTable), id);
+        dataetlDB.update(String.format("delete from %s where id = ?", liveTable), id);
     }
 
     public void deleteChannel(long id) {

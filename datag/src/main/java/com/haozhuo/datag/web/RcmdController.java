@@ -288,16 +288,12 @@ public class RcmdController {
             @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
-        if (version == 1) {
-            if ("R".equalsIgnoreCase(channelType))  //推荐频道下没有分类
-                categoryId = InfoRcmdService.allCategoryId;
-            return infoRcmdService.channelRecommend(channelType, channelId, categoryId, userId, size);
-        } else {
-            logger.info("new recommder");
+        if ("R".equalsIgnoreCase(channelType))  //推荐频道下没有分类
+            categoryId = InfoRcmdService.allCategoryId;
 
 
-            return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
-        }
+        return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
+
 
     }
 

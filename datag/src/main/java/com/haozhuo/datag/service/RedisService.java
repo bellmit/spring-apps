@@ -100,6 +100,10 @@ public class RedisService {
         deleteHashKey(pushedInfoKeys.getKey(), pushedInfoKeys.getALVHashKeys().toArray());
     }
 
+    public void deleteHashKeyByPushedInfoKeys(PushedInfoKeys pushedInfoKeys,String hashKey) {
+        deleteHashKey(pushedInfoKeys.getKey(), hashKey);
+    }
+
     @Deprecated
     public void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
         if (redisDB0.hasKey(pushedInfoKeys.getKey()))
@@ -139,7 +143,7 @@ public class RedisService {
             ListOperations<String, String> oper = redisDB0.opsForList();
             oper.leftPush(key, hateTags);
             oper.trim(key, 0, 30); //只保存最近30条记录
-            redisDB0.expire(key, 90, TimeUnit.DAYS); //过期时间90天
+            redisDB0.expire(key, 1, TimeUnit.DAYS); //过期时间1天
         }
     }
 
@@ -347,7 +351,7 @@ public class RedisService {
         }
         String pushedNewsKey = String.format(newsPushedKeyFormat, userId, channelId);
         redisDB0.opsForSet().add(pushedNewsKey, values.toArray(new String[]{}));
-        redisDB0.expire(pushedNewsKey, 7, TimeUnit.DAYS);
+        redisDB0.expire(pushedNewsKey, expireDays, TimeUnit.DAYS);
     }
 
 

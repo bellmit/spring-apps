@@ -120,11 +120,11 @@ public class EsService {
 
 
     private String getTagField(String index) {
-        if (videoIndex.equals(index) || articleIndex.equals(index)) {
+        //if (videoIndex.equals(index) || articleIndex.equals(index)) {
             return "tags";
-        } else {
-            return "labels";
-        }
+        //} else {
+          //  return "labels";
+        //}
     }
 
     private GaussDecayFunctionBuilder getTimeGaussFunction(String index) {
@@ -234,12 +234,12 @@ public class EsService {
         return getVideoIds(labels, new String[]{}, size, fieldNames);
     }
 
-    public String[] getLivesIds(String labels, String[] excludeIds, int size, String... fieldNames) {
+    public String[] getLivesIds(String tags, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
-            fieldNames = new String[]{"keywords", "labels"};
+            fieldNames = new String[]{"tags"};
         }
-        String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(labels, fieldNames), excludeIds, 0, size);
-        logger.debug("labels:{}, live ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
+        String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(tags, fieldNames), excludeIds, 0, size);
+        logger.debug("tags:{}, live ids:{}", tags, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
@@ -377,7 +377,7 @@ public class EsService {
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(liveIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "labels", "keywords")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param, "tags")).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
@@ -415,20 +415,11 @@ public class EsService {
     }
 
     public boolean isExistKeyword(String keyword) {
-        SearchRequestBuilder srb = client.prepareSearch(videoIndex, articleIndex).setQuery(
+        SearchRequestBuilder srb = client.prepareSearch(videoIndex, liveIndex, articleIndex).setQuery(
                 QueryBuilders.boolQuery()
                         .should(QueryBuilders.matchPhraseQuery("title", keyword))
                         .should(QueryBuilders.matchPhraseQuery("tags", keyword))).setSize(1);
-        boolean isExist = true;
-        if (EsUtils.getDocIdsAsList(srb).size() == 0) {
-            SearchRequestBuilder srb2 = client.prepareSearch(liveIndex).setQuery(
-                    QueryBuilders.boolQuery()
-                            .should(QueryBuilders.matchPhraseQuery("title", keyword))
-                            .should(QueryBuilders.matchPhraseQuery("labels", keyword))
-                            .should(QueryBuilders.matchPhraseQuery("keywords", keyword))).setSize(1);
-            isExist = EsUtils.getDocIdsAsList(srb2).size() == 1;
-        }
-        return isExist;
+        return EsUtils.getDocIdsAsList(srb).size() > 0;
     }
 
     public void updateArticle(Article article) {

@@ -1,14 +1,14 @@
 app:
   es:
     video-index: video4
-    live-index: live4
+    live-index: livetest
     goods-index: good
     article-index: article4
     reportlabel-index: reportlabel
   mysql:
     article: article4
     video: video4
-    live: live4
+    live: livetest
   redis:
     expire-days: 15
     pushed-key-max-size: 200

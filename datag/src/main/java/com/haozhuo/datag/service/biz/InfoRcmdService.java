@@ -31,10 +31,10 @@ public class InfoRcmdService {
     private static final Logger logger = LoggerFactory.getLogger(InfoRcmdService.class);
     @Deprecated
     public static final String channelRcmdId = "10000";
-    @Deprecated
-    public static final String channelVideoId = "20000";
-    @Deprecated
-    public static final String channelLiveId = "30000";
+//    @Deprecated
+//    public static final String channelVideoId = "20000";
+//    @Deprecated
+//    public static final String channelLiveId = "30000";
     private int randomLiveOrVideoSize = 1;
 
     public static final String channelTypeRCMD = "R";
@@ -62,8 +62,8 @@ public class InfoRcmdService {
     }
 
 
-    public String getLoveTags(String userId, String channelId, String categoryId) {
-        if (allCategoryId.equals(categoryId) || channelLiveId.equals(channelId)) {
+    public String getLoveTags(String userId, String categoryId) {
+        if (allCategoryId.equals(categoryId)) {
             //获取用户感兴趣的标签
             String loveTags = redisService.getLoveTags(userId);
             logger.debug("userId:{}, loveTags:{}", userId, loveTags);
@@ -134,7 +134,7 @@ public class InfoRcmdService {
         if (channelTypeVideo.equalsIgnoreCase(channelType)) {//视频频道下所有
             logger.debug("视频频道下所有");
 
-            videoIds = getRcmdIds(getLoveTags(userId, channelId, categoryId), 10, esService.getVideoIndex(), hateTags, pushedALV.getVideo());
+            videoIds = getRcmdIds(getLoveTags(userId, categoryId), 10, esService.getVideoIndex(), hateTags, pushedALV.getVideo());
             //videoIds = esService.personalizedRecommend(esService.getVideoIndex(), tag, hateTags, pushedIds, 1, esTypes);
             if (videoIds.length < size) {
                 String[] supplementsVideoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, (String[]) ArrayUtils.addAll(videoIds, pushedALV.getVideo()), size - videoIds.length);
@@ -145,7 +145,7 @@ public class InfoRcmdService {
             }
         } else if (channelTypeLive.equalsIgnoreCase(channelType)) { //直播频道下所有
             logger.debug("直播频道下所有");
-            liveIds = getRcmdIds(getLoveTags(userId, channelId, categoryId), 10, esService.getLiveIndex(), hateTags, pushedALV.getLive());
+            liveIds = getRcmdIds(getLoveTags(userId, categoryId), 10, esService.getLiveIndex(), hateTags, pushedALV.getLive());
             if (liveIds.length < size) {
                 String[] supplementsLiveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, (String[]) ArrayUtils.addAll(liveIds, pushedALV.getLive()), size - liveIds.length);
                 liveIds = (String[]) ArrayUtils.addAll(liveIds, supplementsLiveIds);
@@ -153,11 +153,6 @@ public class InfoRcmdService {
         } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道下所有
             logger.debug("推荐频道下所有");
 
-//            if (System.currentTimeMillis() % 2 == 0) {
-//                videoIds = esService.commonRecommend(esService.getVideoIndex(), hateTags, pushedALV.getVideo(), 1);
-//            } else {
-//                liveIds = esService.commonRecommend(esService.getLiveIndex(), hateTags, pushedALV.getLive(), 1);
-//            }
             RandomVideoOrLiveId vl = getRandomVideoOrLiveId(hateTags, pushedALV, pushedInfoKeys);
             videoIds = vl.videoIds;
             liveIds = vl.liveIds;
@@ -169,7 +164,7 @@ public class InfoRcmdService {
 
             if (articleIds.length < compSize) {
                 articleIds = esService.commonRecommend(esService.getArticleIndex(), hateTags, pushedALV.getArticle(), compSize);
-                getRcmdIds(getLoveTags(userId, channelId, categoryId), compSize, esService.getArticleIndex(), hateTags, pushedALV.getArticle());
+                getRcmdIds(getLoveTags(userId, categoryId), compSize, esService.getArticleIndex(), hateTags, pushedALV.getArticle());
                 logger.info("用户 {} 推荐频道 Redis中数据不够，从ES中为取数据", userId);
             } else {
                 logger.info("从Redis中为用户:{} 取出{}条数据", userId, articleIds.length);
@@ -214,7 +209,6 @@ public class InfoRcmdService {
             redisService.setPushedInfoALV(pushedInfoKeys, pushedALV, result);
         }
 
-
         logger.info("/mul/ALV/user_channel?channelType={}&userId={}&channelId={}&categoryId={}  cost: {}ms", channelType, userId, channelId, categoryId, System.currentTimeMillis() - beginTime);
 
         return result;
@@ -228,42 +222,4 @@ public class InfoRcmdService {
         channelIds.forEach(channelId -> kafkaService.sendRcmdRequestMsg(new NewsRcmdMsg(userId, channelId, 1)));
 
     }
-
-//    public InfoALV channelRecommend(String channelType, String channelId, String categoryId, int pageNo, int size) {
-//        long beginTime = System.currentTimeMillis();
-//        String[] videoIds;
-//        String[] liveIds = new String[]{};
-//        String[] articleIds = new String[]{};
-//        InfoALV result = new InfoALV();
-//        if (channelTypeVideo.equalsIgnoreCase(channelType)) {//视频频道下所有
-//            logger.debug("视频频道下所有");
-//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, size);
-//        } else if (channelTypeRCMD.equalsIgnoreCase(channelType)) { //推荐频道
-//            logger.debug("推荐频道");
-//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 1);
-//            liveIds = esService.heatRecommend(esService.getLiveIndex(), pageNo, 1);
-//            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length - liveIds.length);
-//        } else if (allCategoryId.equals(categoryId)) { //文章频道下所有
-//            logger.debug("其他频道下所有");
-//            String[] categories = dataetlJdbcService.channelEsTypeMap.get(channelId);
-//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2, categories);
-//            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length, categories);
-//            if (articleIds.length == 0) { //如果文章都到底了，那么就不推视频了
-//                videoIds = new String[]{};
-//            }
-//        } else {//文章某个频道下所有某个类别
-//            logger.debug("其他频道下某个分类");
-//            String esType = channelId + "_" + categoryId;
-//            videoIds = esService.heatRecommend(esService.getHeatVideoIndex(), pageNo, 2, esType);
-//            articleIds = esService.heatRecommend(esService.getHeatArticleIndex(), pageNo, size - videoIds.length, esType);
-//            if (articleIds.length == 0) {
-//                videoIds = new String[]{};
-//            }
-//        }
-//        result.setArticle(articleIds);
-//        result.setVideo(videoIds);
-//        result.setLive(liveIds);
-//        logger.info("/mul/ALV/channel?channelType={}&channelId={}&categoryId={}&pageNo={}  cost: {}ms", channelType, channelId, categoryId, pageNo, System.currentTimeMillis() - beginTime);
-//        return result;
-//    }
 }

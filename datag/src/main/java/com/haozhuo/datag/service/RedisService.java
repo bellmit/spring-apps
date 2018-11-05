@@ -59,8 +59,6 @@ public class RedisService {
     @Deprecated
     private final String loveTagsKey = "LoveTags:%s";
 
-//    @Value("${app.biz.negativeCoefficient:-1}")
-//    private double negativeCoefficient;
 
     @Value("${app.biz.queueRcmdNum:5,4,3,2}")
     private String queueRcmdNumStr;
@@ -247,12 +245,10 @@ public class RedisService {
     }
 
     public void setKeywordsOfArticleInRedis(SimpleArticle simpleArticle) {
-        // saveToNewsKeywordsInRedis()
         String strInfoId = String.valueOf(simpleArticle.getInformationId());
         HashOperations ho = redisDB0.opsForHash();
         ho.put(newsKeywordsKey, strInfoId, simpleArticle.getChannelIdWithKeywords());
 
-        // saveToNewsIndInRedis()
         simpleArticle.getKeywords().stream()
                 .forEach(kw -> ho.put(
                         String.format(newsIndexKeyFormat, String.valueOf(simpleArticle.getChannelId()), kw.getName()),
@@ -288,7 +284,6 @@ public class RedisService {
     public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
         Tuple<List<String>, Boolean> tup = getNewsByUserAndChannel(userId, channelId, count);
         RcmdNewsInfo rcmdNewsInfo = new RcmdNewsInfo();
-        // rcmdNewsInfo.setInitAllChannels(tup.getT1().size() <= 0);
         rcmdNewsInfo.addNews(tup.getT1());
         if (tup.getT2()) {
             rcmdNewsInfo.addRcmdChannelId(channelId);

@@ -129,7 +129,6 @@ public class DataetlJdbcService {
      */
     public String getLabelStrByUserId(String userId) {
         return getLabelSetByUserId(userId).stream().collect(joining(","));
-        // return StringUtils.collectionToDelimitedString(getLabelSetByUserId(userId), ",");
     }
 
     /**

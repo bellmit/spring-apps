@@ -234,6 +234,27 @@ public class DataetlJdbcService {
         return tags;
     }
 
+    /**
+     * 根据infoId获取Tags
+     */
+    public String getTagsKeywordsByInfoId(String infoId) {
+        String tags = "";
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            String sql = String.format("select concat(tags,keywords) as tags from  %s  where information_id = ?", articleTable);
+            logger.debug("sql:{}", sql);
+            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, new RowMapper<String>() {
+                @Override
+                public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                    return resultSet.getString("tags");
+                }
+            });
+        } catch (Exception ex) {
+            logger.debug("getTagsByInfoId error", ex);
+        }
+        return tags;
+    }
+
     @Deprecated
     public String getLabelsByInfoId(String infoId) {
         String labelsIds = "";

@@ -2,7 +2,7 @@ app:
   es:
     video-index: video4
     live-index: live4
-    goods-index: good
+    goods-index: goods4
     article-index: article4
     reportlabel-index: reportlabel
   mysql:

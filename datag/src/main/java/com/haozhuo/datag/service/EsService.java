@@ -5,7 +5,6 @@ import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.crm.UserIdTagsId;
-import com.haozhuo.datag.service.biz.InfoRcmdService;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
@@ -206,6 +205,7 @@ public class EsService {
         return getArticleIds(labels, new String[]{}, size, fieldNames);
     }
 
+    @Deprecated
     public String[] getGoodsIdsByLabels(String labels, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"label"};
@@ -215,12 +215,25 @@ public class EsService {
         return ids;
     }
 
+    @Deprecated
     public String[] getGoodsIdsByLabels(String labels, int from, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"label"};
         }
         String[] ids = getGoodsIdsByCondition(QueryBuilders.multiMatchQuery(labels, fieldNames), new String[]{}, from, size);
         logger.debug("labels:{}, goods ids:{}", labels, StringUtils.arrayToCommaDelimitedString(ids));
+        return ids;
+    }
+
+    public String[] getGoodsIdsByKeywordsAndCitys(String keywords, String cityId, int from, int size, String... fieldNames) {
+        if (fieldNames.length == 0) {
+            fieldNames = new String[]{"name","category","subCategory","goodTags","thirdTags"};
+        }
+        QueryBuilder builder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.multiMatchQuery(keywords, fieldNames))
+                .must(QueryBuilders.matchQuery("cityIds", cityId));
+        // TODO: 考虑全国
+        String[] ids = getGoodsIdsByCondition(builder, new String[]{}, from, size);
         return ids;
     }
 
@@ -430,19 +443,19 @@ public class EsService {
 
     public void updateGoods(Goods goods) {
         Map<String, Object> map = new HashMap<>();
-        map.put("content_name", goods.getContentName());
-        map.put("second_class", goods.getSecondClass());
-        map.put("display_label", goods.getDisplayLabel());
-        map.put("first_label", goods.getFirstLabel());
-        map.put("label", goods.getLabel());
-        map.put("first_class", goods.getFirstClass());
-        map.put("basic_label", goods.getBasicLabel());
-        map.put("second_label", goods.getSecondLabel());
-        client.prepareIndex(goodsIndex, "docs", goods.getContentId().toString()).setSource(map).get();
+        map.put("name", goods.getGoodsName());
+        map.put("category", goods.getCategory());
+        map.put("subCategory", goods.getSubCategory());
+        map.put("goodTags", goods.getGoodTags());
+        map.put("thirdTags", goods.getThirdTags());
+        map.put("description", goods.getGoodsDescription());
+        map.put("cityIds", goods.getCityIds());
+        map.put("createTime", goods.getCreateTime());
+        client.prepareIndex(goodsIndex, "docs", goods.getGoodsId()).setSource(map).get();
     }
 
-    public void deleteGoods(long id) {
-        client.prepareDelete(goodsIndex, "docs", String.valueOf(id)).get();
+    public void deleteGoods(String id) {
+        client.prepareDelete(goodsIndex, "docs", id).get();
     }
 
 }

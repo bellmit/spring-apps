@@ -31,10 +31,6 @@ public class InfoRcmdService {
     private static final Logger logger = LoggerFactory.getLogger(InfoRcmdService.class);
     @Deprecated
     public static final String channelRcmdId = "10000";
-//    @Deprecated
-//    public static final String channelVideoId = "20000";
-//    @Deprecated
-//    public static final String channelLiveId = "30000";
     private int randomLiveOrVideoSize = 1;
 
     public static final String channelTypeRCMD = "R";

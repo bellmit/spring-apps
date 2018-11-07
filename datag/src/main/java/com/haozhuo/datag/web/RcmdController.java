@@ -290,6 +290,28 @@ public class RcmdController {
         return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
     }
 
+
+    @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
+    @Deprecated
+    public Object getMulAlvgByInfoId(
+            @PathVariable(value = "infoId") String infoId,
+            @RequestParam(value = "size", defaultValue = "5") int size) {
+        long beginTime = System.currentTimeMillis();
+        String tags = dataetlJdbcService.getTagsByInfoId(infoId);
+        Map<String, List<String>> map = new HashMap<>();
+        logger.debug("tags:{}", tags);
+        String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
+        String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
+        String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
+        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, size);
+        map.put("a", Arrays.asList(articleIds));
+        map.put("l", Arrays.asList(liveIds));
+        map.put("v", Arrays.asList(videoIds));
+        map.put("g", Arrays.asList(goodsIds));
+        logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
+        return map;
+    }
+
     /**
      * 旧的接口：
      * 对应developer-api项目中的GetSimiIdController的getSimiIdNew()方法
@@ -312,18 +334,19 @@ public class RcmdController {
                     "1.相似的资讯、视频和直播是从Redis中的'simi_{infoId}'这个key中获取。这是黄金宝之前就用的逻辑。  \n" +
                     "2.推荐商品的产生是通过查询传入资讯的tags，使用该tags匹配ES中good索引的label字段得到。  \n" +
                     "3.将上述的资讯、视频、直播和商品合并后进行返回。")
-    @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
-    public Object getMulAlvgByInfoId(
-            @PathVariable(value = "infoId") String infoId,
+    @RequestMapping(value = "/mul/ALVG/infoAndCity", method = RequestMethod.GET)
+    public Object getMulAlvgByInfoAndCity(
+            @RequestParam(value = "infoId") String infoId,
+            @RequestParam(value = "cityId") String cityId,
             @RequestParam(value = "size", defaultValue = "5") int size) {
         long beginTime = System.currentTimeMillis();
-        String tags = dataetlJdbcService.getTagsByInfoId(infoId);
+        String tags = dataetlJdbcService.getTagsKeywordsByInfoId(infoId);
         Map<String, List<String>> map = new HashMap<>();
         logger.debug("tags:{}", tags);
         String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
         String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
         String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
-        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, size);
+        String[] goodsIds = esService.getGoodsIdsByKeywordsAndCitys(tags, cityId, 0, size);
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));

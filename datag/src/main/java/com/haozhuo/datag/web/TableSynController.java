@@ -155,13 +155,14 @@ public class TableSynController {
     public Object updateGoods(@RequestBody Goods goods) {
         long beginTime = System.currentTimeMillis();
         esService.updateGoods(goods);
-        logger.info("POST /goods  goodsId:{}  cost:{} ms", goods.getContentId(), System.currentTimeMillis() - beginTime);
+        logger.info("POST /goods  goodsId:{}  cost:{} ms", goods.getGoodsId(), System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
+
     @DeleteMapping("/goods/{id}")
     @ApiOperation(value = "商品删除接口")
-    public Object deleteGoods(@PathVariable(value = "id") long id) {
+    public Object deleteGoods(@PathVariable(value = "id") String id) {
         long beginTime = System.currentTimeMillis();
         esService.deleteGoods(id);
         logger.info("DELETE /goods/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);

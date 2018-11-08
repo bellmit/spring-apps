@@ -328,12 +328,7 @@ public class RcmdController {
      * 中匹配出相应的商品
      */
     @ApiOperation(value = "根据infoId获取相似的资讯、视频、直播、商品  【/getSimi/all】",
-            notes = "输入infoId,返回相似的资讯、视频、直播、商品。  \n" +
-                    "原接口: http://192.168.1.152:8085/getSimi/all?informationId=56  \n" +
-                    "业务逻辑:  \n" +
-                    "1.相似的资讯、视频和直播是从Redis中的'simi_{infoId}'这个key中获取。这是黄金宝之前就用的逻辑。  \n" +
-                    "2.推荐商品的产生是通过查询传入资讯的tags，使用该tags匹配ES中good索引的label字段得到。  \n" +
-                    "3.将上述的资讯、视频、直播和商品合并后进行返回。")
+            notes = "")
     @RequestMapping(value = "/mul/ALVG/infoAndCity", method = RequestMethod.GET)
     public Object getMulAlvgByInfoAndCity(
             @RequestParam(value = "infoId") String infoId,
@@ -346,12 +341,12 @@ public class RcmdController {
         String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
         String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
         String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
-        String[] goodsIds = esService.getGoodsIdsByKeywordsAndCitys(tags, cityId, 0, size);
+        String[] goodsIds = esService.getGoodsIdsByKeywordsAndCityIds(tags, cityId, 0, size);
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
         map.put("g", Arrays.asList(goodsIds));
-        logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
+        logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={}  cost: {}ms", infoId, cityId, System.currentTimeMillis() - beginTime);
         return map;
     }
 

@@ -69,6 +69,8 @@ public class EsService {
     @Value("${app.es.reportlabel-index}")
     private String reportlabelIndex;
 
+    private String countryId = "000000";
+
     @Autowired
     private TransportClient client;
     private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8D);
@@ -100,7 +102,7 @@ public class EsService {
 
 
     private String getTagField() {
-       return "tags";
+        return "tags";
     }
 
     private GaussDecayFunctionBuilder getTimeGaussFunction(String index) {
@@ -162,7 +164,7 @@ public class EsService {
             fieldNames = new String[]{"tags"};
         }
         String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
-        logger.debug("labels:{}, video ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
+        logger.debug("tags:{}, video ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
 
@@ -225,14 +227,15 @@ public class EsService {
         return ids;
     }
 
-    public String[] getGoodsIdsByKeywordsAndCitys(String keywords, String cityId, int from, int size, String... fieldNames) {
+    public String[] getGoodsIdsByKeywordsAndCityIds(String keywords, String cityId, int from, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
-            fieldNames = new String[]{"name","category","subCategory","goodTags","thirdTags"};
+            fieldNames = new String[]{"name", "category", "subCategory", "goodTags", "thirdTags"};
         }
         QueryBuilder builder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.multiMatchQuery(keywords, fieldNames))
-                .must(QueryBuilders.matchQuery("cityIds", cityId));
-        // TODO: 考虑全国
+                .must(QueryBuilders.boolQuery()
+                        .should(QueryBuilders.matchQuery("cityIds", cityId))
+                        .should(QueryBuilders.matchQuery("cityIds", countryId)));
         String[] ids = getGoodsIdsByCondition(builder, new String[]{}, from, size);
         return ids;
     }

@@ -27,10 +27,10 @@ public class Goods {
     private String subCategory;
 
     //商品标签
-    private String goodTags;
+    private List<String> goodTags;
 
     //三级标签
-    private String thirdTags;
+    private List<String> thirdTags;
 
     //所属城市编码
     private List<String> cityIds;

@@ -37,6 +37,7 @@ public class DataetlJdbcService {
     private final String liveTable;
     private final String videoTable;
     private final String articleTable;
+    private final String articleTags;
     public final static List<String> stopwords = new ArrayList<>();
 
 
@@ -50,6 +51,8 @@ public class DataetlJdbcService {
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
+        articleTags = env.getProperty("app.biz.articleTags", "title,tags,keywords");
+
         updateChannelEsTypeMap();
         initLabelMap();
         initStopwords();
@@ -241,7 +244,7 @@ public class DataetlJdbcService {
         String tags = "";
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            String sql = String.format("select concat(tags,keywords) as tags from  %s  where information_id = ?", articleTable);
+            String sql = String.format("select concat(%s) as tags from  %s  where information_id = ?", articleTags, articleTable);
             logger.debug("sql:{}", sql);
             tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, new RowMapper<String>() {
                 @Override

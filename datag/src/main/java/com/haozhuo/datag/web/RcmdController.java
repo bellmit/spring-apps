@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -39,8 +40,11 @@ public class RcmdController {
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${app.biz.version:1}")
-    private int version;
+    //    @Value("${app.biz.version:1}")
+//    private int version;
+    @Value("${app.biz.rcmdShuffle: false}")
+    private Boolean rcmdShuffle;
+
 
     @Autowired
     public RcmdController(EsService esService, RedisService redisService, KafkaService kafkaService, DataetlJdbcService dataetlJdbcService) {
@@ -307,7 +311,8 @@ public class RcmdController {
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
-        map.put("g", Arrays.asList(goodsIds));
+        List<String> goodsList = Arrays.asList(goodsIds);
+        map.put("g", goodsList);
         logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
         return map;
     }
@@ -332,7 +337,7 @@ public class RcmdController {
     @RequestMapping(value = "/mul/ALVG/infoAndCity", method = RequestMethod.GET)
     public Object getMulAlvgByInfoAndCity(
             @RequestParam(value = "infoId") String infoId,
-            @RequestParam(value = "cityId") String cityId,
+            @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
             @RequestParam(value = "size", defaultValue = "5") int size) {
         long beginTime = System.currentTimeMillis();
         String tags = dataetlJdbcService.getTagsKeywordsByInfoId(infoId);
@@ -341,12 +346,20 @@ public class RcmdController {
         String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
         String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
         String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
+        if ("null".equals(cityId)) {
+            cityId = "000000";
+        }
         String[] goodsIds = esService.getGoodsIdsByKeywordsAndCityIds(tags, cityId, 0, size);
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
-        map.put("g", Arrays.asList(goodsIds));
-        logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={}  cost: {}ms", infoId, cityId, System.currentTimeMillis() - beginTime);
+        List<String> goodsList = Arrays.asList(goodsIds);
+        if (rcmdShuffle) {
+            Collections.shuffle(goodsList);
+        }
+        String goodId = goodsList.get(0);
+        map.put("g", Arrays.asList(goodId));
+        logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={} resut->goodsId:{}  cost: {}ms", infoId, cityId, goodId, System.currentTimeMillis() - beginTime);
         return map;
     }
 

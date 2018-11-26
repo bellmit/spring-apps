@@ -2,6 +2,7 @@ package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.EsUtils;
 import com.haozhuo.datag.common.JavaUtils;
+import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.crm.UserIdTagsId;
@@ -24,13 +25,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 
 @Component
 public class EsService {
@@ -71,10 +75,18 @@ public class EsService {
 
     private String countryId = "000000";
 
+    private double goodsScoreDecay;
+
     @Autowired
     private TransportClient client;
     private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8D);
     private GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
+    private GaussDecayFunctionBuilder goodsScoreGaussDecayFunction;
+
+    public EsService(Environment env) {
+        this.goodsScoreDecay = Double.parseDouble(env.getProperty("app.biz.goodsScoreDecay", "0.9"));
+        this.goodsScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("goodsScore", Goods.SCORE_MAX, 10, 0, goodsScoreDecay);
+    }
 
     private String[] recommend(String index, QueryBuilder query, int size, String... types) {
         SearchRequestBuilder srb = client.prepareSearch(index)
@@ -227,17 +239,53 @@ public class EsService {
         return ids;
     }
 
-    public String[] getGoodsIdsByKeywordsAndCityIds(String keywords, String cityId, int from, int size, String... fieldNames) {
+    private SearchHit[] getGoodsIdsByKeywordsAndCityIdsHits(String keywords, String cityId, int from, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"name", "category", "subCategory", "goodTags", "thirdTags"};
         }
-        QueryBuilder builder = QueryBuilders.boolQuery()
-                .must(QueryBuilders.multiMatchQuery(keywords, fieldNames))
-                .must(QueryBuilders.boolQuery()
-                        .should(QueryBuilders.matchQuery("cityIds", cityId))
-                        .should(QueryBuilders.matchQuery("cityIds", countryId)));
-        String[] ids = getGoodsIdsByCondition(builder, new String[]{}, from, size);
-        return ids;
+        SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
+                .setFrom(from)
+                .setSize(size)
+                .setQuery(
+                        new FunctionScoreQueryBuilder(QueryBuilders.boolQuery()
+                                .must(QueryBuilders.multiMatchQuery(keywords, fieldNames))
+                                .must(QueryBuilders.boolQuery()
+                                        .should(QueryBuilders.matchQuery("cityIds", cityId))
+                                        .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsScoreGaussDecayFunction)
+                ).setFetchSource(new String[]{"goodsScore"}, null);
+        return srb.execute().actionGet().getHits().getHits();
+    }
+
+    public String getBestMatchGoodsIdByKeywordsAndCityIds(String keywords, String cityId, int from, int size, String... fieldNames) {
+        List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size, fieldNames))
+                .map(hit -> new Tuple(hit.getId(), hit.getSource().get("goodsScore"))).collect(toList());
+        List<String> docIdOfHighestScore = result.stream().filter(x -> ((Integer) x.getT2()) == Goods.SCORE_MAX).map(x -> (String) x.getT1()).collect(toList());
+        if (docIdOfHighestScore.size() == 0) {
+            docIdOfHighestScore = result.stream().map(x -> (String) x.getT1()).collect(toList());
+        }
+        String goodsId = null;
+        if (docIdOfHighestScore.size() > 0) {
+            Collections.shuffle(docIdOfHighestScore);
+            goodsId = docIdOfHighestScore.get(0);
+        }
+        return goodsId;
+    }
+
+    public Goods getGoodsById(String id){
+        GetResponse response = client.prepareGet(goodsIndex, "docs", id).get();
+        Goods goods = new Goods();
+        Map source = response.getSource();
+        goods.setCategory((String) source.get("category"));
+        goods.setCityIds((List<String>) source.get("cityIds"));
+        goods.setCreateTime((String) source.get("createTime"));
+        goods.setGoodsDescription((String) source.get("description"));
+        goods.setGoodsId(response.getId());
+        goods.setGoodsName((String) source.get("name"));
+        goods.setGoodTags((List<String>) source.get("goodTags"));
+        goods.setSubCategory((String) source.get("subCategory"));
+        goods.setThirdTags((List<String>) source.get("thirdTags"));
+        goods.setScore((Integer) source.get("goodsScore"));
+        return goods;
     }
 
     public String[] getSimilarVideoIdsByTags(String videoId, String tags, int size) {
@@ -453,12 +501,19 @@ public class EsService {
         map.put("thirdTags", goods.getThirdTags());
         map.put("description", goods.getGoodsDescription());
         map.put("cityIds", goods.getCityIds());
+        map.put("goodsScore", goods.getScore());
         map.put("createTime", goods.getCreateTime());
         client.prepareIndex(goodsIndex, "docs", goods.getGoodsId()).setSource(map).get();
     }
 
     public void deleteGoods(String id) {
         client.prepareDelete(goodsIndex, "docs", id).get();
+    }
+
+    public void updateGoodsScore(String id, int goodsScore) {
+        Goods goods = getGoodsById(id);
+        goods.setScore(goodsScore);
+        updateGoods(goods);
     }
 
 }

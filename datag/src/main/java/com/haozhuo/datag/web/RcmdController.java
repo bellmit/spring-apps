@@ -9,7 +9,6 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,11 +38,6 @@ public class RcmdController {
     private final InfoRcmdService infoRcmdService;
 
     private ObjectMapper mapper = new ObjectMapper();
-
-    //    @Value("${app.biz.version:1}")
-//    private int version;
-    @Value("${app.biz.rcmdShuffle: false}")
-    private Boolean rcmdShuffle;
 
 
     @Autowired
@@ -117,6 +111,7 @@ public class RcmdController {
         logger.info("/goods/reportId/{}?pageSize={}&pageNum={}  cost: {}ms", reportId, pageSize, pageNum, System.currentTimeMillis() - beginTime);
         return result;
     }
+
 
 
     @GetMapping("/goods/labels/{labels}")
@@ -294,29 +289,6 @@ public class RcmdController {
         return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
     }
 
-
-    @RequestMapping(value = "/mul/ALVG/infoId/{infoId}", method = RequestMethod.GET)
-    @Deprecated
-    public Object getMulAlvgByInfoId(
-            @PathVariable(value = "infoId") String infoId,
-            @RequestParam(value = "size", defaultValue = "5") int size) {
-        long beginTime = System.currentTimeMillis();
-        String tags = dataetlJdbcService.getTagsByInfoId(infoId);
-        Map<String, List<String>> map = new HashMap<>();
-        logger.debug("tags:{}", tags);
-        String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
-        String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
-        String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
-        String[] goodsIds = esService.getGoodsIdsByLabels(tags, 0, size);
-        map.put("a", Arrays.asList(articleIds));
-        map.put("l", Arrays.asList(liveIds));
-        map.put("v", Arrays.asList(videoIds));
-        List<String> goodsList = Arrays.asList(goodsIds);
-        map.put("g", goodsList);
-        logger.info("/mul/ALVG/infoId/{}  cost: {}ms", infoId, System.currentTimeMillis() - beginTime);
-        return map;
-    }
-
     /**
      * 旧的接口：
      * 对应developer-api项目中的GetSimiIdController的getSimiIdNew()方法
@@ -349,17 +321,15 @@ public class RcmdController {
         if ("null".equals(cityId)) {
             cityId = "000000";
         }
-        String[] goodsIds = esService.getGoodsIdsByKeywordsAndCityIds(tags, cityId, 0, size);
+
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
-        List<String> goodsList = Arrays.asList(goodsIds);
-        if (rcmdShuffle) {
-            Collections.shuffle(goodsList);
+        String goodsId = esService.getBestMatchGoodsIdByKeywordsAndCityIds(tags, cityId, 0, size);
+        if (goodsId != null) {
+            map.put("g", Arrays.asList(goodsId));
         }
-        String goodId = goodsList.get(0);
-        map.put("g", Arrays.asList(goodId));
-        logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={} resut->goodsId:{}  cost: {}ms", infoId, cityId, goodId, System.currentTimeMillis() - beginTime);
+        logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={} resut->goodsId:{}  cost: {}ms", infoId, cityId, goodsId, System.currentTimeMillis() - beginTime);
         return map;
     }
 
@@ -544,7 +514,6 @@ public class RcmdController {
         //为视频、直播推荐
         String tags = dataetlJdbcService.getInfoTagsById(infoId);
         redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
-
         kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString(), "", false, true, 2));
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";

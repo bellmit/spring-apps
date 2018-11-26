@@ -5,7 +5,7 @@ curl -XDELETE 'http://192.168.1.152:9200/goods4'
 curl -XPUT 'http://192.168.1.152:9200/goods4?pretty' -H 'Content-Type: application/json'  -d '{
     "settings": {
         "index": {
-            "number_of_shards": 5,
+            "number_of_shards": 1,
             "number_of_replicas": 1
         }
     },
@@ -38,6 +38,9 @@ curl -XPUT 'http://192.168.1.152:9200/goods4?pretty' -H 'Content-Type: applicati
                 },
                 "cityIds": {
                     "type": "keyword"
+                },
+                "goodsScore": {
+                    "type": "integer"
                 },
 				"createTime": {
                     "type": "date",

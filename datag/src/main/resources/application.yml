@@ -17,13 +17,11 @@ app:
       news-rcmd-request: news-rcmd-request
       prefs-update: prefs-update
   biz:
+    goodsScoreDecay: 0.9
     queueRcmdNum: 5,4,3,2
     articleTags: title,tags,keywords
-    rcmdShuffle: false
-    rcmdDefaultSize: 5
   rest:
     glu: http://192.168.1.178:10011/getReportContent?healthReportId=%s
-
 
 logging:
   level:

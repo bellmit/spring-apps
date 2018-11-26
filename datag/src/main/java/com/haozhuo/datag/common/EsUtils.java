@@ -1,5 +1,6 @@
 package com.haozhuo.datag.common;
 
+import com.haozhuo.datag.model.DocIdScore;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
@@ -22,6 +23,11 @@ public class EsUtils {
     public static String[] getDocIdsAsArray(SearchRequestBuilder srb) {
         SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
         return stream(hits).map(x -> x.getId()).toArray(String[]::new);
+    }
+
+    public static List<DocIdScore> getDocIdScoresAsList(SearchRequestBuilder srb) {
+        SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
+        return stream(hits).map(x -> new DocIdScore(x.getId(),x.getScore())).collect(Collectors.toList());
     }
 
 }

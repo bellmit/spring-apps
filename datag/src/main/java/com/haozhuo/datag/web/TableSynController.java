@@ -51,7 +51,6 @@ public class TableSynController {
     }
 
 
-
     @PostMapping("/article")
     @ApiOperation(value = "资讯更新接口")
     public Object updateArticle(@RequestBody Article article) {
@@ -169,12 +168,11 @@ public class TableSynController {
         return "success!";
     }
 
-//    @PostMapping("/infoHeat")
-//    @ApiOperation(value = "资讯热度接口")
-//    public Object updateInfoHeat(@RequestBody InfoHeat infoHeat) {
-//        long beginTime = System.currentTimeMillis();
-//        esService.updateInfoHeat(infoHeat);
-//        logger.info("POST /infoHeat  Id:{}  cost:{} ms", infoHeat.getInfoId(), System.currentTimeMillis() - beginTime);
-//        return "success!";
-//    }
+    @GetMapping("/goods/updateScore")
+    @ApiOperation(value = "更新商品推荐权重")
+    public Object updateGoodsScore(@RequestParam(value = "id") String id, @RequestParam(value = "goodsScore") int goodsScore) {
+        long beginTime = System.currentTimeMillis();
+        esService.updateGoodsScore(id, goodsScore);
+        return "success!";
+    }
 }

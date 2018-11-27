@@ -1,6 +1,6 @@
 
 
-curl -XDELETE 'http://192.168.1.152:9200/goods4'
+curl -XDELETE 'http://es1:9200/goods4'
 
 curl -XPUT 'http://192.168.1.152:9200/goods4?pretty' -H 'Content-Type: application/json'  -d '{
     "settings": {
@@ -24,7 +24,7 @@ curl -XPUT 'http://192.168.1.152:9200/goods4?pretty' -H 'Content-Type: applicati
                     "type":"text",
                     "analyzer":"ik_smart"
                 },
-                "goodTags":{
+                "goodsTags":{
                     "type":"text",
                     "analyzer":"ik_smart"
                 },
@@ -39,7 +39,7 @@ curl -XPUT 'http://192.168.1.152:9200/goods4?pretty' -H 'Content-Type: applicati
                 "cityIds": {
                     "type": "keyword"
                 },
-                "goodsScore": {
+                "rcmdScore": {
                     "type": "integer"
                 },
 				"createTime": {

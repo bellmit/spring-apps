@@ -1,10 +1,10 @@
 package com.haozhuo.datag.model;
 
 
-
 import lombok.Getter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by Lucius on 11/7/18.
@@ -38,19 +38,35 @@ public class Goods {
     //所属城市编码
     private List<String> cityIds;
 
-    private int score = SCORE_DEFAULT;
+    private int rcmdScore = -1;
 
     private String createTime;
 
-    public void setScore(int score) {
-        if (score > SCORE_MAX) {
-            this.score = SCORE_MAX;
-        } else if (score < SCORE_MIN) {
-            this.score = SCORE_MIN;
+    public void setRcmdScore(int rcmdScore) {
+        if (rcmdScore > SCORE_MAX) {
+            this.rcmdScore = SCORE_MAX;
+        } else if (rcmdScore < SCORE_MIN) {
+            this.rcmdScore = SCORE_MIN;
         } else {
-            this.score = score;
+            this.rcmdScore = rcmdScore;
         }
     }
+
+    public static String listToStr(List<String> list) {
+        if (list == null) {
+            return "";
+        } else {
+            return list.stream().collect(Collectors.joining(","));
+        }
+    }
+
+//    public String getThirdTagsStr() {
+//        return thirdTags.stream().collect(Collectors.joining(","));
+//    }
+//
+//    public String getCityIdsStr() {
+//        return cityIds.stream().collect(Collectors.joining(","));
+//    }
 
     public void setGoodsId(String goodsId) {
         this.goodsId = goodsId;
@@ -72,8 +88,8 @@ public class Goods {
         this.subCategory = subCategory;
     }
 
-    public void setGoodTags(List<String> goodTags) {
-        this.goodTags = goodTags;
+    public void setGoodsTags(List<String> goodsTags) {
+        this.goodTags = goodsTags;
     }
 
     public void setThirdTags(List<String> thirdTags) {
@@ -99,7 +115,7 @@ public class Goods {
                 ", goodTags=" + goodTags +
                 ", thirdTags=" + thirdTags +
                 ", cityIds=" + cityIds +
-                ", score=" + score +
+                ", rcmdScore=" + rcmdScore +
                 ", createTime='" + createTime + '\'' +
                 '}';
     }

@@ -9,6 +9,7 @@ app:
     article: article4
     video: video4
     live: live4
+    goods: goods4
   redis:
     expire-days: 15
     pushed-key-max-size: 200

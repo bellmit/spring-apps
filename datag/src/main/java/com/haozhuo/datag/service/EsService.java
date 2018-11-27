@@ -30,7 +30,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
@@ -75,17 +74,17 @@ public class EsService {
 
     private String countryId = "000000";
 
-    private double goodsScoreDecay;
+    private double goodsRcmdScoreDecay;
 
     @Autowired
     private TransportClient client;
     private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8D);
     private GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
-    private GaussDecayFunctionBuilder goodsScoreGaussDecayFunction;
+    private GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction;
 
     public EsService(Environment env) {
-        this.goodsScoreDecay = Double.parseDouble(env.getProperty("app.biz.goodsScoreDecay", "0.9"));
-        this.goodsScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("goodsScore", Goods.SCORE_MAX, 10, 0, goodsScoreDecay);
+        this.goodsRcmdScoreDecay = Double.parseDouble(env.getProperty("app.biz.goodsRcmdScoreDecay", "0.9"));
+        this.goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, goodsRcmdScoreDecay);
     }
 
     private String[] recommend(String index, QueryBuilder query, int size, String... types) {
@@ -241,7 +240,7 @@ public class EsService {
 
     private SearchHit[] getGoodsIdsByKeywordsAndCityIdsHits(String keywords, String cityId, int from, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
-            fieldNames = new String[]{"name", "category", "subCategory", "goodTags", "thirdTags"};
+            fieldNames = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
         }
         SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
                 .setFrom(from)
@@ -251,15 +250,17 @@ public class EsService {
                                 .must(QueryBuilders.multiMatchQuery(keywords, fieldNames))
                                 .must(QueryBuilders.boolQuery()
                                         .should(QueryBuilders.matchQuery("cityIds", cityId))
-                                        .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsScoreGaussDecayFunction)
-                ).setFetchSource(new String[]{"goodsScore"}, null);
+                                        .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction)
+                ).setFetchSource(new String[]{"rcmdScore"}, null);
         return srb.execute().actionGet().getHits().getHits();
     }
 
     public String getBestMatchGoodsIdByKeywordsAndCityIds(String keywords, String cityId, int from, int size, String... fieldNames) {
         List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size, fieldNames))
-                .map(hit -> new Tuple(hit.getId(), hit.getSource().get("goodsScore"))).collect(toList());
-        List<String> docIdOfHighestScore = result.stream().filter(x -> ((Integer) x.getT2()) == Goods.SCORE_MAX).map(x -> (String) x.getT1()).collect(toList());
+                .map(hit -> new Tuple(hit.getId(), hit.getSource().get("rcmdScore"))).collect(toList());
+        List<String> docIdOfHighestScore =
+                result.stream().filter(x -> ((Integer) x.getT2()) == Goods.SCORE_MAX)
+                        .map(x -> (String) x.getT1()).collect(toList());
         if (docIdOfHighestScore.size() == 0) {
             docIdOfHighestScore = result.stream().map(x -> (String) x.getT1()).collect(toList());
         }
@@ -271,20 +272,23 @@ public class EsService {
         return goodsId;
     }
 
-    public Goods getGoodsById(String id){
+    public Goods getGoodsById(String id) {
         GetResponse response = client.prepareGet(goodsIndex, "docs", id).get();
-        Goods goods = new Goods();
+        Goods goods = null;
         Map source = response.getSource();
-        goods.setCategory((String) source.get("category"));
-        goods.setCityIds((List<String>) source.get("cityIds"));
-        goods.setCreateTime((String) source.get("createTime"));
-        goods.setGoodsDescription((String) source.get("description"));
-        goods.setGoodsId(response.getId());
-        goods.setGoodsName((String) source.get("name"));
-        goods.setGoodTags((List<String>) source.get("goodTags"));
-        goods.setSubCategory((String) source.get("subCategory"));
-        goods.setThirdTags((List<String>) source.get("thirdTags"));
-        goods.setScore((Integer) source.get("goodsScore"));
+        if (source != null) {
+            goods = new Goods();
+            goods.setCategory((String) source.get("category"));
+            goods.setCityIds((List<String>) source.get("cityIds"));
+            goods.setCreateTime((String) source.get("createTime"));
+            goods.setGoodsDescription((String) source.get("description"));
+            goods.setGoodsId(response.getId());
+            goods.setGoodsName((String) source.get("name"));
+            goods.setGoodsTags((List<String>) source.get("goodsTags"));
+            goods.setSubCategory((String) source.get("subCategory"));
+            goods.setThirdTags((List<String>) source.get("thirdTags"));
+            goods.setRcmdScore((Integer) source.get("rcmdScore"));
+        }
         return goods;
     }
 
@@ -497,11 +501,11 @@ public class EsService {
         map.put("name", goods.getGoodsName());
         map.put("category", goods.getCategory());
         map.put("subCategory", goods.getSubCategory());
-        map.put("goodTags", goods.getGoodTags());
+        map.put("goodsTags", goods.getGoodTags());
         map.put("thirdTags", goods.getThirdTags());
         map.put("description", goods.getGoodsDescription());
         map.put("cityIds", goods.getCityIds());
-        map.put("goodsScore", goods.getScore());
+        map.put("rcmdScore", goods.getRcmdScore());
         map.put("createTime", goods.getCreateTime());
         client.prepareIndex(goodsIndex, "docs", goods.getGoodsId()).setSource(map).get();
     }
@@ -510,10 +514,13 @@ public class EsService {
         client.prepareDelete(goodsIndex, "docs", id).get();
     }
 
-    public void updateGoodsScore(String id, int goodsScore) {
+    public void updateGoodsRcmdScore(String id, int rcmdScore) {
         Goods goods = getGoodsById(id);
-        goods.setScore(goodsScore);
-        updateGoods(goods);
+        if (goods != null) {
+            goods.setRcmdScore(rcmdScore);
+            updateGoods(goods);
+        }
+
     }
 
 }

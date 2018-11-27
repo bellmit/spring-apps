@@ -2,10 +2,7 @@ package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Tuple;
-import com.haozhuo.datag.model.Article;
-import com.haozhuo.datag.model.Channel;
-import com.haozhuo.datag.model.Live;
-import com.haozhuo.datag.model.Video;
+import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +18,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.haozhuo.datag.model.Goods.listToStr;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
 
@@ -34,6 +32,7 @@ public class DataetlJdbcService {
     public Map<String, String[]> channelEsTypeMap;
     public final Map<String, String> labelIdNameMap = new HashMap<>();
     public final Map<String, String> labelNameIdMap = new HashMap<>();
+    private final String goodsTable;
     private final String liveTable;
     private final String videoTable;
     private final String articleTable;
@@ -51,6 +50,7 @@ public class DataetlJdbcService {
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
+        goodsTable = env.getProperty("app.mysql.goods");
         articleTags = env.getProperty("app.biz.articleTags", "title,tags,keywords");
 
         updateChannelEsTypeMap();
@@ -173,7 +173,7 @@ public class DataetlJdbcService {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             tags = dataetlDB.queryForObject(
-                    String.format("select title,  tags from %s x where x.information_id = ?", articleTable),
+                    String.format("select title, tags from %s x where x.information_id = ?", articleTable),
                     new Object[]{infoId},
                     new RowMapper<String>() {
                         @Override
@@ -188,6 +188,27 @@ public class DataetlJdbcService {
             logger.debug("getInfoTagsById error", ex);
         }
         return tags;
+    }
+
+    public List<String> getGoodsIdsByLikeStr(String field, String str) {
+        List<String> goodsIdList = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            goodsIdList = dataetlDB.query(
+                    String.format("select id from %s x where x.%s like ?", goodsTable, field),
+                    new Object[]{str},
+                    new RowMapper<String>() {
+                        @Override
+                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
+                            // Optional.ofNullable() 表示传入的参数可能为null
+                            // orElse() 表示如果传入的是null就赋予另一个值
+                            return resultSet.getString("id");
+                        }
+                    });
+        } catch (Exception ex) {
+            logger.debug("getGoodsIdsByLikeStr error", ex);
+        }
+        return goodsIdList;
     }
 
     /**
@@ -331,11 +352,27 @@ public class DataetlJdbcService {
                 " `tags`, `is_pay`, `play_time`, `update_time`)  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)  " +
                 " ON DUPLICATE KEY UPDATE  `title`=?, `status`=?, `description`=?, `channel_id`=?,`category_id`=?," +
                 "`tags`=?,`is_pay`=?, `play_time`=?, `update_time`=?", liveTable);
-        dataetlDB.update(query, liveInfo.getId(), liveInfo.getTitle(), liveInfo.getStatus(),liveInfo.getDescription(),
+        dataetlDB.update(query, liveInfo.getId(), liveInfo.getTitle(), liveInfo.getStatus(), liveInfo.getDescription(),
                 liveInfo.getChannelId(), liveInfo.getCategoryId(), liveInfo.getTags(), liveInfo.getIsPay(),
                 liveInfo.getPlayTime(), liveInfo.getUpdateTime(), liveInfo.getTitle(), liveInfo.getStatus(),
-                liveInfo.getDescription(),liveInfo.getChannelId(), liveInfo.getCategoryId(), liveInfo.getTags(),
+                liveInfo.getDescription(), liveInfo.getChannelId(), liveInfo.getCategoryId(), liveInfo.getTags(),
                 liveInfo.getIsPay(), liveInfo.getPlayTime(), liveInfo.getUpdateTime());
+
+    }
+
+    public void updateGoods(Goods goods) {
+        String goodTags = listToStr(goods.getGoodTags());
+        String thirdTags = listToStr(goods.getThirdTags());
+        String cityIds = listToStr(goods.getCityIds());
+        String query = String.format("INSERT INTO `%s` (`id`, `name`, `description`, `category`, `sub_category`, " +
+                " `goods_tags`, `third_tags`, `city_ids`, `rcmd_score`, `create_time`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                " ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, `category` = ?, `sub_category` = ?, `goods_tags` = ?," +
+                " `third_tags` = ?, `city_ids` = ?, `rcmd_score` = ?, `create_time` = ?", goodsTable);
+        dataetlDB.update(query, goods.getGoodsId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
+                goods.getSubCategory(), goodTags, thirdTags, cityIds,
+                goods.getRcmdScore(), goods.getCreateTime(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
+                goods.getSubCategory(), goodTags, thirdTags, cityIds,
+                goods.getRcmdScore(), goods.getCreateTime());
 
     }
 
@@ -354,6 +391,10 @@ public class DataetlJdbcService {
     public void deleteChannel(long id) {
         dataetlDB.update("delete from channel where channel_id = ?", id);
         updateChannelEsTypeMap();
+    }
+
+    public void deleteGoods(String id) {
+        dataetlDB.update(String.format("delete from %s where id = ?", goodsTable), id);
     }
 
     public void updatePermitUsers(long healthReportId, int flag) {

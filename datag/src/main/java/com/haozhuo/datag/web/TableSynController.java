@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 /**
  * Created by Lucius on 8/22/18.
@@ -88,7 +90,6 @@ public class TableSynController {
         return simpleArticle;
     }
 
-
     @DeleteMapping("/article/{id}")
     @ApiOperation(value = "资讯删除接口", notes = "mysql中的article4表中的status字段设置为0,ES中删除article4中的该文档")
     public Object deleteArticle(@PathVariable(value = "id") long id) {
@@ -153,8 +154,24 @@ public class TableSynController {
     @ApiOperation(value = "商品更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
     public Object updateGoods(@RequestBody Goods goods) {
         long beginTime = System.currentTimeMillis();
-        esService.updateGoods(goods);
-        logger.info("POST /goods  goodsId:{}  cost:{} ms", goods.getGoodsId(), System.currentTimeMillis() - beginTime);
+        //推荐得分全程由数据端维护
+        try {
+            System.out.println(goods.getRcmdScore());
+            if (goods.getRcmdScore() == -1) {
+                Goods existGoods = esService.getGoodsById(goods.getGoodsId());
+                if (existGoods == null) {
+                    goods.setRcmdScore(Goods.SCORE_DEFAULT);
+                } else {
+                    goods.setRcmdScore(existGoods.getRcmdScore());
+                }
+            }
+            esService.updateGoods(goods);
+            dataetlJdbcService.updateGoods(goods);
+            logger.info("POST /goods  goodsId:{}  cost:{} ms", goods.getGoodsId(), System.currentTimeMillis() - beginTime);
+        } catch (Exception ex) {
+            logger.error("goods update error:", ex);
+            return "failed!";
+        }
         return "success!";
     }
 
@@ -164,15 +181,32 @@ public class TableSynController {
     public Object deleteGoods(@PathVariable(value = "id") String id) {
         long beginTime = System.currentTimeMillis();
         esService.deleteGoods(id);
+        dataetlJdbcService.deleteGoods(id);
         logger.info("DELETE /goods/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
     @GetMapping("/goods/updateScore")
     @ApiOperation(value = "更新商品推荐权重")
-    public Object updateGoodsScore(@RequestParam(value = "id") String id, @RequestParam(value = "goodsScore") int goodsScore) {
-        long beginTime = System.currentTimeMillis();
-        esService.updateGoodsScore(id, goodsScore);
+    public Object updateGoodsScore(@RequestParam(value = "id") String id, @RequestParam(value = "rcmdScore") int rcmdScore) {
+        Goods goods = esService.getGoodsById(id);
+        if (goods != null) {
+            goods.setRcmdScore(rcmdScore);
+            esService.updateGoods(goods);
+            dataetlJdbcService.updateGoods(goods);
+        }
         return "success!";
+    }
+
+    @GetMapping("/goods/updateScoresByLikeStr")
+    @ApiOperation(value = "根据字符匹配批量更新商品推荐权重")
+    public Object updateGoodsScoresByLikeStr(@RequestParam(value = "likeStr") String likeStr,
+                                             @RequestParam(value = "rcmdScore") int rcmdScore,
+                                             @RequestParam(value = "field", defaultValue = "name") String field) {
+        List<String> ids = dataetlJdbcService.getGoodsIdsByLikeStr(field, likeStr);
+        for (String id : ids) {
+            updateGoodsScore(id, rcmdScore);
+        }
+        return ids;
     }
 }

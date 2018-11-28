@@ -14,8 +14,9 @@ public class Goods {
     public static final int SCORE_MAX = 100;
     public static final int SCORE_MIN = 0;
     public static final int SCORE_DEFAULT = 60;
+    private String skuId;
     //商品ID
-    private String goodsId;
+    private List<String> goodsIds;
 
     //商品名称
     private String goodsName;
@@ -30,13 +31,16 @@ public class Goods {
     private String subCategory;
 
     //商品标签
-    private List<String> goodTags;
+    private List<String> goodsTags;
 
     //三级标签
     private List<String> thirdTags;
 
     //所属城市编码
     private List<String> cityIds;
+
+    //商品类别
+    private String goodsType;
 
     private int rcmdScore = -1;
 
@@ -60,18 +64,6 @@ public class Goods {
         }
     }
 
-//    public String getThirdTagsStr() {
-//        return thirdTags.stream().collect(Collectors.joining(","));
-//    }
-//
-//    public String getCityIdsStr() {
-//        return cityIds.stream().collect(Collectors.joining(","));
-//    }
-
-    public void setGoodsId(String goodsId) {
-        this.goodsId = goodsId;
-    }
-
     public void setGoodsName(String goodsName) {
         this.goodsName = goodsName;
     }
@@ -88,10 +80,6 @@ public class Goods {
         this.subCategory = subCategory;
     }
 
-    public void setGoodsTags(List<String> goodsTags) {
-        this.goodTags = goodsTags;
-    }
-
     public void setThirdTags(List<String> thirdTags) {
         this.thirdTags = thirdTags;
     }
@@ -104,19 +92,19 @@ public class Goods {
         this.createTime = createTime;
     }
 
-    @Override
-    public String toString() {
-        return "Goods{" +
-                "goodsId='" + goodsId + '\'' +
-                ", goodsName='" + goodsName + '\'' +
-                ", goodsDescription='" + goodsDescription + '\'' +
-                ", category='" + category + '\'' +
-                ", subCategory='" + subCategory + '\'' +
-                ", goodTags=" + goodTags +
-                ", thirdTags=" + thirdTags +
-                ", cityIds=" + cityIds +
-                ", rcmdScore=" + rcmdScore +
-                ", createTime='" + createTime + '\'' +
-                '}';
+    public void setSkuId(String skuId) {
+        this.skuId = skuId;
+    }
+
+    public void setGoodsIds(List<String> goodsIds) {
+        this.goodsIds = goodsIds;
+    }
+
+    public void setGoodsTags(List<String> goodsTags) {
+        this.goodsTags = goodsTags;
+    }
+
+    public void setGoodsType(String goodsType) {
+        this.goodsType = goodsType;
     }
 }

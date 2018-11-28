@@ -361,18 +361,20 @@ public class DataetlJdbcService {
     }
 
     public void updateGoods(Goods goods) {
-        String goodTags = listToStr(goods.getGoodTags());
+        String goodsIds = listToStr(goods.getGoodsIds());
+        String goodsTags = listToStr(goods.getGoodsTags());
         String thirdTags = listToStr(goods.getThirdTags());
         String cityIds = listToStr(goods.getCityIds());
-        String query = String.format("INSERT INTO `%s` (`id`, `name`, `description`, `category`, `sub_category`, " +
-                " `goods_tags`, `third_tags`, `city_ids`, `rcmd_score`, `create_time`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                " ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, `category` = ?, `sub_category` = ?, `goods_tags` = ?," +
-                " `third_tags` = ?, `city_ids` = ?, `rcmd_score` = ?, `create_time` = ?", goodsTable);
-        dataetlDB.update(query, goods.getGoodsId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
-                goods.getSubCategory(), goodTags, thirdTags, cityIds,
-                goods.getRcmdScore(), goods.getCreateTime(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
-                goods.getSubCategory(), goodTags, thirdTags, cityIds,
-                goods.getRcmdScore(), goods.getCreateTime());
+        String query = String.format("INSERT INTO `%s` (`sku_id`, `name`, `description`, `category`, `sub_category`, " +
+                " `goods_tags`, `third_tags`, `city_ids`, `rcmd_score`, `create_time`, `goods_ids`, `goods_type`) " +
+                " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, " +
+                "`category` = ?, `sub_category` = ?, `goods_tags` = ?, `third_tags` = ?, `city_ids` = ?, `rcmd_score` = ?," +
+                " `create_time` = ?, `goods_ids` = ?, `goods_type` = ?", goodsTable);
+        dataetlDB.update(query, goods.getSkuId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
+                goods.getSubCategory(), goodsTags, thirdTags, cityIds, goods.getRcmdScore(), goods.getCreateTime(),
+                goodsIds, goods.getGoodsType(), goods.getGoodsName(), goods.getGoodsDescription(),
+                goods.getGoodsDescription(), goods.getSubCategory(), goodsTags, thirdTags, cityIds,
+                goods.getRcmdScore(), goods.getCreateTime(), goodsIds, goods.getGoodsType());
 
     }
 
@@ -393,8 +395,8 @@ public class DataetlJdbcService {
         updateChannelEsTypeMap();
     }
 
-    public void deleteGoods(String id) {
-        dataetlDB.update(String.format("delete from %s where id = ?", goodsTable), id);
+    public void deleteGoods(String skuId) {
+        dataetlDB.update(String.format("delete from %s where sku_id = ?", goodsTable), skuId);
     }
 
     public void updatePermitUsers(long healthReportId, int flag) {

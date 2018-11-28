@@ -251,38 +251,44 @@ public class EsService {
                                 .must(QueryBuilders.boolQuery()
                                         .should(QueryBuilders.matchQuery("cityIds", cityId))
                                         .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction)
-                ).setFetchSource(new String[]{"rcmdScore"}, null);
+                ).setFetchSource(new String[]{"goodsIds","rcmdScore"}, null);
         return srb.execute().actionGet().getHits().getHits();
     }
 
     public String getBestMatchGoodsIdByKeywordsAndCityIds(String keywords, String cityId, int from, int size, String... fieldNames) {
         List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size, fieldNames))
-                .map(hit -> new Tuple(hit.getId(), hit.getSource().get("rcmdScore"))).collect(toList());
-        List<String> docIdOfHighestScore =
+                .map(hit -> new Tuple(hit.getSource().get("goodsIds"), hit.getSource().get("rcmdScore"))).collect(toList());
+        List<List<String>> goodsIdsOfHighestScore =
                 result.stream().filter(x -> ((Integer) x.getT2()) == Goods.SCORE_MAX)
-                        .map(x -> (String) x.getT1()).collect(toList());
-        if (docIdOfHighestScore.size() == 0) {
-            docIdOfHighestScore = result.stream().map(x -> (String) x.getT1()).collect(toList());
+                        .map(x -> (List<String>) x.getT1()).collect(toList());
+        if (goodsIdsOfHighestScore.size() == 0) {
+            goodsIdsOfHighestScore = result.stream().map(x -> (List<String>) x.getT1()).collect(toList());
         }
-        String goodsId = null;
-        if (docIdOfHighestScore.size() > 0) {
-            Collections.shuffle(docIdOfHighestScore);
-            goodsId = docIdOfHighestScore.get(0);
+        String goodsId = "";
+        List<String> goodsIds = null;
+        if (goodsIdsOfHighestScore.size() > 0) {
+            Collections.shuffle(goodsIdsOfHighestScore);
+            goodsIds = goodsIdsOfHighestScore.get(0);
+            Collections.shuffle(goodsIds);
+            //主键是skuID即文档ID，但是根据业务需求，这里不需要skuID，而是返回该skuID下众多goodsIds下的一个即可。所以取第一个。
+            goodsId = goodsIds.get(0);
         }
         return goodsId;
     }
 
-    public Goods getGoodsById(String id) {
-        GetResponse response = client.prepareGet(goodsIndex, "docs", id).get();
+    public Goods getGoodsBySkuId(String skuId) {
+        GetResponse response = client.prepareGet(goodsIndex, "_all", skuId).get();
         Goods goods = null;
         Map source = response.getSource();
         if (source != null) {
             goods = new Goods();
+            goods.setSkuId(response.getId());
+            goods.setGoodsType(response.getType());
             goods.setCategory((String) source.get("category"));
             goods.setCityIds((List<String>) source.get("cityIds"));
+            goods.setGoodsIds((List<String>) source.get("goodsIds"));
             goods.setCreateTime((String) source.get("createTime"));
             goods.setGoodsDescription((String) source.get("description"));
-            goods.setGoodsId(response.getId());
             goods.setGoodsName((String) source.get("name"));
             goods.setGoodsTags((List<String>) source.get("goodsTags"));
             goods.setSubCategory((String) source.get("subCategory"));
@@ -498,24 +504,25 @@ public class EsService {
 
     public void updateGoods(Goods goods) {
         Map<String, Object> map = new HashMap<>();
+        map.put("goodsIds", goods.getGoodsIds());
         map.put("name", goods.getGoodsName());
         map.put("category", goods.getCategory());
         map.put("subCategory", goods.getSubCategory());
-        map.put("goodsTags", goods.getGoodTags());
+        map.put("goodsTags", goods.getGoodsTags());
         map.put("thirdTags", goods.getThirdTags());
         map.put("description", goods.getGoodsDescription());
         map.put("cityIds", goods.getCityIds());
         map.put("rcmdScore", goods.getRcmdScore());
         map.put("createTime", goods.getCreateTime());
-        client.prepareIndex(goodsIndex, "docs", goods.getGoodsId()).setSource(map).get();
+        client.prepareIndex(goodsIndex, goods.getGoodsType(), goods.getSkuId()).setSource(map).get();
     }
 
-    public void deleteGoods(String id) {
-        client.prepareDelete(goodsIndex, "docs", id).get();
+    public void deleteGoods(String skuId) {
+        deleteIdByQuery(goodsIndex, String.valueOf(skuId));
     }
 
-    public void updateGoodsRcmdScore(String id, int rcmdScore) {
-        Goods goods = getGoodsById(id);
+    public void updateGoodsRcmdScore(String skuId, int rcmdScore) {
+        Goods goods = getGoodsBySkuId(skuId);
         if (goods != null) {
             goods.setRcmdScore(rcmdScore);
             updateGoods(goods);

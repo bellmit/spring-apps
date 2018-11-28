@@ -1,4 +1,59 @@
+curl -XDELETE 'http://192.168.1.152:9200/goods5'
 
+curl -XPUT 'http://192.168.1.152:9200/goods5?pretty' -H 'Content-Type: application/json'  -d '{
+    "settings": {
+        "index": {
+            "number_of_shards": 1,
+            "number_of_replicas": 1
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "goodsIds": {
+                    "type": "keyword"
+                },
+                "name": {
+                    "type": "text",
+                    "analyzer": "ik_smart"
+                },
+				"category":{
+					"type":"text",
+					"analyzer":"ik_smart"
+				},
+				"subCategory":{
+                    "type":"text",
+                    "analyzer":"ik_smart"
+                },
+                "goodsTags":{
+                    "type":"text",
+                    "analyzer":"ik_smart"
+                },
+                "thirdTags":{
+                    "type":"text",
+                    "analyzer":"ik_smart"
+                },
+                "description": {
+                    "type": "text",
+                    "analyzer": "ik_smart"
+                },
+                "cityIds": {
+                    "type": "keyword"
+                },
+                "rcmdScore": {
+                    "type": "integer"
+                },
+				"createTime": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                }
+            }
+        }
+    }
+}';
+
+
+============================
 
 curl -XDELETE 'http://es1:9200/goods4'
 

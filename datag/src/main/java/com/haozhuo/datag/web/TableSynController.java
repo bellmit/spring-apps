@@ -158,7 +158,7 @@ public class TableSynController {
         try {
             System.out.println(goods.getRcmdScore());
             if (goods.getRcmdScore() == -1) {
-                Goods existGoods = esService.getGoodsById(goods.getGoodsId());
+                Goods existGoods = esService.getGoodsBySkuId(goods.getSkuId());
                 if (existGoods == null) {
                     goods.setRcmdScore(Goods.SCORE_DEFAULT);
                 } else {
@@ -167,7 +167,7 @@ public class TableSynController {
             }
             esService.updateGoods(goods);
             dataetlJdbcService.updateGoods(goods);
-            logger.info("POST /goods  goodsId:{}  cost:{} ms", goods.getGoodsId(), System.currentTimeMillis() - beginTime);
+            logger.info("POST /goods skuId:{}  cost:{} ms", goods.getSkuId(), System.currentTimeMillis() - beginTime);
         } catch (Exception ex) {
             logger.error("goods update error:", ex);
             return "failed!";
@@ -188,8 +188,8 @@ public class TableSynController {
 
     @GetMapping("/goods/updateScore")
     @ApiOperation(value = "更新商品推荐权重")
-    public Object updateGoodsScore(@RequestParam(value = "id") String id, @RequestParam(value = "rcmdScore") int rcmdScore) {
-        Goods goods = esService.getGoodsById(id);
+    public Object updateGoodsScore(@RequestParam(value = "skuId") String skuId, @RequestParam(value = "rcmdScore") int rcmdScore) {
+        Goods goods = esService.getGoodsBySkuId(skuId);
         if (goods != null) {
             goods.setRcmdScore(rcmdScore);
             esService.updateGoods(goods);

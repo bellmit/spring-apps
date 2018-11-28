@@ -5,7 +5,7 @@ package com.haozhuo.datag.common;
  */
 public class Utils {
     public static String removeStopWords(String text){
-        return text.replaceAll("(增高|降低|阳性|阴性|偏低|偏高|增大)", "");
+        return text.replaceAll("(增高|降低|阳性|阴性|偏低|偏高|增大|改变)", "");
     }
 
 }

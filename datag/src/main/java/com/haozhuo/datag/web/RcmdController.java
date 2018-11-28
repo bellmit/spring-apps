@@ -112,8 +112,6 @@ public class RcmdController {
         return result;
     }
 
-
-
     @GetMapping("/goods/labels/{labels}")
     @ApiOperation(value = "根据标签返回推荐的商品  【新增】",
             notes = "根据标签返回推荐的商品。  \n" +
@@ -125,6 +123,17 @@ public class RcmdController {
         String[] result = esService.getGoodsIdsByLabels(labels, new String[]{}, 10, "label", "content_name");
         logger.info("/goods/labels/{}  cost: {}ms", labels, System.currentTimeMillis() - beginTime);
         return result;
+    }
+
+    @GetMapping("/goods/userAndCity")
+    public Object getGoodsIdsByUserIdAndCityIds(
+            @RequestParam(value = "userId") String userId,
+            @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
+            @RequestParam(value = "from", defaultValue = "0") int from,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        String diseaseLabels = esService.getDiseaseLabelsByUserId(userId);
+        return esService.getBestMatchSkuIdsByKeywordsAndCityIds(diseaseLabels, cityId, from, size);
     }
 
     /**

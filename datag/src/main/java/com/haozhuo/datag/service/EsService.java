@@ -9,6 +9,7 @@ import com.haozhuo.datag.model.crm.UserIdTagsId;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -33,6 +34,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 @Component
@@ -238,25 +240,35 @@ public class EsService {
         return ids;
     }
 
-    private SearchHit[] getGoodsIdsByKeywordsAndCityIdsHits(String keywords, String cityId, int from, int size, String... fieldNames) {
-        if (fieldNames.length == 0) {
-            fieldNames = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
-        }
+    private QueryBuilder goodsSearchCityIdsQueryBuilder(String keywords,String cityId) {
+        return new FunctionScoreQueryBuilder(QueryBuilders.boolQuery()
+                .must(QueryBuilders.multiMatchQuery(keywords, defaultGoodsSearchFields))
+                .must(QueryBuilders.boolQuery()
+                        .should(QueryBuilders.matchQuery("cityIds", cityId))
+                        .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction);
+    }
+
+    private static final String [] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
+
+    private SearchHit[] getGoodsIdsByKeywordsAndCityIdsHits(String keywords, String cityId, int from, int size) {
         SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
                 .setFrom(from)
                 .setSize(size)
-                .setQuery(
-                        new FunctionScoreQueryBuilder(QueryBuilders.boolQuery()
-                                .must(QueryBuilders.multiMatchQuery(keywords, fieldNames))
-                                .must(QueryBuilders.boolQuery()
-                                        .should(QueryBuilders.matchQuery("cityIds", cityId))
-                                        .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction)
-                ).setFetchSource(new String[]{"goodsIds","rcmdScore"}, null);
+                .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId)).setFetchSource(new String[]{"goodsIds", "rcmdScore"}, null);
         return srb.execute().actionGet().getHits().getHits();
     }
 
-    public String getBestMatchGoodsIdByKeywordsAndCityIds(String keywords, String cityId, int from, int size, String... fieldNames) {
-        List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size, fieldNames))
+    public List<String> getBestMatchSkuIdsByKeywordsAndCityIds(String keywords, String cityId, int from, int size) {
+        SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
+                .setSize(size)
+                .setFrom(from)
+                .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId));
+        System.out.println( srb);
+        return EsUtils.getDocIdsAsList(srb);
+    }
+
+    public String getBestMatchGoodsIdByKeywordsAndCityIds(String keywords, String cityId, int from, int size) {
+        List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size))
                 .map(hit -> new Tuple(hit.getSource().get("goodsIds"), hit.getSource().get("rcmdScore"))).collect(toList());
         List<List<String>> goodsIdsOfHighestScore =
                 result.stream().filter(x -> ((Integer) x.getT2()) == Goods.SCORE_MAX)
@@ -357,7 +369,6 @@ public class EsService {
     }
 
     public List<String> getUserIdsByPortraitTagIds(String strTagIds, String searchAfterUid, int size) {
-
         SearchRequestBuilder srb = client.prepareSearch(portraitIndex)
                 .setSize(size)
                 .setQuery(getQueryBuilderForPortrait(strTagIds))
@@ -376,7 +387,7 @@ public class EsService {
         return srb.execute().actionGet().getHits().getTotalHits();
     }
 
-    public List<UserIdTagsId> getPortraitIds(String[] userIds) {
+    public List<UserIdTagsId> getPortraitByUserIdArray(String[] userIds) {
         MultiGetResponse multiGetItemResponses = client.prepareMultiGet()
                 .add(portraitIndex, "docs", userIds)
                 .get();
@@ -392,6 +403,22 @@ public class EsService {
             }
         }
         return list;
+    }
+
+    public List<String> getDiseaseLabelListByUserId(String userIds) {
+        GetResponse response = client.prepareGet(portraitIndex, "docs", userIds).get();
+        Map<String, Object> source = response.getSource();
+        List<String> diseaseLabelList;
+        if (source == null) {
+            diseaseLabelList = new ArrayList<>();
+        } else {
+            diseaseLabelList = (List<String>) response.getSource().getOrDefault("diseaseLabels", new ArrayList<String>());
+        }
+        return diseaseLabelList;
+    }
+
+    public String getDiseaseLabelsByUserId(String userIds) {
+       return Utils.removeStopWords(getDiseaseLabelListByUserId(userIds).stream().collect(joining(",")));
     }
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {

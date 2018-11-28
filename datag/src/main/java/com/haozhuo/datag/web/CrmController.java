@@ -28,7 +28,7 @@ public class CrmController {
     @ApiOperation(value = "根据userIds返回用户画像", notes = "多个userId使用逗号隔开")
     public Object getTagsIdsByUserIds(@PathVariable(value = "userIds") String userIds) {
         long beginTime = System.currentTimeMillis();
-        List<UserIdTagsId> result = esService.getPortraitIds(userIds.split(","));
+        List<UserIdTagsId> result = esService.getPortraitByUserIdArray(userIds.split(","));
         logger.info("/portrait/{}  cost: {}ms", userIds, System.currentTimeMillis() - beginTime);
         return result;
     }

@@ -7,12 +7,14 @@ import com.haozhuo.datag.service.DataetlJdbcService;
 import com.haozhuo.datag.service.RedisService;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import com.haozhuo.datag.model.textspilt.TFIDF;
+import com.haozhuo.datag.service.YjkMallJdbcService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -27,6 +29,10 @@ public class TableSynController {
     private EsService esService;
     @Autowired
     private DataetlJdbcService dataetlJdbcService;
+
+    @Autowired
+    private YjkMallJdbcService yjkMallJdbcService;
+
     @Autowired
     private RedisService redisService;
 
@@ -157,14 +163,24 @@ public class TableSynController {
         //推荐得分全程由数据端维护
         try {
             System.out.println(goods.getRcmdScore());
-            if (goods.getRcmdScore() == -1) {
-                Goods existGoods = esService.getGoodsBySkuId(goods.getSkuId());
+            Goods existGoods = esService.getGoodsBySkuId(goods.getSkuId());
+
+            if (goods.getRcmdScore() <= 0) {
                 if (existGoods == null) {
                     goods.setRcmdScore(Goods.SCORE_DEFAULT);
                 } else {
                     goods.setRcmdScore(existGoods.getRcmdScore());
                 }
             }
+
+            if (goods.getSalesNum() <= 0) {
+                if (existGoods == null) {
+                    goods.setSalesNum(0);
+                } else {
+                    goods.setSalesNum(existGoods.getSalesNum());
+                }
+            }
+
             esService.updateGoods(goods);
             dataetlJdbcService.updateGoods(goods);
             logger.info("POST /goods skuId:{}  cost:{} ms", goods.getSkuId(), System.currentTimeMillis() - beginTime);
@@ -176,13 +192,13 @@ public class TableSynController {
     }
 
 
-    @DeleteMapping("/goods/{id}")
+    @DeleteMapping("/goods/{skuId}")
     @ApiOperation(value = "商品删除接口")
-    public Object deleteGoods(@PathVariable(value = "id") String id) {
+    public Object deleteGoods(@PathVariable(value = "skuId") String skuId) {
         long beginTime = System.currentTimeMillis();
-        esService.deleteGoods(id);
-        dataetlJdbcService.deleteGoods(id);
-        logger.info("DELETE /goods/{} cost:{} ms", id, System.currentTimeMillis() - beginTime);
+        esService.deleteGoods(skuId);
+        dataetlJdbcService.deleteGoods(skuId);
+        logger.info("DELETE /goods/{} cost:{} ms", skuId, System.currentTimeMillis() - beginTime);
         return "success!";
     }
 
@@ -198,12 +214,26 @@ public class TableSynController {
         return "success!";
     }
 
+    @GetMapping("/goods/synSaleNum/{password}")
+    @ApiOperation(value = "同步商品销量", notes = "该接口用于每天定时同步更新商品的销量。开销大，不能随便调用。只有项目开发者才知道密码，才能调用。")
+    public Object synGoodsSaleNum(@PathVariable(value = "password") String password,
+                                  @RequestParam(value = "goodsIds") String goodsIds) {
+        if ("321".equals(password)) {
+            dataetlJdbcService.getGoodsList(0, 10);
+            int count = yjkMallJdbcService.getGoodsSaleNum(Arrays.asList(goodsIds.split(",")));
+            return "同步完成";
+        } else {
+            return "密码错误!";
+        }
+    }
+
+
     @GetMapping("/goods/updateScoresByLikeStr")
     @ApiOperation(value = "根据字符匹配批量更新商品推荐权重")
     public Object updateGoodsScoresByLikeStr(@RequestParam(value = "likeStr") String likeStr,
                                              @RequestParam(value = "rcmdScore") int rcmdScore,
                                              @RequestParam(value = "field", defaultValue = "name") String field) {
-        List<String> ids = dataetlJdbcService.getGoodsIdsByLikeStr(field, likeStr);
+        List<String> ids = dataetlJdbcService.getGoodsSkuIdsByLikeStr(field, likeStr);
         for (String id : ids) {
             updateGoodsScore(id, rcmdScore);
         }

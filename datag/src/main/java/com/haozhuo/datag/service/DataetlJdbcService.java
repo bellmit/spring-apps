@@ -39,7 +39,6 @@ public class DataetlJdbcService {
     private final String articleTags;
     public final static List<String> stopwords = new ArrayList<>();
 
-
     @Qualifier("dataetlJdbc") //选择jdbc连接池
     private final JdbcTemplate dataetlDB;
 
@@ -93,7 +92,6 @@ public class DataetlJdbcService {
         });
         channelEsTypeMap = list.stream().collect(groupingBy(Tuple::getT1, mapping(x -> x.getT1() + "_" + x.getT2(), toList())))
                 .entrySet().stream().collect(toMap(x -> x.getKey(), x -> x.getValue().stream().toArray(String[]::new)));
-
         logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
 
     }
@@ -190,23 +188,52 @@ public class DataetlJdbcService {
         return tags;
     }
 
-    public List<String> getGoodsIdsByLikeStr(String field, String str) {
+    public List<String> getGoodsList(int from, int size) {
+        dataetlDB.query(
+                String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,third_tags,city_ids" +
+                        " rcmd_score,goods_type,sales_num,create_time from %s x limit ?,?", goodsTable),
+                new Object[]{from,size},
+                new RowMapper<Goods>() {
+                    @Override
+                    public Goods mapRow(ResultSet resultSet, int i) throws SQLException {
+                        // Optional.ofNullable() 表示传入的参数可能为null
+                        // orElse() 表示如果传入的是null就赋予另一个值
+                        Goods goods = new Goods();
+                        goods.setSkuId(resultSet.getString("sku_id"));
+                        goods.setGoodsIds(Arrays.asList(resultSet.getString("goods_ids").split(",")));
+                        goods.setGoodsName(resultSet.getString("name"));
+                        goods.setGoodsDescription(resultSet.getString("description"));
+                        goods.setCategory(resultSet.getString("category"));
+                        goods.setSubCategory(resultSet.getString("sub_category"));
+                        goods.setGoodsTags(Arrays.asList(resultSet.getString("goods_tags").split(",")));
+                        goods.setThirdTags(Arrays.asList(resultSet.getString("third_tags").split(",")));
+                        goods.setCityIds(Arrays.asList(resultSet.getString("city_ids").split(",")));
+                        goods.setRcmdScore(resultSet.getInt("rcmd_score"));
+                        goods.setGoodsType(resultSet.getInt("goods_type"));
+                        goods.setSalesNum(resultSet.getInt("sales_num"));
+                        goods.setCreateTime(resultSet.getString("create_time"));
+                        return goods;
+                    }
+                });
+        return null;
+    }
+    public List<String> getGoodsSkuIdsByLikeStr(String field, String str) {
         List<String> goodsIdList = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             goodsIdList = dataetlDB.query(
-                    String.format("select id from %s x where x.%s like ?", goodsTable, field),
+                    String.format("select sku_id from %s x where x.%s like ?", goodsTable, field),
                     new Object[]{str},
                     new RowMapper<String>() {
                         @Override
                         public String mapRow(ResultSet resultSet, int i) throws SQLException {
                             // Optional.ofNullable() 表示传入的参数可能为null
                             // orElse() 表示如果传入的是null就赋予另一个值
-                            return resultSet.getString("id");
+                            return resultSet.getString("sku_id");
                         }
                     });
         } catch (Exception ex) {
-            logger.debug("getGoodsIdsByLikeStr error", ex);
+            logger.debug("getGoodsSkuIdsByLikeStr error", ex);
         }
         return goodsIdList;
     }
@@ -363,19 +390,18 @@ public class DataetlJdbcService {
     public void updateGoods(Goods goods) {
         String goodsIds = listToStr(goods.getGoodsIds());
         String goodsTags = listToStr(goods.getGoodsTags());
-        String thirdTags = listToStr(goods.getThirdTags());
+        String thirdTags =listToStr(goods.getThirdTags());
         String cityIds = listToStr(goods.getCityIds());
         String query = String.format("INSERT INTO `%s` (`sku_id`, `name`, `description`, `category`, `sub_category`, " +
-                " `goods_tags`, `third_tags`, `city_ids`, `rcmd_score`, `create_time`, `goods_ids`, `goods_type`) " +
-                " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, " +
+                " `goods_tags`, `third_tags`, `city_ids`, `rcmd_score`, `create_time`, `goods_ids`, `goods_type`, `sales_num`) " +
+                " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?) ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, " +
                 "`category` = ?, `sub_category` = ?, `goods_tags` = ?, `third_tags` = ?, `city_ids` = ?, `rcmd_score` = ?," +
-                " `create_time` = ?, `goods_ids` = ?, `goods_type` = ?", goodsTable);
+                " `create_time` = ?, `goods_ids` = ?, `goods_type` = ?, `sales_num` =? ", goodsTable);
         dataetlDB.update(query, goods.getSkuId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
                 goods.getSubCategory(), goodsTags, thirdTags, cityIds, goods.getRcmdScore(), goods.getCreateTime(),
-                goodsIds, goods.getGoodsType(), goods.getGoodsName(), goods.getGoodsDescription(),
+                goodsIds, goods.getGoodsType(), goods.getSalesNum(),goods.getGoodsName(), goods.getGoodsDescription(),
                 goods.getGoodsDescription(), goods.getSubCategory(), goodsTags, thirdTags, cityIds,
-                goods.getRcmdScore(), goods.getCreateTime(), goodsIds, goods.getGoodsType());
-
+                goods.getRcmdScore(), goods.getCreateTime(), goodsIds, goods.getGoodsType(),goods.getSalesNum());
     }
 
     public void deleteVideo(long id) {

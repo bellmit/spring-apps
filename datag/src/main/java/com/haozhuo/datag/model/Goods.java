@@ -40,9 +40,11 @@ public class Goods {
     private List<String> cityIds;
 
     //商品类别
-    private String goodsType;
+    private int goodsType;
 
     private int rcmdScore = -1;
+
+    private int salesNum = -1;
 
     private String createTime;
 
@@ -64,6 +66,22 @@ public class Goods {
         }
     }
 
+    public void setGoodsIds(List<String> goodsIds) {
+        this.goodsIds = goodsIds;
+    }
+
+    public void setGoodsTags(List<String> goodsTags) {
+        this.goodsTags = goodsTags;
+    }
+
+    public void setThirdTags(List<String> thirdTags) {
+        this.thirdTags = thirdTags;
+    }
+
+    public void setCityIds(List<String> cityIds) {
+        this.cityIds = cityIds;
+    }
+
     public void setGoodsName(String goodsName) {
         this.goodsName = goodsName;
     }
@@ -80,14 +98,6 @@ public class Goods {
         this.subCategory = subCategory;
     }
 
-    public void setThirdTags(List<String> thirdTags) {
-        this.thirdTags = thirdTags;
-    }
-
-    public void setCityIds(List<String> cityIds) {
-        this.cityIds = cityIds;
-    }
-
     public void setCreateTime(String createTime) {
         this.createTime = createTime;
     }
@@ -96,15 +106,11 @@ public class Goods {
         this.skuId = skuId;
     }
 
-    public void setGoodsIds(List<String> goodsIds) {
-        this.goodsIds = goodsIds;
-    }
-
-    public void setGoodsTags(List<String> goodsTags) {
-        this.goodsTags = goodsTags;
-    }
-
-    public void setGoodsType(String goodsType) {
+    public void setGoodsType(int goodsType) {
         this.goodsType = goodsType;
+    }
+
+    public void setSalesNum(int salesNum) {
+        this.salesNum = salesNum;
     }
 }

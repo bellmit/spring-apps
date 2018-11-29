@@ -52,6 +52,11 @@ spring:
       username: datag
       password: yjkdatag
       maximum-pool-size: 2
+    yjk-mall:
+      url: jdbc:mysql://192.168.1.201:3306/yjk_mall_2_0?characterEncoding=utf-8
+      username: root
+      password: mysql4hz@2015
+      maximum-pool-size: 1
   kafka:
     bootstrap-servers: 192.168.1.153:9092
   data:

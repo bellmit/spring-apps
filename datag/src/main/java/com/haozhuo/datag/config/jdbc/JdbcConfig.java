@@ -50,4 +50,21 @@ public class JdbcConfig {
     public DataSource bisysDataSource() {
         return bisysDataSourceProperties().initializeDataSourceBuilder().build();
     }
+
+    @Bean(name = "yjkMallJdbc")
+    public JdbcTemplate yjkMallJdbcTemplate() {
+        return new JdbcTemplate(yjkMallDataSource());
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.yjk-mall")
+    public DataSourceProperties yjkMallDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.yjk-mall")
+    public DataSource yjkMallDataSource() {
+        return yjkMallDataSourceProperties().initializeDataSourceBuilder().build();
+    }
 }

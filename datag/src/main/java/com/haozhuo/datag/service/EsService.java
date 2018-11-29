@@ -295,7 +295,7 @@ public class EsService {
         if (source != null) {
             goods = new Goods();
             goods.setSkuId(response.getId());
-            goods.setGoodsType(response.getType());
+            goods.setGoodsType(Integer.parseInt(response.getType()));
             goods.setCategory((String) source.get("category"));
             goods.setCityIds((List<String>) source.get("cityIds"));
             goods.setGoodsIds((List<String>) source.get("goodsIds"));
@@ -306,6 +306,7 @@ public class EsService {
             goods.setSubCategory((String) source.get("subCategory"));
             goods.setThirdTags((List<String>) source.get("thirdTags"));
             goods.setRcmdScore((Integer) source.get("rcmdScore"));
+            goods.setSalesNum((Integer) source.get("salesNum"));
         }
         return goods;
     }
@@ -541,20 +542,12 @@ public class EsService {
         map.put("cityIds", goods.getCityIds());
         map.put("rcmdScore", goods.getRcmdScore());
         map.put("createTime", goods.getCreateTime());
-        client.prepareIndex(goodsIndex, goods.getGoodsType(), goods.getSkuId()).setSource(map).get();
+        map.put("salesNum", goods.getSalesNum());
+        client.prepareIndex(goodsIndex, String.valueOf(goods.getGoodsType()), goods.getSkuId()).setSource(map).get();
     }
 
     public void deleteGoods(String skuId) {
         deleteIdByQuery(goodsIndex, String.valueOf(skuId));
-    }
-
-    public void updateGoodsRcmdScore(String skuId, int rcmdScore) {
-        Goods goods = getGoodsBySkuId(skuId);
-        if (goods != null) {
-            goods.setRcmdScore(rcmdScore);
-            updateGoods(goods);
-        }
-
     }
 
 }

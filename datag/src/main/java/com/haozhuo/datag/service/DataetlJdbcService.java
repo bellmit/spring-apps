@@ -188,10 +188,9 @@ public class DataetlJdbcService {
         return tags;
     }
 
-    public List<String> getGoodsList(int from, int size) {
-        dataetlDB.query(
-                String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,third_tags,city_ids" +
-                        " rcmd_score,goods_type,sales_num,create_time from %s x limit ?,?", goodsTable),
+    public List<Goods> getGoodsList(int from, int size) {
+        return dataetlDB.query(
+                String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,third_tags, city_ids, rcmd_score,goods_type,sales_num,create_time from %s x limit ?, ?", goodsTable),
                 new Object[]{from,size},
                 new RowMapper<Goods>() {
                     @Override
@@ -207,15 +206,14 @@ public class DataetlJdbcService {
                         goods.setSubCategory(resultSet.getString("sub_category"));
                         goods.setGoodsTags(Arrays.asList(resultSet.getString("goods_tags").split(",")));
                         goods.setThirdTags(Arrays.asList(resultSet.getString("third_tags").split(",")));
-                        goods.setCityIds(Arrays.asList(resultSet.getString("city_ids").split(",")));
                         goods.setRcmdScore(resultSet.getInt("rcmd_score"));
                         goods.setGoodsType(resultSet.getInt("goods_type"));
                         goods.setSalesNum(resultSet.getInt("sales_num"));
+                        goods.setCityIds(Arrays.asList(resultSet.getString("city_ids").split(",")));
                         goods.setCreateTime(resultSet.getString("create_time"));
                         return goods;
                     }
                 });
-        return null;
     }
     public List<String> getGoodsSkuIdsByLikeStr(String field, String str) {
         List<String> goodsIdList = null;

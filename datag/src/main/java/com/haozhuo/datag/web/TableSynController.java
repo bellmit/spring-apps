@@ -216,11 +216,24 @@ public class TableSynController {
 
     @GetMapping("/goods/synSaleNum/{password}")
     @ApiOperation(value = "同步商品销量", notes = "该接口用于每天定时同步更新商品的销量。开销大，不能随便调用。只有项目开发者才知道密码，才能调用。")
-    public Object synGoodsSaleNum(@PathVariable(value = "password") String password,
-                                  @RequestParam(value = "goodsIds") String goodsIds) {
+    public Object synGoodsSaleNum(@PathVariable(value = "password") String password) {
         if ("321".equals(password)) {
-            dataetlJdbcService.getGoodsList(0, 10);
-            int count = yjkMallJdbcService.getGoodsSaleNum(Arrays.asList(goodsIds.split(",")));
+            int from = 0;
+            int size = 100;
+            List<Goods> goodsList;
+            do {
+                goodsList = dataetlJdbcService.getGoodsList(from, size);
+                from = from + size;
+                for(Goods goods: goodsList) {
+                    int salesNum = yjkMallJdbcService.getGoodsSaleNum(goods.getGoodsIds());
+                    goods.setSalesNum(salesNum);
+                    esService.updateGoods(goods);
+                    dataetlJdbcService.updateGoods(goods);
+                }
+
+            } while (goodsList.size() == size);
+
+           // int count = yjkMallJdbcService.getGoodsSaleNum(Arrays.asList(goodsIds.split(",")));
             return "同步完成";
         } else {
             return "密码错误!";

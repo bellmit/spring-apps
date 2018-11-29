@@ -99,7 +99,11 @@ public class Goods {
     }
 
     public void setCreateTime(String createTime) {
-        this.createTime = createTime;
+        if (createTime.length() > 19) {
+            this.createTime = createTime.substring(0, 19);
+        } else {
+            this.createTime = createTime;
+        }
     }
 
     public void setSkuId(String skuId) {
@@ -112,5 +116,24 @@ public class Goods {
 
     public void setSalesNum(int salesNum) {
         this.salesNum = salesNum;
+    }
+
+    @Override
+    public String toString() {
+        return "Goods{" +
+                "skuId='" + skuId + '\'' +
+                ", goodsIds=" + goodsIds +
+                ", goodsName='" + goodsName + '\'' +
+                ", goodsDescription='" + goodsDescription + '\'' +
+                ", category='" + category + '\'' +
+                ", subCategory='" + subCategory + '\'' +
+                ", goodsTags=" + goodsTags +
+                ", thirdTags=" + thirdTags +
+                ", cityIds=" + cityIds +
+                ", goodsType=" + goodsType +
+                ", rcmdScore=" + rcmdScore +
+                ", salesNum=" + salesNum +
+                ", createTime='" + createTime + '\'' +
+                '}';
     }
 }

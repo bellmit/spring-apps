@@ -2,14 +2,14 @@ app:
   es:
     video-index: video4
     live-index: live4
-    goods-index: goods5
+    goods-index: goods5 ## update!!
     article-index: article4
     reportlabel-index: reportlabel
   mysql:
     article: article4
     video: video4
     live: live4
-    goods: goods5
+    goods: goods5 ## update!!
   redis:
     expire-days: 15
     pushed-key-max-size: 200
@@ -19,6 +19,7 @@ app:
       prefs-update: prefs-update
   biz:
     goodsScoreDecay: 0.9
+    goodsSalesDays: 365 ## new add!
     queueRcmdNum: 5,4,3,2
     articleTags: title,tags,keywords
   rest:
@@ -52,7 +53,7 @@ spring:
       username: datag
       password: yjkdatag
       maximum-pool-size: 2
-    yjk-mall:
+    yjk-mall: ## new add!!
       url: jdbc:mysql://192.168.1.201:3306/yjk_mall_2_0?characterEncoding=utf-8
       username: root
       password: mysql4hz@2015

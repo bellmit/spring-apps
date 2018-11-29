@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -35,6 +36,9 @@ public class TableSynController {
 
     @Autowired
     private RedisService redisService;
+
+    @Value("${app.biz.admin-password:321}")
+    private String adminPassword;
 
     /**
      * 对应原来developer-api项目中的InsertEntityController中的
@@ -172,7 +176,6 @@ public class TableSynController {
                     goods.setRcmdScore(existGoods.getRcmdScore());
                 }
             }
-
             if (goods.getSalesNum() <= 0) {
                 if (existGoods == null) {
                     goods.setSalesNum(0);
@@ -217,23 +220,20 @@ public class TableSynController {
     @GetMapping("/goods/synSaleNum/{password}")
     @ApiOperation(value = "同步商品销量", notes = "该接口用于每天定时同步更新商品的销量。开销大，不能随便调用。只有项目开发者才知道密码，才能调用。")
     public Object synGoodsSaleNum(@PathVariable(value = "password") String password) {
-        if ("321".equals(password)) {
+        if (adminPassword.equals(password)) {
             int from = 0;
             int size = 100;
             List<Goods> goodsList;
             do {
                 goodsList = dataetlJdbcService.getGoodsList(from, size);
                 from = from + size;
-                for(Goods goods: goodsList) {
+                for (Goods goods : goodsList) {
                     int salesNum = yjkMallJdbcService.getGoodsSaleNum(goods.getGoodsIds());
                     goods.setSalesNum(salesNum);
                     esService.updateGoods(goods);
                     dataetlJdbcService.updateGoods(goods);
                 }
-
             } while (goodsList.size() == size);
-
-           // int count = yjkMallJdbcService.getGoodsSaleNum(Arrays.asList(goodsIds.split(",")));
             return "同步完成";
         } else {
             return "密码错误!";
@@ -242,14 +242,21 @@ public class TableSynController {
 
 
     @GetMapping("/goods/updateScoresByLikeStr")
-    @ApiOperation(value = "根据字符匹配批量更新商品推荐权重")
-    public Object updateGoodsScoresByLikeStr(@RequestParam(value = "likeStr") String likeStr,
-                                             @RequestParam(value = "rcmdScore") int rcmdScore,
-                                             @RequestParam(value = "field", defaultValue = "name") String field) {
+    @ApiOperation(value = "根据字符匹配批量更新商品推荐权重", notes = "只有项目开发者才知道密码，才能调用。")
+    public Object updateGoodsScoresByLikeStr(
+            @RequestParam(value = "password") String password,
+            @RequestParam(value = "likeStr") String likeStr,
+            @RequestParam(value = "rcmdScore") int rcmdScore,
+            @RequestParam(value = "field", defaultValue = "name") String field) {
         List<String> ids = dataetlJdbcService.getGoodsSkuIdsByLikeStr(field, likeStr);
-        for (String id : ids) {
-            updateGoodsScore(id, rcmdScore);
+        if (adminPassword.equals(password)) {
+            for (String id : ids) {
+                updateGoodsScore(id, rcmdScore);
+            }
+            return ids;
+        } else {
+            return "密码错误!";
         }
-        return ids;
+
     }
 }

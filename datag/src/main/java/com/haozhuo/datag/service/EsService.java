@@ -14,6 +14,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.ExponentialDecayFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.index.query.functionscore.GaussDecayFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
@@ -26,15 +27,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 @Component
 public class EsService {
@@ -79,13 +83,15 @@ public class EsService {
 
     @Autowired
     private TransportClient client;
-    private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8D);
+    private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8);
     private GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
-    private GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction;
+    private GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, 0.9);
+    private ExponentialDecayFunctionBuilder goodsCreateTimeExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("createTime", "now", "180d", "0d", 0.8);
+    private ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
+
 
     public EsService(Environment env) {
-        this.goodsRcmdScoreDecay = Double.parseDouble(env.getProperty("app.biz.goodsRcmdScoreDecay", "0.9"));
-        this.goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, goodsRcmdScoreDecay);
+
     }
 
     private String[] recommend(String index, QueryBuilder query, int size, String... types) {
@@ -105,9 +111,9 @@ public class EsService {
     public String[] personalizedRecommend(String index, String tags, String hateTags, String[] pushedIds, int size, String... types) {
         String tagField = getTagField();
         QueryBuilder query = QueryBuilders.boolQuery()
-                .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
+                .mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
-                .should(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(tags)).boost(3));
+                .should(matchQuery(tagField, Utils.removeStopWords(tags)).boost(3));
 
         return recommend(index, query, size, types);
     }
@@ -128,7 +134,7 @@ public class EsService {
     public String[] commonRecommend(String index, String hateTags, String[] pushedIds, int size, String... types) {
         String tagField = getTagField();
         QueryBuilder query = QueryBuilders.boolQuery()
-                .mustNot(QueryBuilders.matchQuery(tagField, Utils.removeStopWords(hateTags)))
+                .mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
         return recommend(index, query, size, types);
     }
@@ -239,15 +245,19 @@ public class EsService {
         return ids;
     }
 
-    private QueryBuilder goodsSearchCityIdsQueryBuilder(String keywords,String cityId) {
+    private QueryBuilder goodsSearchCityIdsQueryBuilder(String keywords, String cityId) {
         return new FunctionScoreQueryBuilder(QueryBuilders.boolQuery()
                 .must(QueryBuilders.multiMatchQuery(keywords, defaultGoodsSearchFields))
                 .must(QueryBuilders.boolQuery()
-                        .should(QueryBuilders.matchQuery("cityIds", cityId))
-                        .should(QueryBuilders.matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction);
+                        .should(matchQuery("cityIds", cityId))
+                        .should(matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction);
     }
 
-    private static final String [] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
+//    private QueryBuilder goodsSearchCityIdsQueryBuilder2() {
+//        return new FunctionScoreQueryBuilder(goodsRcmdScoreGaussDecayFunction);
+//    }
+
+    private static final String[] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
 
     private SearchHit[] getGoodsIdsByKeywordsAndCityIdsHits(String keywords, String cityId, int from, int size) {
         SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
@@ -257,12 +267,70 @@ public class EsService {
         return srb.execute().actionGet().getHits().getHits();
     }
 
+    /**
+     * curl -XGET "192.168.1.152:9200/goods5/3/_search?pretty" -d'{
+     * "query": {
+     * "function_score": {
+     * "functions": [{
+     * "exp": {
+     * "salesNum": {
+     * "origin": 10000,
+     * "offset": 9000,
+     * "scale": 500
+     * }
+     * }
+     * }, {
+     * "exp": {
+     * "createTime": {
+     * "origin": "now",
+     * "scale": "180d",
+     * "decay": "0.8"
+     * }
+     * }
+     * }]
+     * }
+     * },
+     * "from": 0,
+     * "size": 45
+     * }'
+     *
+     * @param cityId
+     * @param goodsType
+     * @param from
+     * @param size
+     * @return
+     * @throws InterruptedException
+     */
+    //TODO cityId
+    public List<String> getSkuIdsListByCityId(String cityId, int goodsType, int from, int size) throws InterruptedException {
+        logger.debug("cityId:{},goodsType:{},from:{},size:{}", cityId, goodsType, from, size);
+        SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
+                .setTypes(String.valueOf(goodsType))
+                .setSize(size)
+                .setFrom(from)
+                .setQuery(QueryBuilders.functionScoreQuery(
+                        QueryBuilders.functionScoreQuery(goodsSaleNumExpDecayFunction), goodsCreateTimeExpDecayFunction));
+        return EsUtils.getDocIdsAsList(srb);
+    }
+
+    @Async("rcmdExecutor")
+    public CompletableFuture<List<String>> getFutureSkuIdsByCityId(
+            String cityId, int goodsType, int from, int size) throws InterruptedException {
+        logger.debug("getFutureSkuIdsByCityId goodsType:{}", goodsType);
+        return CompletableFuture.completedFuture(getSkuIdsListByCityId(cityId, goodsType, from, size));
+    }
+
+    @Async("rcmdExecutor")
+    public CompletableFuture<List<String>> getFutureSkuIdsByCityId(
+            String cityId, int goodsType, int totalFrom, int totalSize, double typePercent) throws InterruptedException {
+        return getFutureSkuIdsByCityId(cityId, goodsType, (int) (totalFrom * typePercent), (int) (totalSize * typePercent));
+    }
+
     public List<String> getBestMatchSkuIdsByKeywordsAndCityIds(String keywords, String cityId, int from, int size) {
         SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
                 .setSize(size)
                 .setFrom(from)
                 .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId));
-        System.out.println( srb);
         return EsUtils.getDocIdsAsList(srb);
     }
 
@@ -276,10 +344,9 @@ public class EsService {
             goodsIdsOfHighestScore = result.stream().map(x -> (List<String>) x.getT1()).collect(toList());
         }
         String goodsId = "";
-        List<String> goodsIds = null;
         if (goodsIdsOfHighestScore.size() > 0) {
             Collections.shuffle(goodsIdsOfHighestScore);
-            goodsIds = goodsIdsOfHighestScore.get(0);
+            List<String> goodsIds = goodsIdsOfHighestScore.get(0);
             Collections.shuffle(goodsIds);
             //主键是skuID即文档ID，但是根据业务需求，这里不需要skuID，而是返回该skuID下众多goodsIds下的一个即可。所以取第一个。
             goodsId = goodsIds.get(0);
@@ -314,7 +381,7 @@ public class EsService {
         //去掉这些对匹配结果有负面影响的词
         String replacedTags = Utils.removeStopWords(tags);
         logger.debug("replacedLabel:{}", replacedTags);
-        return getVideoIdsByCondition(QueryBuilders.matchQuery("tags", replacedTags), new String[]{videoId}, 0, size);
+        return getVideoIdsByCondition(matchQuery("tags", replacedTags), new String[]{videoId}, 0, size);
     }
 
     /**
@@ -324,7 +391,7 @@ public class EsService {
      */
     public String getLabelsByReportId(String reportId) {
         SearchRequestBuilder srb = client.prepareSearch(reportlabelIndex).setSize(1)
-                .setQuery(QueryBuilders.matchQuery("healthReportId", reportId.trim()));
+                .setQuery(matchQuery("healthReportId", reportId.trim()));
         logger.debug(srb.toString());
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         return stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString();
@@ -418,7 +485,7 @@ public class EsService {
     }
 
     public String getDiseaseLabelsByUserId(String userIds) {
-       return Utils.removeStopWords(getDiseaseLabelListByUserId(userIds).stream().collect(joining(",")));
+        return Utils.removeStopWords(getDiseaseLabelListByUserId(userIds).stream().collect(joining(",")));
     }
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {

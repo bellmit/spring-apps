@@ -2,6 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
+import com.haozhuo.datag.model.Goods;
 import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -135,6 +138,29 @@ public class RcmdController {
         String diseaseLabels = esService.getDiseaseLabelsByUserId(userId);
         return esService.getBestMatchSkuIdsByKeywordsAndCityIds(diseaseLabels, cityId, from, size);
     }
+
+
+
+    @GetMapping("/goods/home")
+    public Object getGoodsIdsHome(
+            @RequestParam(value = "userId") String userId,
+            @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
+            @RequestParam(value = "from", defaultValue = "0") int from,
+            @RequestParam(value = "size", defaultValue = "40") int size
+    ) throws InterruptedException, ExecutionException {
+        CompletableFuture<List<String>> g1 = esService.getFutureSkuIdsByCityId(cityId, 1, from, size, 0.6);
+        CompletableFuture<List<String>> g2 = esService.getFutureSkuIdsByCityId(cityId, 2, from, size, 0.3);
+        CompletableFuture<List<String>> g3 = esService.getFutureSkuIdsByCityId(cityId, 3, from, size, 0.1);
+        // Wait until they are all done
+        CompletableFuture.allOf(g1, g2, g3).join();
+        List<String> list = new ArrayList<>();
+        list.addAll(g1.get());
+        list.addAll(g2.get());
+        list.addAll(g3.get());
+        Collections.shuffle(list);
+        return list;
+    }
+
 
     /**
      * 推荐视频列表

@@ -18,8 +18,8 @@ app:
       news-rcmd-request: news-rcmd-request
       prefs-update: prefs-update
   biz:
-    goodsScoreDecay: 0.9
-    goodsSalesDays: 365 ## new add!
+    #goodsScoreDecay: 0.9 ## delete !
+    goodsSalesDays: 90 ## new add!
     queueRcmdNum: 5,4,3,2
     articleTags: title,tags,keywords
   rest:
@@ -31,7 +31,7 @@ logging:
       springframework: ERROR
     com:
       haozhuo: DEBUG
-  file: /data/work/luciuschina/spring-apps/tmp/recommder.log
+  file: tmp/recommder.log
 
 spring:
   redis:

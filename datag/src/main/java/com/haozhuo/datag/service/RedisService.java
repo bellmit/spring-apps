@@ -52,6 +52,7 @@ public class RedisService {
 
     private final String videoPushedKey = "video-pushed:%s:%s";
     private final String goodsPushedKey = "goods-pushed:%s:%s";
+    private final String homePushedGoodsSkuId = "HPSkuId:%s";
 
     @Deprecated
     private final String hateTagsKey = "HateTags:%s";
@@ -98,7 +99,7 @@ public class RedisService {
         deleteHashKey(pushedInfoKeys.getKey(), pushedInfoKeys.getALVHashKeys().toArray());
     }
 
-    public void deleteHashKeyByPushedInfoKeys(PushedInfoKeys pushedInfoKeys,String hashKey) {
+    public void deleteHashKeyByPushedInfoKeys(PushedInfoKeys pushedInfoKeys, String hashKey) {
         deleteHashKey(pushedInfoKeys.getKey(), hashKey);
     }
 
@@ -300,11 +301,12 @@ public class RedisService {
     }
 
     private Integer[] getRcmdNumArray() {
-        if(queueRcmdNumArray == null) {
+        if (queueRcmdNumArray == null) {
             queueRcmdNumArray = stream(queueRcmdNumStr.split(",")).map(x -> Integer.parseInt(x)).toArray(Integer[]::new);
         }
         return queueRcmdNumArray;
     }
+
     public RcmdNewsInfo getRcmdNews(String userId, int count) {
         Object queue = redisDB0.opsForHash().get(newsRcmdChannelsKey, userId);
         Integer[] queueRcmdNumArray = getRcmdNumArray();
@@ -384,4 +386,20 @@ public class RedisService {
         //delete hashValue from Redis.news_keywords where hashKey = infomationId
         ho.delete(newsKeywordsKey, informationId);
     }
+
+    public Set<String> getHomePushedGoodsSkuIds(String userId) {
+        return redisDB1.opsForSet().members(String.format(homePushedGoodsSkuId, userId));
+    }
+
+    public void addHomePushedGoodsByUserId(String userId, String... skuIds) {
+        String key = String.format(homePushedGoodsSkuId, userId);
+        redisDB1.opsForSet().add(key, skuIds);
+        redisDB1.expire(key, 1, TimeUnit.DAYS);
+    }
+
+    public void deleteHomePushedGoodsByUserId(String userId) {
+        redisDB1.delete(String.format(homePushedGoodsSkuId, userId));
+    }
+
+
 }

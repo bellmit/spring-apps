@@ -1,8 +1,8 @@
 package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.AbnormalParam;
-import com.haozhuo.datag.model.Goods;
 import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
@@ -128,26 +128,47 @@ public class RcmdController {
         return result;
     }
 
-    @GetMapping("/goods/userAndCity")
-    public Object getGoodsIdsByUserIdAndCityIds(
-            @RequestParam(value = "userId") String userId,
-            @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
-            @RequestParam(value = "from", defaultValue = "0") int from,
-            @RequestParam(value = "size", defaultValue = "10") int size
-    ) {
-        String diseaseLabels = esService.getDiseaseLabelsByUserId(userId);
-        return esService.getBestMatchSkuIdsByKeywordsAndCityIds(diseaseLabels, cityId, from, size);
-    }
-
+//    @GetMapping("/goods/userAndCity")
+//    public Object getGoodsIdsByUserIdAndCityIds(
+//            @RequestParam(value = "userId") String userId,
+//            @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
+//            @RequestParam(value = "from", defaultValue = "0") int from,
+//            @RequestParam(value = "size", defaultValue = "10") int size
+//    ) {
+//        String diseaseLabels = esService.getPortraitDiseaseLabelsByUserId(userId);
+//        return esService.getBestMatchGoodsId(diseaseLabels, cityId, from, size);
+//    }
 
 
     @GetMapping("/goods/home")
     public Object getGoodsIdsHome(
-            @RequestParam(value = "userId") String userId,
+            @RequestParam(value = "userId", defaultValue = "null") String userId,
             @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
-            @RequestParam(value = "from", defaultValue = "0") int from,
-            @RequestParam(value = "size", defaultValue = "40") int size
+            @RequestParam(value = "from", defaultValue = "0") int from
     ) throws InterruptedException, ExecutionException {
+        int size = 40;
+        if (!"null".equals(userId)) {
+            //从Redis中查询出已经推荐过的商品skuId
+            Set<String> pushedSkuIds = redisService.getHomePushedGoodsSkuIds(userId);
+            System.out.println(pushedSkuIds);
+            //从ES中查询用户疾病标签
+            String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
+            //根据用户疾病标签查找商品10篇
+            List<Tuple<String, String>> tupList = esService.getBestMatchSkuIdGoodsIdList(labels, "000000", from, 10, pushedSkuIds.toArray(new String[]{}));
+            List<String> skuIdsByLabels = tupList.stream().map(t->t.getT1()).collect(toList());
+            List<String> goodsIdsByLabels = tupList.stream().map(t->t.getT2()).collect(toList());
+
+            //根据商品销量查找商品40篇
+
+
+            //将这些商品打乱顺序，写入Redis
+
+            //返回商品列表
+            //redisService.addHomePushedGoodsByUserId(userId, aa);
+            return tup;
+
+        }
+
         CompletableFuture<List<String>> g1 = esService.getFutureSkuIdsByCityId(cityId, 1, from, size, 0.6);
         CompletableFuture<List<String>> g2 = esService.getFutureSkuIdsByCityId(cityId, 2, from, size, 0.3);
         CompletableFuture<List<String>> g3 = esService.getFutureSkuIdsByCityId(cityId, 3, from, size, 0.1);
@@ -360,10 +381,12 @@ public class RcmdController {
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
-        String goodsId = esService.getBestMatchGoodsIdByKeywordsAndCityIds(tags, cityId, 0, size);
+        String goodsId = esService.getBestMatchGoodsId(tags, cityId, 0, size);
+        List<String> goodsIds = new ArrayList<>();
         if (goodsId != null) {
-            map.put("g", Arrays.asList(goodsId));
+            goodsIds.add(goodsId);
         }
+        map.put("g", goodsIds);
         logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={} resut->goodsId:{}  cost: {}ms", infoId, cityId, goodsId, System.currentTimeMillis() - beginTime);
         return map;
     }

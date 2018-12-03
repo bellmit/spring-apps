@@ -22,7 +22,6 @@ public class KafkaService {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-
     @Autowired
     public KafkaService(KafkaTemplate kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
@@ -40,7 +39,7 @@ public class KafkaService {
             logger.debug("send msg:{}", msg);
             kafkaTemplate.send(newsRcmdRequestTopic, objectMapper.writeValueAsString(msg));
         } catch (JsonProcessingException e) {
-            logger.error("发送Kafka消息{}失败:{}",msg,e);
+            logger.error("发送Kafka消息{}失败:{}", msg, e);
         }
     }
 
@@ -49,9 +48,7 @@ public class KafkaService {
             logger.debug("send msg:{}", msg);
             kafkaTemplate.send(prefUpdateTopic, objectMapper.writeValueAsString(msg));
         } catch (JsonProcessingException e) {
-            logger.error("发送Kafka消息{}失败:{}",msg,e);
+            logger.error("发送Kafka消息{}失败:{}", msg, e);
         }
     }
-
-
 }

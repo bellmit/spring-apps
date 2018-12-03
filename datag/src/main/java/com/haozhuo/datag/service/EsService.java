@@ -74,6 +74,8 @@ public class EsService {
         return articleIndex;
     }
 
+    private final Random random = new Random();
+
     @Value("${app.es.reportlabel-index}")
     private String reportlabelIndex;
 
@@ -245,10 +247,11 @@ public class EsService {
         return ids;
     }
 
-    private QueryBuilder goodsSearchCityIdsQueryBuilder(String keywords, String cityId) {
+    private QueryBuilder goodsSearchCityIdsQueryBuilder(String keywords, String cityId, String... pushedSkuIds) {
         return new FunctionScoreQueryBuilder(QueryBuilders.boolQuery()
                 .must(QueryBuilders.multiMatchQuery(keywords, defaultGoodsSearchFields))
                 .must(QueryBuilders.boolQuery()
+                        .mustNot(QueryBuilders.idsQuery().addIds(pushedSkuIds))
                         .should(matchQuery("cityIds", cityId))
                         .should(matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction);
     }
@@ -326,15 +329,29 @@ public class EsService {
         return getFutureSkuIdsByCityId(cityId, goodsType, (int) (totalFrom * typePercent), (int) (totalSize * typePercent));
     }
 
-    public List<String> getBestMatchSkuIdsByKeywordsAndCityIds(String keywords, String cityId, int from, int size) {
+    public List<Tuple<String, String>> getBestMatchSkuIdGoodsIdList(String keywords, String cityId, int from, int size, String... pushedSkuIds) {
         SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
                 .setSize(size)
                 .setFrom(from)
-                .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId));
-        return EsUtils.getDocIdsAsList(srb);
+                .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId, pushedSkuIds))
+                .setFetchSource(new String[]{"goodsIds"}, null);
+
+        SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
+        List<Tuple<String, String>> result = new ArrayList<>();
+        List<String> goodsIdsList;
+        for (SearchHit hit : hits) {
+            Object obj = hit.getSource().get("goodsIds");
+            if (obj != null) {
+                goodsIdsList = (List<String>) obj;
+                Tuple<String, String> tuple = new Tuple<>(hit.getId(), goodsIdsList.get(random.nextInt(goodsIdsList.size())));
+                result.add(tuple);
+            }
+
+        }
+        return result;
     }
 
-    public String getBestMatchGoodsIdByKeywordsAndCityIds(String keywords, String cityId, int from, int size) {
+    public String getBestMatchGoodsId(String keywords, String cityId, int from, int size) {
         List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size))
                 .map(hit -> new Tuple(hit.getSource().get("goodsIds"), hit.getSource().get("rcmdScore"))).collect(toList());
         List<List<String>> goodsIdsOfHighestScore =
@@ -343,7 +360,7 @@ public class EsService {
         if (goodsIdsOfHighestScore.size() == 0) {
             goodsIdsOfHighestScore = result.stream().map(x -> (List<String>) x.getT1()).collect(toList());
         }
-        String goodsId = "";
+        String goodsId = null;
         if (goodsIdsOfHighestScore.size() > 0) {
             Collections.shuffle(goodsIdsOfHighestScore);
             List<String> goodsIds = goodsIdsOfHighestScore.get(0);
@@ -472,7 +489,7 @@ public class EsService {
         return list;
     }
 
-    public List<String> getDiseaseLabelListByUserId(String userIds) {
+    public List<String> getPortraitDiseaseLabelListByUserId(String userIds) {
         GetResponse response = client.prepareGet(portraitIndex, "docs", userIds).get();
         Map<String, Object> source = response.getSource();
         List<String> diseaseLabelList;
@@ -484,8 +501,8 @@ public class EsService {
         return diseaseLabelList;
     }
 
-    public String getDiseaseLabelsByUserId(String userIds) {
-        return Utils.removeStopWords(getDiseaseLabelListByUserId(userIds).stream().collect(joining(",")));
+    public String getPortraitDiseaseLabelsByUserId(String userId) {
+        return Utils.removeStopWords(getPortraitDiseaseLabelListByUserId(userId).stream().collect(joining(",")));
     }
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {

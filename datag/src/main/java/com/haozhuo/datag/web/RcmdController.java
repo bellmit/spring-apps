@@ -1,7 +1,6 @@
 package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.AbnormalParam;
 import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.model.SkuIdGoodsIds;
@@ -76,7 +75,8 @@ public class RcmdController {
         String userLabels = dataetlJdbcService.getLabelStrByUserId(userId);
 
         //根据userId的label匹配es中good索引中的label，返回内容。
-        String[] result = esService.getGoodsIdsByLabels(userLabels, alreadyPushedGoods, pageSize);
+        esService.getSkuIdGoodsIdsByKeywords(userLabels,null,0,pageSize,alreadyPushedGoods);
+        String[] result = esService.getGoodsIdsByKeywords(userLabels, null,0, pageSize,alreadyPushedGoods);
 
         //如果返回的数量小于pageSize，删除Redis中推过的商品列表的key
         redisService.setPushedGoods(userId, result);
@@ -111,7 +111,7 @@ public class RcmdController {
         if ("".equals(labels))
             return null;
         int from = (pageNum - 1) * pageSize;
-        String[] result = esService.getGoodsIdsByLabels(labels, from, pageSize);
+        String[] result = esService.getGoodsIdsByKeywords(labels, null, from, pageSize);
         logger.info("/goods/reportId/{}?pageSize={}&pageNum={}  cost: {}ms", reportId, pageSize, pageNum, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -124,22 +124,10 @@ public class RcmdController {
     public Object getGoodsIdsByLabels(
             @PathVariable(value = "labels") String labels) {
         long beginTime = System.currentTimeMillis();
-        String[] result = esService.getGoodsIdsByLabels(labels, new String[]{}, 10, "label", "content_name");
+        String[] result = esService.getGoodsIdsByKeywords(labels, null, 0, 10);
         logger.info("/goods/labels/{}  cost: {}ms", labels, System.currentTimeMillis() - beginTime);
         return result;
     }
-
-//    @GetMapping("/goods/userAndCity")
-//    public Object getGoodsIdsByUserIdAndCityIds(
-//            @RequestParam(value = "userId") String userId,
-//            @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
-//            @RequestParam(value = "from", defaultValue = "0") int from,
-//            @RequestParam(value = "size", defaultValue = "10") int size
-//    ) {
-//        String diseaseLabels = esService.getPortraitDiseaseLabelsByUserId(userId);
-//        return esService.getOneOfMatchedGoodsId(diseaseLabels, cityId, from, size);
-//    }
-
 
     @GetMapping("/goods/home")
     public Object getGoodsIdsHome(
@@ -155,9 +143,8 @@ public class RcmdController {
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
             //根据用户疾病标签查找商品10篇
-            List<SkuIdGoodsIds> tupList = esService.getSkuIdGoodsIdsByKeywords(labels, "000000", from, 10, pushedSkuIds.toArray(new String[]{}));
-//            List<String> skuIdsByLabels = tupList.stream().map(t -> t.getT1()).collect(toList());
-//            List<String> goodsIdsByLabels = tupList.stream().map(t -> t.getT2()).collect(toList());
+            List<SkuIdGoodsIds> tupList = esService.getSkuIdGoodsIdsByKeywords(labels, cityId, from, 10, pushedSkuIds.toArray(new String[]{}));
+
 
             //根据商品销量查找商品40篇
 

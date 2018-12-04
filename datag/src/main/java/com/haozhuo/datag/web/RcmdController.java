@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.AbnormalParam;
 import com.haozhuo.datag.model.PrefUpdateMsg;
+import com.haozhuo.datag.model.SkuIdGoodsIds;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -136,7 +137,7 @@ public class RcmdController {
 //            @RequestParam(value = "size", defaultValue = "10") int size
 //    ) {
 //        String diseaseLabels = esService.getPortraitDiseaseLabelsByUserId(userId);
-//        return esService.getBestMatchGoodsId(diseaseLabels, cityId, from, size);
+//        return esService.getOneOfMatchedGoodsId(diseaseLabels, cityId, from, size);
 //    }
 
 
@@ -154,9 +155,9 @@ public class RcmdController {
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
             //根据用户疾病标签查找商品10篇
-            List<Tuple<String, String>> tupList = esService.getBestMatchSkuIdGoodsIdList(labels, "000000", from, 10, pushedSkuIds.toArray(new String[]{}));
-            List<String> skuIdsByLabels = tupList.stream().map(t->t.getT1()).collect(toList());
-            List<String> goodsIdsByLabels = tupList.stream().map(t->t.getT2()).collect(toList());
+            List<SkuIdGoodsIds> tupList = esService.getSkuIdGoodsIdsByKeywords(labels, "000000", from, 10, pushedSkuIds.toArray(new String[]{}));
+//            List<String> skuIdsByLabels = tupList.stream().map(t -> t.getT1()).collect(toList());
+//            List<String> goodsIdsByLabels = tupList.stream().map(t -> t.getT2()).collect(toList());
 
             //根据商品销量查找商品40篇
 
@@ -165,16 +166,16 @@ public class RcmdController {
 
             //返回商品列表
             //redisService.addHomePushedGoodsByUserId(userId, aa);
-            return tup;
+            return tupList;
 
         }
 
-        CompletableFuture<List<String>> g1 = esService.getFutureSkuIdsByCityId(cityId, 1, from, size, 0.6);
-        CompletableFuture<List<String>> g2 = esService.getFutureSkuIdsByCityId(cityId, 2, from, size, 0.3);
-        CompletableFuture<List<String>> g3 = esService.getFutureSkuIdsByCityId(cityId, 3, from, size, 0.1);
+        CompletableFuture<List<SkuIdGoodsIds>> g1 = esService.getFutureSkuIdsByCityId(cityId, 1, from, size, 0.6);
+        CompletableFuture<List<SkuIdGoodsIds>> g2 = esService.getFutureSkuIdsByCityId(cityId, 2, from, size, 0.3);
+        CompletableFuture<List<SkuIdGoodsIds>> g3 = esService.getFutureSkuIdsByCityId(cityId, 3, from, size, 0.1);
         // Wait until they are all done
         CompletableFuture.allOf(g1, g2, g3).join();
-        List<String> list = new ArrayList<>();
+        List<SkuIdGoodsIds> list = new ArrayList<>();
         list.addAll(g1.get());
         list.addAll(g2.get());
         list.addAll(g3.get());
@@ -381,7 +382,7 @@ public class RcmdController {
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
-        String goodsId = esService.getBestMatchGoodsId(tags, cityId, 0, size);
+        String goodsId = esService.getOneOfMatchedGoodsId(tags, cityId, 0, size);
         List<String> goodsIds = new ArrayList<>();
         if (goodsId != null) {
             goodsIds.add(goodsId);

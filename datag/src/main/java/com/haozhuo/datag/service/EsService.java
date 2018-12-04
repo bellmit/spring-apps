@@ -247,27 +247,58 @@ public class EsService {
         return ids;
     }
 
-    private QueryBuilder goodsSearchCityIdsQueryBuilder(String keywords, String cityId, String... pushedSkuIds) {
-        return new FunctionScoreQueryBuilder(QueryBuilders.boolQuery()
-                .must(QueryBuilders.multiMatchQuery(keywords, defaultGoodsSearchFields))
-                .must(QueryBuilders.boolQuery()
-                        .mustNot(QueryBuilders.idsQuery().addIds(pushedSkuIds))
+    private BoolQueryBuilder goodsSearchBuilder(String cityId, String keywords, String... pushedSkuIds) {
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery().must(
+                QueryBuilders.boolQuery()
                         .should(matchQuery("cityIds", cityId))
-                        .should(matchQuery("cityIds", countryId))), goodsRcmdScoreGaussDecayFunction);
-    }
+                        .should(matchQuery("cityIds", countryId))
+        );
 
-//    private QueryBuilder goodsSearchCityIdsQueryBuilder2() {
-//        return new FunctionScoreQueryBuilder(goodsRcmdScoreGaussDecayFunction);
-//    }
+        if (pushedSkuIds.length > 0) {
+            boolQueryBuilder.mustNot(QueryBuilders.idsQuery().addIds(pushedSkuIds));
+        }
+
+        if (keywords != null) {
+            boolQueryBuilder.must(QueryBuilders.multiMatchQuery(keywords, defaultGoodsSearchFields));
+        }
+        System.out.println("====================");
+        System.out.println(boolQueryBuilder);
+        return boolQueryBuilder;
+    }
 
     private static final String[] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
 
-    private SearchHit[] getGoodsIdsByKeywordsAndCityIdsHits(String keywords, String cityId, int from, int size) {
-        SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
-                .setFrom(from)
-                .setSize(size)
-                .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId)).setFetchSource(new String[]{"goodsIds", "rcmdScore"}, null);
-        return srb.execute().actionGet().getHits().getHits();
+
+    @Async("rcmdExecutor")
+    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByCityId(
+            String cityId, int goodsType, int from, int size) throws InterruptedException {
+        logger.debug("getFutureSkuIdsByCityId goodsType:{}", goodsType);
+        return CompletableFuture.completedFuture(getSkuIdsGoodsIdList(cityId, goodsType, from, size));
+    }
+
+    @Async("rcmdExecutor")
+    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByCityId(
+            String cityId, int goodsType, int totalFrom, int totalSize, double typePercent) throws InterruptedException {
+        return getFutureSkuIdsByCityId(cityId, goodsType, (int) (totalFrom * typePercent), (int) (totalSize * typePercent));
+    }
+
+    private List<SkuIdGoodsIds> getSkuIdGoodsIdsFromSRB(SearchRequestBuilder srb) {
+        SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
+        List<SkuIdGoodsIds> result = new ArrayList<>();
+        List<String> goodsIdsList = null;
+        int rcmdScore = 0;
+        for (SearchHit hit : hits) {
+            Object goodsIdsObj = hit.getSource().get("goodsIds");
+            if (goodsIdsObj != null) {
+                goodsIdsList = (List<String>) goodsIdsObj;
+            }
+            Object rcmdScoreObj = hit.getSource().get("rcmdScore");
+            if (rcmdScoreObj != null) {
+                rcmdScore = (Integer) rcmdScoreObj;
+            }
+            result.add(new SkuIdGoodsIds(hit.getId(), goodsIdsList, rcmdScore));
+        }
+        return result;
     }
 
     /**
@@ -304,71 +335,49 @@ public class EsService {
      * @return
      * @throws InterruptedException
      */
-    //TODO cityId
-    public List<String> getSkuIdsListByCityId(String cityId, int goodsType, int from, int size) throws InterruptedException {
+    public List<SkuIdGoodsIds> getSkuIdsGoodsIdList(String cityId, int goodsType, int from, int size) throws InterruptedException {
         logger.debug("cityId:{},goodsType:{},from:{},size:{}", cityId, goodsType, from, size);
+        return getGoodsIdsTemplate(QueryBuilders.functionScoreQuery(
+                QueryBuilders.functionScoreQuery(
+                        goodsSearchBuilder(cityId, null),
+                        goodsCreateTimeExpDecayFunction
+                ),
+                goodsCreateTimeExpDecayFunction
+        ), from, size, String.valueOf(goodsType));
+    }
+
+
+    public List<SkuIdGoodsIds> getSkuIdGoodsIdsByKeywords(String keywords, String cityId, int from, int size, String... pushedSkuIds) {
+        return getGoodsIdsTemplate(goodsSearchBuilder(cityId, keywords, pushedSkuIds), from, size);
+    }
+
+    private List<SkuIdGoodsIds> getGoodsIdsTemplate(QueryBuilder query, int from, int size, String goodsType) {
         SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
-                .setTypes(String.valueOf(goodsType))
-                .setSize(size)
                 .setFrom(from)
-                .setQuery(QueryBuilders.functionScoreQuery(
-                        QueryBuilders.functionScoreQuery(goodsSaleNumExpDecayFunction), goodsCreateTimeExpDecayFunction));
-        return EsUtils.getDocIdsAsList(srb);
-    }
-
-    @Async("rcmdExecutor")
-    public CompletableFuture<List<String>> getFutureSkuIdsByCityId(
-            String cityId, int goodsType, int from, int size) throws InterruptedException {
-        logger.debug("getFutureSkuIdsByCityId goodsType:{}", goodsType);
-        return CompletableFuture.completedFuture(getSkuIdsListByCityId(cityId, goodsType, from, size));
-    }
-
-    @Async("rcmdExecutor")
-    public CompletableFuture<List<String>> getFutureSkuIdsByCityId(
-            String cityId, int goodsType, int totalFrom, int totalSize, double typePercent) throws InterruptedException {
-        return getFutureSkuIdsByCityId(cityId, goodsType, (int) (totalFrom * typePercent), (int) (totalSize * typePercent));
-    }
-
-    public List<Tuple<String, String>> getBestMatchSkuIdGoodsIdList(String keywords, String cityId, int from, int size, String... pushedSkuIds) {
-        SearchRequestBuilder srb = client.prepareSearch(goodsIndex)
                 .setSize(size)
-                .setFrom(from)
-                .setQuery(goodsSearchCityIdsQueryBuilder(keywords, cityId, pushedSkuIds))
-                .setFetchSource(new String[]{"goodsIds"}, null);
-
-        SearchHit[] hits = srb.execute().actionGet().getHits().getHits();
-        List<Tuple<String, String>> result = new ArrayList<>();
-        List<String> goodsIdsList;
-        for (SearchHit hit : hits) {
-            Object obj = hit.getSource().get("goodsIds");
-            if (obj != null) {
-                goodsIdsList = (List<String>) obj;
-                Tuple<String, String> tuple = new Tuple<>(hit.getId(), goodsIdsList.get(random.nextInt(goodsIdsList.size())));
-                result.add(tuple);
-            }
-
+                .setQuery(query);
+        if (goodsType != null) {
+            srb.setTypes(goodsType);
         }
-        return result;
+        return getSkuIdGoodsIdsFromSRB(srb);
     }
 
-    public String getBestMatchGoodsId(String keywords, String cityId, int from, int size) {
-        List<Tuple> result = stream(getGoodsIdsByKeywordsAndCityIdsHits(keywords, cityId, from, size))
-                .map(hit -> new Tuple(hit.getSource().get("goodsIds"), hit.getSource().get("rcmdScore"))).collect(toList());
-        List<List<String>> goodsIdsOfHighestScore =
-                result.stream().filter(x -> ((Integer) x.getT2()) == Goods.SCORE_MAX)
-                        .map(x -> (List<String>) x.getT1()).collect(toList());
-        if (goodsIdsOfHighestScore.size() == 0) {
-            goodsIdsOfHighestScore = result.stream().map(x -> (List<String>) x.getT1()).collect(toList());
+    private List<SkuIdGoodsIds> getGoodsIdsTemplate(QueryBuilder query, int from, int size) {
+        return getGoodsIdsTemplate(query, from, size, null);
+    }
+
+    public String getOneOfMatchedGoodsId(String keywords, String cityId, int from, int size) {
+        List<SkuIdGoodsIds> list = getGoodsIdsTemplate(
+                new FunctionScoreQueryBuilder(goodsSearchBuilder(cityId, keywords), goodsRcmdScoreGaussDecayFunction), from, size);
+        if (list.size() == 0) {
+            return null;
         }
-        String goodsId = null;
-        if (goodsIdsOfHighestScore.size() > 0) {
-            Collections.shuffle(goodsIdsOfHighestScore);
-            List<String> goodsIds = goodsIdsOfHighestScore.get(0);
-            Collections.shuffle(goodsIds);
-            //主键是skuID即文档ID，但是根据业务需求，这里不需要skuID，而是返回该skuID下众多goodsIds下的一个即可。所以取第一个。
-            goodsId = goodsIds.get(0);
+        List<SkuIdGoodsIds> filteredList =
+                list.stream().filter(x -> x.getRcmdScore() == Goods.SCORE_MAX).collect(toList());
+        if (filteredList.size() == 0) {
+            filteredList = list;
         }
-        return goodsId;
+        return filteredList.get(random.nextInt(filteredList.size())).getRandomGoodsId();
     }
 
     public Goods getGoodsBySkuId(String skuId) {

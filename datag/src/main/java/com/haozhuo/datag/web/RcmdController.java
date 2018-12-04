@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -72,10 +73,13 @@ public class RcmdController {
         String[] alreadyPushedGoods = redisService.getPushedGoods(userId);
         //从mysql查出userId的label
         String userLabels = dataetlJdbcService.getLabelStrByUserId(userId);
+        GoodsSearchParams params = new GoodsSearchParams().size(pageSize).excludeSkuIds(alreadyPushedGoods);
+        if (userLabels != null && !"".equals(userLabels)) {
+            params.setKeywords(userLabels);
+        }
 
         //根据userId的label匹配es中good索引中的label，返回内容。
-
-        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams().keywords(userLabels).size(pageSize).excludeSkuIds(alreadyPushedGoods));
+        String[] result = esService.getGoodsIdsByKeywords(params);
 
         //如果返回的数量小于pageSize，删除Redis中推过的商品列表的key
         redisService.setPushedGoods(userId, result);
@@ -157,7 +161,7 @@ public class RcmdController {
             List<SkuIdGoodsIds> listByLabel = esService.getSkuIdGoodsIdsByKeywords(
                     new GoodsSearchParams(labels, cityId, null, from, 10, pushedSkuIdsArray));
 
-            String[] newExcludeSkuIds = (String[])ArrayUtils.addAll(pushedSkuIdsArray, listByLabel.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new));
+            String[] newExcludeSkuIds = (String[]) ArrayUtils.addAll(pushedSkuIdsArray, listByLabel.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new));
 
             //根据商品销量查找商品40篇
             List<SkuIdGoodsIds> queryResult = esService.getSkuIdsByTypePercent(new GoodsSearchParams().cityId(cityId).size(size).excludeSkuIds(newExcludeSkuIds));

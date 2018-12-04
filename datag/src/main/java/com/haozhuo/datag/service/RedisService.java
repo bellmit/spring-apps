@@ -390,6 +390,10 @@ public class RedisService {
     public Set<String> getHomePushedGoodsSkuIds(String userId) {
         return redisDB1.opsForSet().members(String.format(homePushedGoodsSkuId, userId));
     }
+    public String[] getHomePushedGoodsSkuIdsArray(String userId) {
+        return getHomePushedGoodsSkuIds(userId).toArray(new String[]{});
+    }
+
 
     public void addHomePushedGoodsByUserId(String userId, String... skuIds) {
         String key = String.format(homePushedGoodsSkuId, userId);

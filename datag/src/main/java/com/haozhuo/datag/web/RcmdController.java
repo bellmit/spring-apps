@@ -2,6 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.AbnormalParam;
+import com.haozhuo.datag.model.GoodsSearchParams;
 import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.model.SkuIdGoodsIds;
 import com.haozhuo.datag.service.*;
@@ -75,8 +76,8 @@ public class RcmdController {
         String userLabels = dataetlJdbcService.getLabelStrByUserId(userId);
 
         //根据userId的label匹配es中good索引中的label，返回内容。
-        esService.getSkuIdGoodsIdsByKeywords(userLabels,null,0,pageSize,alreadyPushedGoods);
-        String[] result = esService.getGoodsIdsByKeywords(userLabels, null,0, pageSize,alreadyPushedGoods);
+
+        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams(userLabels, null, null, 0, pageSize, alreadyPushedGoods));
 
         //如果返回的数量小于pageSize，删除Redis中推过的商品列表的key
         redisService.setPushedGoods(userId, result);
@@ -110,64 +111,75 @@ public class RcmdController {
         String labels = esService.getLabelsByReportId(reportId);
         if ("".equals(labels))
             return null;
-        int from = (pageNum - 1) * pageSize;
-        String[] result = esService.getGoodsIdsByKeywords(labels, null, from, pageSize);
+        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams(labels, null, null, (pageNum - 1) * pageSize, pageSize, null));
         logger.info("/goods/reportId/{}?pageSize={}&pageNum={}  cost: {}ms", reportId, pageSize, pageNum, System.currentTimeMillis() - beginTime);
         return result;
     }
 
     @GetMapping("/goods/labels/{labels}")
-    @ApiOperation(value = "根据标签返回推荐的商品  【新增】",
+    @ApiOperation(value = "根据标签返回推荐的商品【新增】",
             notes = "根据标签返回推荐的商品。  \n" +
                     "业务逻辑：  \n" +
                     "labels与ES中good索引的label字段进行匹配，得到推荐的商品id。")
     public Object getGoodsIdsByLabels(
             @PathVariable(value = "labels") String labels) {
         long beginTime = System.currentTimeMillis();
-        String[] result = esService.getGoodsIdsByKeywords(labels, null, 0, 10);
+        GoodsSearchParams params = new GoodsSearchParams();
+        params.setKeywords(labels);
+        params.setSize(10);
+        String[] result = esService.getGoodsIdsByKeywords(params);
         logger.info("/goods/labels/{}  cost: {}ms", labels, System.currentTimeMillis() - beginTime);
         return result;
     }
 
     @GetMapping("/goods/home")
+    @ApiOperation(value = "首页商品推荐")
     public Object getGoodsIdsHome(
             @RequestParam(value = "userId", defaultValue = "null") String userId,
             @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
-            @RequestParam(value = "from", defaultValue = "0") int from
-    ) throws InterruptedException, ExecutionException {
-        int size = 40;
-        if (!"null".equals(userId)) {
-            //从Redis中查询出已经推荐过的商品skuId
-            Set<String> pushedSkuIds = redisService.getHomePushedGoodsSkuIds(userId);
-            System.out.println(pushedSkuIds);
+            @RequestParam(value = "pageNo", defaultValue = "1") int pageNo,
+            @RequestParam(value = "size", defaultValue = "40") int size
+    ) throws Exception {
+        int from = (pageNo - 1) * size;
+        if ("null".equals(userId)) { // 无用户ID
+            GoodsSearchParams params = new GoodsSearchParams();
+            params.setCityId(cityId);
+            params.setFrom(from);
+            params.setSize(size);
+
+            List<SkuIdGoodsIds> list = esService.getSkuIdsByTypePercent(params);
+        } else { // 有用户ID
+            String[] pushedSkuIdsArray;
+            if (from == 0) {
+                redisService.deleteHomePushedGoodsByUserId(userId);
+                pushedSkuIdsArray = new String[]{};
+            } else {
+                pushedSkuIdsArray = redisService.getHomePushedGoodsSkuIdsArray(userId);
+            }
+
+//            //从Redis中查询出已经推荐过的商品skuId
+//            Set<String> pushedSkuIds = redisService.getHomePushedGoodsSkuIds(userId);
+
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
+
             //根据用户疾病标签查找商品10篇
-            List<SkuIdGoodsIds> tupList = esService.getSkuIdGoodsIdsByKeywords(labels, cityId, from, 10, pushedSkuIds.toArray(new String[]{}));
+
+            List<SkuIdGoodsIds> tupList = esService.getSkuIdGoodsIdsByKeywords(
+                    new GoodsSearchParams(labels, cityId, null, from, 10, pushedSkuIdsArray));
 
 
             //根据商品销量查找商品40篇
-
+            List<SkuIdGoodsIds> list = esService.getSkuIdsByTypePercent(new GoodsSearchParams(null, cityId, null, from, size, null));
 
             //将这些商品打乱顺序，写入Redis
 
             //返回商品列表
             //redisService.addHomePushedGoodsByUserId(userId, aa);
-            return tupList;
 
         }
+        return null;
 
-        CompletableFuture<List<SkuIdGoodsIds>> g1 = esService.getFutureSkuIdsByCityId(cityId, 1, from, size, 0.6);
-        CompletableFuture<List<SkuIdGoodsIds>> g2 = esService.getFutureSkuIdsByCityId(cityId, 2, from, size, 0.3);
-        CompletableFuture<List<SkuIdGoodsIds>> g3 = esService.getFutureSkuIdsByCityId(cityId, 3, from, size, 0.1);
-        // Wait until they are all done
-        CompletableFuture.allOf(g1, g2, g3).join();
-        List<SkuIdGoodsIds> list = new ArrayList<>();
-        list.addAll(g1.get());
-        list.addAll(g2.get());
-        list.addAll(g3.get());
-        Collections.shuffle(list);
-        return list;
     }
 
 
@@ -369,7 +381,8 @@ public class RcmdController {
         map.put("a", Arrays.asList(articleIds));
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
-        String goodsId = esService.getOneOfMatchedGoodsId(tags, cityId, 0, size);
+
+        String goodsId = esService.getOneOfMatchedGoodsId(new GoodsSearchParams(tags, cityId, null, 0, size, null));
         List<String> goodsIds = new ArrayList<>();
         if (goodsId != null) {
             goodsIds.add(goodsId);

@@ -203,7 +203,6 @@ public class EsService {
     }
 
 
-
     //------------------- portrait start -----------------------------
 
     /**
@@ -282,7 +281,6 @@ public class EsService {
     //------------------- portrait end ----------------------------------
 
 
-
     //---------------------- goods start -----------------------------------
 
     public void updateGoods(Goods goods) {
@@ -305,27 +303,27 @@ public class EsService {
         deleteIdByQuery(goodsIndex, String.valueOf(skuId));
     }
 
-    public String[] getGoodsIdsByKeywords(String keywords, String cityIds, int from, int size, String... pushedSkuIds) {
-        return getSkuIdGoodsIdsByKeywords(keywords, cityIds, from, size, pushedSkuIds)
-                .stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
+    public String[] getGoodsIdsByKeywords(GoodsSearchParams params) {
+        return getSkuIdGoodsIdsByKeywords(params).stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
     }
 
-    private BoolQueryBuilder goodsSearchBuilder(String cityId, String keywords, String... pushedSkuIds) {
+    private BoolQueryBuilder goodsSearchBuilder(GoodsSearchParams params) {
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        if (cityId != null) {
+        if (params.getCityId() != null) {
             boolQueryBuilder.must(
                     QueryBuilders.boolQuery()
-                            .should(matchQuery("cityIds", cityId))
+                            .should(matchQuery("cityIds", params.getCityId()))
                             .should(matchQuery("cityIds", countryId))
             );
         }
 
-        if (pushedSkuIds.length > 0) {
-            boolQueryBuilder.mustNot(QueryBuilders.idsQuery().addIds(pushedSkuIds));
+        String[] excludeSkuIds = params.getExcludeSkuIds();
+        if (excludeSkuIds != null && excludeSkuIds.length > 0) {
+            boolQueryBuilder.mustNot(QueryBuilders.idsQuery().addIds(excludeSkuIds));
         }
 
-        if (keywords != null) {
-            boolQueryBuilder.must(QueryBuilders.multiMatchQuery(keywords, defaultGoodsSearchFields));
+        if (params.getKeywords() != null) {
+            boolQueryBuilder.must(QueryBuilders.multiMatchQuery(params.getKeywords(), defaultGoodsSearchFields));
         }
         return boolQueryBuilder;
     }
@@ -334,16 +332,38 @@ public class EsService {
 
 
     @Async("rcmdExecutor")
-    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByCityId(
-            String cityId, int goodsType, int from, int size) throws InterruptedException {
-        logger.debug("getFutureSkuIdsByCityId goodsType:{}", goodsType);
-        return CompletableFuture.completedFuture(getSkuIdsGoodsIdList(cityId, goodsType, from, size));
+    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByGoodsType(GoodsSearchParams params) throws InterruptedException {
+        return CompletableFuture.completedFuture(getSkuIdsGoodsIdList(params));
     }
 
-    @Async("rcmdExecutor")
-    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByCityId(
-            String cityId, int goodsType, int totalFrom, int totalSize, double typePercent) throws InterruptedException {
-        return getFutureSkuIdsByCityId(cityId, goodsType, (int) (totalFrom * typePercent), (int) (totalSize * typePercent));
+//    @Async("rcmdExecutor")
+//    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByGoodsType(GoodsSearchParams param, double typePercent) throws InterruptedException {
+//        GoodsSearchParams params = new GoodsSearchParams(null,param.getCityId(),param.getGoodsType(),(int) ( param.getFrom() * typePercent), (int) (param.getSize() * typePercent), param.getExcludeSkuIds());
+//        return getFutureSkuIdsByGoodsType(params);
+//    }
+
+    public List<SkuIdGoodsIds> getSkuIdsByTypePercent(GoodsSearchParams params) throws Exception {
+        CompletableFuture<List<SkuIdGoodsIds>> g1 =
+                getFutureSkuIdsByGoodsType(
+                        new GoodsSearchParams(null, params.getCityId(), params.getGoodsType(),
+                                (int) (params.getFrom() * 0.6), (int) (params.getSize() * 0.6), params.getExcludeSkuIds()));
+
+        CompletableFuture<List<SkuIdGoodsIds>> g2 = getFutureSkuIdsByGoodsType(
+                new GoodsSearchParams(null, params.getCityId(), params.getGoodsType(),
+                        (int) (params.getFrom() * 0.3), (int) (params.getSize() * 0.3), params.getExcludeSkuIds()));
+
+        CompletableFuture<List<SkuIdGoodsIds>> g3 = getFutureSkuIdsByGoodsType(
+                new GoodsSearchParams(null, params.getCityId(), params.getGoodsType(),
+                        (int) (params.getFrom() * 0.1), (int) (params.getSize() * 0.1), params.getExcludeSkuIds()));
+        // Wait until they are all done
+
+        CompletableFuture.allOf(g1, g2, g3).join();
+        List<SkuIdGoodsIds> list = new ArrayList<>();
+        list.addAll(g1.get());
+        list.addAll(g2.get());
+        list.addAll(g3.get());
+        Collections.shuffle(list);
+        return list;
     }
 
     private List<SkuIdGoodsIds> getSkuIdGoodsIdsFromSRB(SearchRequestBuilder srb) {
@@ -391,28 +411,24 @@ public class EsService {
      * "from": 0,
      * "size": 45
      * }'
-     *
-     * @param cityId
-     * @param goodsType
-     * @param from
-     * @param size
+
      * @return
      * @throws InterruptedException
      */
-    public List<SkuIdGoodsIds> getSkuIdsGoodsIdList(String cityId, int goodsType, int from, int size) throws InterruptedException {
-        logger.debug("cityId:{},goodsType:{},from:{},size:{}", cityId, goodsType, from, size);
+    public List<SkuIdGoodsIds> getSkuIdsGoodsIdList(GoodsSearchParams params) throws InterruptedException {
+        logger.debug("cityId:{},goodsType:{},from:{},size:{}", params.getCityId(), params.getGoodsType(), params.getFrom(), params.getSize());
         return getGoodsIdsTemplate(QueryBuilders.functionScoreQuery(
                 QueryBuilders.functionScoreQuery(
-                        goodsSearchBuilder(cityId, null),
+                        goodsSearchBuilder(params),
                         goodsCreateTimeExpDecayFunction
                 ),
                 goodsCreateTimeExpDecayFunction
-        ), from, size, String.valueOf(goodsType));
+        ), params.getFrom(), params.getSize(), params.getGoodsType());
     }
 
 
-    public List<SkuIdGoodsIds> getSkuIdGoodsIdsByKeywords(String keywords, String cityId, int from, int size, String... pushedSkuIds) {
-        return getGoodsIdsTemplate(goodsSearchBuilder(cityId, keywords, pushedSkuIds), from, size);
+    public List<SkuIdGoodsIds> getSkuIdGoodsIdsByKeywords(GoodsSearchParams params) {
+        return getGoodsIdsTemplate(goodsSearchBuilder(params), params.getFrom(), params.getSize());
     }
 
     private List<SkuIdGoodsIds> getGoodsIdsTemplate(QueryBuilder query, int from, int size, String goodsType) {
@@ -430,9 +446,9 @@ public class EsService {
         return getGoodsIdsTemplate(query, from, size, null);
     }
 
-    public String getOneOfMatchedGoodsId(String keywords, String cityId, int from, int size) {
+    public String getOneOfMatchedGoodsId(GoodsSearchParams params) {
         List<SkuIdGoodsIds> list = getGoodsIdsTemplate(
-                new FunctionScoreQueryBuilder(goodsSearchBuilder(cityId, keywords), goodsRcmdScoreGaussDecayFunction), from, size);
+                new FunctionScoreQueryBuilder(goodsSearchBuilder(params), goodsRcmdScoreGaussDecayFunction), params.getFrom(), params.getSize());
         if (list.size() == 0) {
             return null;
         }
@@ -534,7 +550,6 @@ public class EsService {
     //---------------------- article end -----------------------------------
 
 
-
     //---------------------- live start -----------------------------------
 
     private String[] getLiveIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
@@ -575,7 +590,6 @@ public class EsService {
         return EsUtils.getDocIdsAsList(srb);
     }
     //---------------------- live end -----------------------------------
-
 
 
     //---------------------- video start -----------------------------------

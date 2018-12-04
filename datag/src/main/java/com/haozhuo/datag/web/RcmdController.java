@@ -8,16 +8,14 @@ import com.haozhuo.datag.model.SkuIdGoodsIds;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -77,7 +75,7 @@ public class RcmdController {
 
         //根据userId的label匹配es中good索引中的label，返回内容。
 
-        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams(userLabels, null, null, 0, pageSize, alreadyPushedGoods));
+        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams().keywords(userLabels).size(pageSize).excludeSkuIds(alreadyPushedGoods));
 
         //如果返回的数量小于pageSize，删除Redis中推过的商品列表的key
         redisService.setPushedGoods(userId, result);
@@ -111,7 +109,7 @@ public class RcmdController {
         String labels = esService.getLabelsByReportId(reportId);
         if ("".equals(labels))
             return null;
-        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams(labels, null, null, (pageNum - 1) * pageSize, pageSize, null));
+        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams().keywords(labels).from((pageNum - 1) * pageSize).size(pageSize));
         logger.info("/goods/reportId/{}?pageSize={}&pageNum={}  cost: {}ms", reportId, pageSize, pageNum, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -124,10 +122,7 @@ public class RcmdController {
     public Object getGoodsIdsByLabels(
             @PathVariable(value = "labels") String labels) {
         long beginTime = System.currentTimeMillis();
-        GoodsSearchParams params = new GoodsSearchParams();
-        params.setKeywords(labels);
-        params.setSize(10);
-        String[] result = esService.getGoodsIdsByKeywords(params);
+        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams().keywords(labels).size(10));
         logger.info("/goods/labels/{}  cost: {}ms", labels, System.currentTimeMillis() - beginTime);
         return result;
     }
@@ -142,12 +137,8 @@ public class RcmdController {
     ) throws Exception {
         int from = (pageNo - 1) * size;
         if ("null".equals(userId)) { // 无用户ID
-            GoodsSearchParams params = new GoodsSearchParams();
-            params.setCityId(cityId);
-            params.setFrom(from);
-            params.setSize(size);
-
-            List<SkuIdGoodsIds> list = esService.getSkuIdsByTypePercent(params);
+            List<SkuIdGoodsIds> list = esService.getSkuIdsGoodsIdList(new GoodsSearchParams().cityId(cityId).from(from).size(size));
+            return list.stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
         } else { // 有用户ID
             String[] pushedSkuIdsArray;
             if (from == 0) {
@@ -157,28 +148,29 @@ public class RcmdController {
                 pushedSkuIdsArray = redisService.getHomePushedGoodsSkuIdsArray(userId);
             }
 
-//            //从Redis中查询出已经推荐过的商品skuId
-//            Set<String> pushedSkuIds = redisService.getHomePushedGoodsSkuIds(userId);
 
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
 
             //根据用户疾病标签查找商品10篇
 
-            List<SkuIdGoodsIds> tupList = esService.getSkuIdGoodsIdsByKeywords(
+            List<SkuIdGoodsIds> listByLabel = esService.getSkuIdGoodsIdsByKeywords(
                     new GoodsSearchParams(labels, cityId, null, from, 10, pushedSkuIdsArray));
 
+            String[] newExcludeSkuIds = (String[])ArrayUtils.addAll(pushedSkuIdsArray, listByLabel.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new));
 
             //根据商品销量查找商品40篇
-            List<SkuIdGoodsIds> list = esService.getSkuIdsByTypePercent(new GoodsSearchParams(null, cityId, null, from, size, null));
+            List<SkuIdGoodsIds> queryResult = esService.getSkuIdsByTypePercent(new GoodsSearchParams().cityId(cityId).size(size).excludeSkuIds(newExcludeSkuIds));
 
             //将这些商品打乱顺序，写入Redis
+            queryResult.addAll(listByLabel);
 
+            String[] skuIds = queryResult.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new);
+            String[] goodsIds = queryResult.stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
             //返回商品列表
-            //redisService.addHomePushedGoodsByUserId(userId, aa);
-
+            redisService.addHomePushedGoodsByUserId(userId, skuIds);
+            return goodsIds;
         }
-        return null;
 
     }
 
@@ -382,7 +374,7 @@ public class RcmdController {
         map.put("l", Arrays.asList(liveIds));
         map.put("v", Arrays.asList(videoIds));
 
-        String goodsId = esService.getOneOfMatchedGoodsId(new GoodsSearchParams(tags, cityId, null, 0, size, null));
+        String goodsId = esService.getOneOfMatchedGoodsId(new GoodsSearchParams().keywords(tags).cityId(cityId).from(0).size(size));
         List<String> goodsIds = new ArrayList<>();
         if (goodsId != null) {
             goodsIds.add(goodsId);

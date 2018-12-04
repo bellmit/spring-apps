@@ -390,15 +390,19 @@ public class RedisService {
     public Set<String> getHomePushedGoodsSkuIds(String userId) {
         return redisDB1.opsForSet().members(String.format(homePushedGoodsSkuId, userId));
     }
+
     public String[] getHomePushedGoodsSkuIdsArray(String userId) {
         return getHomePushedGoodsSkuIds(userId).toArray(new String[]{});
     }
 
 
     public void addHomePushedGoodsByUserId(String userId, String... skuIds) {
-        String key = String.format(homePushedGoodsSkuId, userId);
-        redisDB1.opsForSet().add(key, skuIds);
-        redisDB1.expire(key, 1, TimeUnit.DAYS);
+        if (skuIds.length > 0) {
+            String key = String.format(homePushedGoodsSkuId, userId);
+            logger.debug(key);
+            redisDB1.opsForSet().add(key, skuIds);
+            redisDB1.expire(key, 1, TimeUnit.DAYS);
+        }
     }
 
     public void deleteHomePushedGoodsByUserId(String userId) {

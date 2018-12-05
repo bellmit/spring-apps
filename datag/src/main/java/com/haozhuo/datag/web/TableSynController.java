@@ -161,12 +161,11 @@ public class TableSynController {
     }
 
     @PostMapping("/goods")
-    @ApiOperation(value = "商品更新接口【/insertAll】", notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
+    @ApiOperation(value = "商品更新接口【/insertAll】", notes = "rcmdScore和salesNum这两个字段 java组不需要传过来，由数据组自己同步维护")
     public Object updateGoods(@RequestBody Goods goods) {
         long beginTime = System.currentTimeMillis();
         //推荐得分全程由数据端维护
         try {
-            System.out.println(goods.getRcmdScore());
             Goods existGoods = esService.getGoodsBySkuId(goods.getSkuId());
 
             if (goods.getRcmdScore() <= 0) {

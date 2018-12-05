@@ -75,9 +75,9 @@ public class RcmdController {
         String userLabels = dataetlJdbcService.getLabelStrByUserId(userId);
         GoodsSearchParams params = new GoodsSearchParams().size(pageSize).excludeSkuIds(alreadyPushedGoods);
         if (userLabels != null && !"".equals(userLabels)) {
-            params.setKeywords(userLabels);
+            params.keywords(userLabels);
         }
-
+        logger.debug(params.toString());
         //根据userId的label匹配es中good索引中的label，返回内容。
         String[] result = esService.getGoodsIdsByKeywords(params);
 
@@ -152,12 +152,10 @@ public class RcmdController {
                 pushedSkuIdsArray = redisService.getHomePushedGoodsSkuIdsArray(userId);
             }
 
-
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
 
             //根据用户疾病标签查找商品10篇
-
             List<SkuIdGoodsIds> listByLabel = esService.getSkuIdGoodsIdsByKeywords(
                     new GoodsSearchParams(labels, cityId, null, from, 10, pushedSkuIdsArray));
 

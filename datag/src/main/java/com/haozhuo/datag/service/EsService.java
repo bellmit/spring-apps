@@ -207,9 +207,6 @@ public class EsService {
 
     /**
      * lv03,jbg02|159|zc03,jbg11,61
-     *
-     * @param strTagIds
-     * @return
      */
     private BoolQueryBuilder getQueryBuilderForPortrait(String strTagIds) {
 
@@ -290,7 +287,7 @@ public class EsService {
         map.put("category", goods.getCategory());
         map.put("subCategory", goods.getSubCategory());
         map.put("goodsTags", goods.getGoodsTags());
-        map.put("thirdTags", goods.getThirdTags());
+        map.put("searchKeywords", goods.getSearchKeywords());
         map.put("description", goods.getGoodsDescription());
         map.put("cityIds", goods.getCityIds());
         map.put("rcmdScore", goods.getRcmdScore());
@@ -328,19 +325,12 @@ public class EsService {
         return boolQueryBuilder;
     }
 
-    private static final String[] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "thirdTags"};
-
+    private static final String[] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "searchKeywords"};
 
     @Async("rcmdExecutor")
     public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByGoodsType(GoodsSearchParams params) throws InterruptedException {
         return CompletableFuture.completedFuture(getSkuIdsGoodsIdList(params));
     }
-
-//    @Async("rcmdExecutor")
-//    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByGoodsType(GoodsSearchParams param, double typePercent) throws InterruptedException {
-//        GoodsSearchParams params = new GoodsSearchParams(null,param.getCityId(),param.getGoodsType(),(int) ( param.getFrom() * typePercent), (int) (param.getSize() * typePercent), param.getExcludeSkuIds());
-//        return getFutureSkuIdsByGoodsType(params);
-//    }
 
     public List<SkuIdGoodsIds> getSkuIdsByTypePercent(GoodsSearchParams params) throws Exception {
         CompletableFuture<List<SkuIdGoodsIds>> g1 =
@@ -373,13 +363,9 @@ public class EsService {
         int rcmdScore = 0;
         for (SearchHit hit : hits) {
             Object goodsIdsObj = hit.getSource().get("goodsIds");
-            if (goodsIdsObj != null) {
-                goodsIdsList = (List<String>) goodsIdsObj;
-            }
+            if (goodsIdsObj != null) goodsIdsList = (List<String>) goodsIdsObj;
             Object rcmdScoreObj = hit.getSource().get("rcmdScore");
-            if (rcmdScoreObj != null) {
-                rcmdScore = (Integer) rcmdScoreObj;
-            }
+            if (rcmdScoreObj != null) rcmdScore = (Integer) rcmdScoreObj;
             result.add(new SkuIdGoodsIds(hit.getId(), goodsIdsList, rcmdScore));
         }
         return result;
@@ -476,7 +462,7 @@ public class EsService {
             goods.setGoodsName((String) source.get("name"));
             goods.setGoodsTags((List<String>) source.get("goodsTags"));
             goods.setSubCategory((String) source.get("subCategory"));
-            goods.setThirdTags((List<String>) source.get("thirdTags"));
+            goods.setSearchKeywords((String) source.get("searchKeywords"));
             goods.setRcmdScore((Integer) source.get("rcmdScore"));
             goods.setSalesNum((Integer) source.get("salesNum"));
         }

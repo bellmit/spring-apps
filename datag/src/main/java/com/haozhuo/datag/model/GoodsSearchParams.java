@@ -1,14 +1,16 @@
 package com.haozhuo.datag.model;
 
+import com.haozhuo.datag.common.Utils;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * Created by Lucius on 12/4/18.
  */
-@Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,7 +23,7 @@ public class GoodsSearchParams {
     private String[] excludeSkuIds;
 
     public GoodsSearchParams keywords(String keywords) {
-        this.keywords = keywords;
+        this.keywords = Utils.removeStopWords(keywords);
         return this;
     }
 
@@ -48,5 +50,17 @@ public class GoodsSearchParams {
     public GoodsSearchParams excludeSkuIds(String[] excludeSkuIds) {
         this.excludeSkuIds = excludeSkuIds;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "GoodsSearchParams{" +
+                "keywords='" + keywords + '\'' +
+                ", cityId='" + cityId + '\'' +
+                ", goodsType='" + goodsType + '\'' +
+                ", from=" + from +
+                ", size=" + size +
+                ", excludeSkuIds=" + Arrays.toString(excludeSkuIds) +
+                '}';
     }
 }

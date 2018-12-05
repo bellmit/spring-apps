@@ -34,7 +34,7 @@ public class Goods {
     private List<String> goodsTags;
 
     //三级标签
-    private List<String> thirdTags;
+    private String searchKeywords;
 
     //所属城市编码
     private List<String> cityIds;
@@ -74,8 +74,8 @@ public class Goods {
         this.goodsTags = goodsTags;
     }
 
-    public void setThirdTags(List<String> thirdTags) {
-        this.thirdTags = thirdTags;
+    public void setSearchKeywords(String searchKeywords) {
+        this.searchKeywords = searchKeywords;
     }
 
     public void setCityIds(List<String> cityIds) {
@@ -128,7 +128,7 @@ public class Goods {
                 ", category='" + category + '\'' +
                 ", subCategory='" + subCategory + '\'' +
                 ", goodsTags=" + goodsTags +
-                ", thirdTags=" + thirdTags +
+                ", searchKeywords=" + searchKeywords +
                 ", cityIds=" + cityIds +
                 ", goodsType=" + goodsType +
                 ", rcmdScore=" + rcmdScore +

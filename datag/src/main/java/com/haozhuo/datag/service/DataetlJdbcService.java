@@ -44,7 +44,6 @@ public class DataetlJdbcService {
 
     @Autowired
     public DataetlJdbcService(JdbcTemplate jdbcTemplate, Environment env) {
-        logger.info("init DataetlJdbcService .................");
         this.dataetlDB = jdbcTemplate;
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
@@ -190,7 +189,7 @@ public class DataetlJdbcService {
 
     public List<Goods> getGoodsList(int from, int size) {
         return dataetlDB.query(
-                String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,third_tags, city_ids, rcmd_score,goods_type,sales_num,create_time from %s x limit ?, ?", goodsTable),
+                String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,search_keywords,city_ids, rcmd_score,goods_type,sales_num,create_time from %s x limit ?, ?", goodsTable),
                 new Object[]{from,size},
                 new RowMapper<Goods>() {
                     @Override
@@ -205,7 +204,7 @@ public class DataetlJdbcService {
                         goods.setCategory(resultSet.getString("category"));
                         goods.setSubCategory(resultSet.getString("sub_category"));
                         goods.setGoodsTags(Arrays.asList(resultSet.getString("goods_tags").split(",")));
-                        goods.setThirdTags(Arrays.asList(resultSet.getString("third_tags").split(",")));
+                        goods.setSearchKeywords(resultSet.getString("search_keywords"));
                         goods.setRcmdScore(resultSet.getInt("rcmd_score"));
                         goods.setGoodsType(resultSet.getInt("goods_type"));
                         goods.setSalesNum(resultSet.getInt("sales_num"));
@@ -290,7 +289,7 @@ public class DataetlJdbcService {
         String tags = "";
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            String sql = String.format("select concat(%s) as tags from  %s  where information_id = ?", articleTags, articleTable);
+            String sql = String.format("select concat(%s) as tags from %s  where information_id = ?", articleTags, articleTable);
             logger.debug("sql:{}", sql);
             tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, new RowMapper<String>() {
                 @Override
@@ -304,27 +303,27 @@ public class DataetlJdbcService {
         return tags;
     }
 
-    @Deprecated
-    public String getLabelsByInfoId(String infoId) {
-        String labelsIds = "";
-        try {
-            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
-                @Override
-                public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return resultSet.getString("disease_label_ids");
-                }
-            });
-        } catch (Exception ex) {
-            logger.debug("getTagsByInfoId error", ex);
-        }
-
-        return stream(labelsIds.split(","))
-                .map(labelName -> labelIdNameMap.getOrDefault(labelName, null))
-                .filter(x -> x != null)
-                .collect(Collectors.joining(","));
-
-    }
+//    @Deprecated
+//    public String getLabelsByInfoId(String infoId) {
+//        String labelsIds = "";
+//        try {
+//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+//            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
+//                @Override
+//                public String mapRow(ResultSet resultSet, int i) throws SQLException {
+//                    return resultSet.getString("disease_label_ids");
+//                }
+//            });
+//        } catch (Exception ex) {
+//            logger.debug("getTagsByInfoId error", ex);
+//        }
+//
+//        return stream(labelsIds.split(","))
+//                .map(labelName -> labelIdNameMap.getOrDefault(labelName, null))
+//                .filter(x -> x != null)
+//                .collect(Collectors.joining(","));
+//
+//    }
 
     public String getLabelIdsByNames(String labelNames) {
         return stream(labelNames.split(","))
@@ -388,17 +387,16 @@ public class DataetlJdbcService {
     public void updateGoods(Goods goods) {
         String goodsIds = listToStr(goods.getGoodsIds());
         String goodsTags = listToStr(goods.getGoodsTags());
-        String thirdTags =listToStr(goods.getThirdTags());
         String cityIds = listToStr(goods.getCityIds());
         String query = String.format("INSERT INTO `%s` (`sku_id`, `name`, `description`, `category`, `sub_category`, " +
-                " `goods_tags`, `third_tags`, `city_ids`, `rcmd_score`, `create_time`, `goods_ids`, `goods_type`, `sales_num`) " +
+                " `goods_tags`, `search_keywords`, `city_ids`, `rcmd_score`, `create_time`, `goods_ids`, `goods_type`, `sales_num`) " +
                 " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?) ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, " +
-                "`category` = ?, `sub_category` = ?, `goods_tags` = ?, `third_tags` = ?, `city_ids` = ?, `rcmd_score` = ?," +
+                "`category` = ?, `sub_category` = ?, `goods_tags` = ?, `search_keywords` = ?, `city_ids` = ?, `rcmd_score` = ?," +
                 " `create_time` = ?, `goods_ids` = ?, `goods_type` = ?, `sales_num` =? ", goodsTable);
         dataetlDB.update(query, goods.getSkuId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
-                goods.getSubCategory(), goodsTags, thirdTags, cityIds, goods.getRcmdScore(), goods.getCreateTime(),
+                goods.getSubCategory(), goodsTags, goods.getSearchKeywords(), cityIds, goods.getRcmdScore(), goods.getCreateTime(),
                 goodsIds, goods.getGoodsType(), goods.getSalesNum(),goods.getGoodsName(), goods.getGoodsDescription(),
-                goods.getGoodsDescription(), goods.getSubCategory(), goodsTags, thirdTags, cityIds,
+                goods.getGoodsDescription(), goods.getSubCategory(), goodsTags, goods.getSearchKeywords(), cityIds,
                 goods.getRcmdScore(), goods.getCreateTime(), goodsIds, goods.getGoodsType(),goods.getSalesNum());
     }
 

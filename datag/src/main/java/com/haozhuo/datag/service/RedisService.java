@@ -395,7 +395,6 @@ public class RedisService {
         return getHomePushedGoodsSkuIds(userId).toArray(new String[]{});
     }
 
-
     public void addHomePushedGoodsByUserId(String userId, String... skuIds) {
         if (skuIds.length > 0) {
             String key = String.format(homePushedGoodsSkuId, userId);

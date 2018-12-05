@@ -8,7 +8,6 @@ import com.haozhuo.datag.model.SkuIdGoodsIds;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
-import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,48 +131,34 @@ public class RcmdController {
     }
 
     @GetMapping("/goods/home")
-    @ApiOperation(value = "首页商品推荐")
+    @ApiOperation(value = "首页商品推荐",
+            notes = "当返回的数据条数小于size*0.75条(即当size是40时就是30条)时，说明已经推荐完了。下一次传递pageNo时，重新从1开始。返回结果30~60条之间，都认为是正常返回。")
     public Object getGoodsIdsHome(
             @RequestParam(value = "userId", defaultValue = "null") String userId,
             @RequestParam(value = "cityId", defaultValue = "000000") String cityId,
             @RequestParam(value = "pageNo", defaultValue = "1") int pageNo,
             @RequestParam(value = "size", defaultValue = "40") int size
     ) throws Exception {
-        int from = (pageNo - 1) * size;
-        if ("null".equals(userId)) { // 无用户ID
-            List<SkuIdGoodsIds> list = esService.getSkuIdsGoodsIdList(new GoodsSearchParams().cityId(cityId).from(from).size(size));
-            return list.stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
-        } else { // 有用户ID
-            String[] pushedSkuIdsArray;
-            if (from == 0) {
-                redisService.deleteHomePushedGoodsByUserId(userId);
-                pushedSkuIdsArray = new String[]{};
-            } else {
-                pushedSkuIdsArray = redisService.getHomePushedGoodsSkuIdsArray(userId);
-            }
+        long beginTime = System.currentTimeMillis();
+        //根据商品销量和新品查找商品40篇
+        Set<SkuIdGoodsIds> queryResult = esService.getSkuIdsBySalesAndNews(cityId, pageNo, size);
 
+        if (!"null".equals(userId)) { // 有用户ID
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
 
             //根据用户疾病标签查找商品10篇
-            List<SkuIdGoodsIds> listByLabel = esService.getSkuIdGoodsIdsByKeywords(
-                    new GoodsSearchParams(labels, cityId, null, from, 10, pushedSkuIdsArray));
-
-            String[] newExcludeSkuIds = (String[]) ArrayUtils.addAll(pushedSkuIdsArray, listByLabel.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new));
-
-            //根据商品销量查找商品40篇
-            List<SkuIdGoodsIds> queryResult = esService.getSkuIdsByTypePercent(new GoodsSearchParams().cityId(cityId).size(size).excludeSkuIds(newExcludeSkuIds));
-
-            //将这些商品打乱顺序，写入Redis
-            queryResult.addAll(listByLabel);
-
-            String[] skuIds = queryResult.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new);
-            String[] goodsIds = queryResult.stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
-            //返回商品列表
-            redisService.addHomePushedGoodsByUserId(userId, skuIds);
-            return goodsIds;
+            List<SkuIdGoodsIds> goodsByLabel = esService.getSkuIdGoodsIdsByLabels(
+                    new GoodsSearchParams().keywords(labels).cityId(cityId).pageNo(pageNo).size((int) (size * 0.5)));
+            logger.debug("goodsByLabel:{}", goodsByLabel.size());
+            queryResult.addAll(goodsByLabel);
         }
 
+        List<String> goodsIds = queryResult.stream().map(SkuIdGoodsIds::getRandomGoodsId).collect(toList());
+        Collections.shuffle(goodsIds);
+        logger.info("/goods/home?userId={}&cityId={}&pageNo={}&size={}   result.length={}  cost: {}ms",
+                userId, cityId, pageNo, size, goodsIds.size(), System.currentTimeMillis() - beginTime);
+        return goodsIds;
     }
 
 

@@ -13,10 +13,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.functionscore.ExponentialDecayFunctionBuilder;
-import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
-import org.elasticsearch.index.query.functionscore.GaussDecayFunctionBuilder;
-import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
+import org.elasticsearch.index.query.functionscore.*;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
@@ -32,6 +29,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
@@ -80,7 +78,7 @@ public class EsService {
 
     private String countryId = "000000";
 
-    private double goodsRcmdScoreDecay;
+    private final GoodsTypeProportion goodsTypeProportion = new GoodsTypeProportion();
 
     @Autowired
     private TransportClient client;
@@ -301,7 +299,7 @@ public class EsService {
     }
 
     public String[] getGoodsIdsByKeywords(GoodsSearchParams params) {
-        return getSkuIdGoodsIdsByKeywords(params).stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
+        return getSkuIdGoodsIdsByLabels(params).stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
     }
 
     private BoolQueryBuilder goodsSearchBuilder(GoodsSearchParams params) {
@@ -327,33 +325,79 @@ public class EsService {
 
     private static final String[] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "searchKeywords"};
 
-    @Async("rcmdExecutor")
-    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByGoodsType(GoodsSearchParams params) throws InterruptedException {
-        return CompletableFuture.completedFuture(getSkuIdsGoodsIdList(params));
+    private void checkIfUpdateGoodsTypeCount() {
+        if (goodsTypeProportion.needUpdate()) {
+            goodsTypeProportion.setProportionGoodsType(goodsTypeCount());
+            goodsTypeProportion.setUpdateGoodsTypeNum(System.currentTimeMillis());
+            logger.info("UpdateGoodsTypeCount:" +
+                    stream(goodsTypeProportion.getProportionGoodsType()).mapToObj(x -> String.valueOf(x)).collect(joining(",")));
+        }
     }
 
-    public List<SkuIdGoodsIds> getSkuIdsByTypePercent(GoodsSearchParams params) throws Exception {
-        CompletableFuture<List<SkuIdGoodsIds>> g1 =
-                getFutureSkuIdsByGoodsType(
-                        new GoodsSearchParams(null, params.getCityId(), params.getGoodsType(),
-                                (int) (params.getFrom() * 0.6), (int) (params.getSize() * 0.6), params.getExcludeSkuIds()));
+    @Async("rcmdExecutor")
+    private CompletableFuture<Long> getFutureGoodsCountByType(String goodsType) {
+        return CompletableFuture.completedFuture(
+                client.prepareSearch(goodsIndex).setTypes(goodsType).setSize(0).get().getHits().getTotalHits());
+    }
 
-        CompletableFuture<List<SkuIdGoodsIds>> g2 = getFutureSkuIdsByGoodsType(
-                new GoodsSearchParams(null, params.getCityId(), params.getGoodsType(),
-                        (int) (params.getFrom() * 0.3), (int) (params.getSize() * 0.3), params.getExcludeSkuIds()));
-
-        CompletableFuture<List<SkuIdGoodsIds>> g3 = getFutureSkuIdsByGoodsType(
-                new GoodsSearchParams(null, params.getCityId(), params.getGoodsType(),
-                        (int) (params.getFrom() * 0.1), (int) (params.getSize() * 0.1), params.getExcludeSkuIds()));
-        // Wait until they are all done
-
+    private double[] goodsTypeCount() {
+        CompletableFuture<Long> g1 = getFutureGoodsCountByType("1");
+        CompletableFuture<Long> g2 = getFutureGoodsCountByType("2");
+        CompletableFuture<Long> g3 = getFutureGoodsCountByType("3");
         CompletableFuture.allOf(g1, g2, g3).join();
-        List<SkuIdGoodsIds> list = new ArrayList<>();
-        list.addAll(g1.get());
-        list.addAll(g2.get());
-        list.addAll(g3.get());
-        Collections.shuffle(list);
-        return list;
+        try {
+            long g1Count = g1.get();
+            long g2Count = g2.get();
+            long g3Count = g3.get();
+            double total = g1Count + g2Count + g3Count;
+            return new double[]{g1Count / total, g2Count / total, g3Count / total};
+        } catch (Exception e) {
+            logger.error("error", e);
+            return goodsTypeProportion.getProportionGoodsType();
+        }
+    }
+
+    public Set<SkuIdGoodsIds> getSkuIdsBySalesAndNews(String cityId, int pageNo, int totalSize) throws Exception {
+        checkIfUpdateGoodsTypeCount();
+        int sizeBySales = (int) (totalSize * 0.75);
+        int sizeByNew = totalSize - sizeBySales;
+
+        int[] sizeArray = goodsTypeProportion.getSizeArray(sizeBySales);
+
+        CompletableFuture<List<SkuIdGoodsIds>> newGoods = getFutureSkuIdsByScoreFunction(
+                new GoodsSearchParams().cityId(cityId).pageNo(pageNo).size(sizeByNew), goodsCreateTimeExpDecayFunction);
+
+
+        CompletableFuture<List<SkuIdGoodsIds>> salesGoodsType1 = getFutureSkuIdsByScoreFunction(
+                new GoodsSearchParams().cityId(cityId).pageNo(pageNo).goodsType("1").size(sizeArray[0]), goodsSaleNumExpDecayFunction);
+
+        CompletableFuture<List<SkuIdGoodsIds>> salesGoodsType2 = getFutureSkuIdsByScoreFunction(
+                new GoodsSearchParams().cityId(cityId).pageNo(pageNo).goodsType("2").size(sizeArray[1]), goodsSaleNumExpDecayFunction);
+
+        CompletableFuture<List<SkuIdGoodsIds>> salesGoodsType3 = getFutureSkuIdsByScoreFunction(
+                new GoodsSearchParams().cityId(cityId).pageNo(pageNo).goodsType("3").size(sizeArray[2]), goodsSaleNumExpDecayFunction);
+
+        CompletableFuture.allOf(newGoods, salesGoodsType1, salesGoodsType2, salesGoodsType3).join();
+
+        Set<SkuIdGoodsIds> set = new HashSet<>();
+        set.addAll(salesGoodsType1.get());
+        set.addAll(salesGoodsType2.get());
+        set.addAll(salesGoodsType3.get());
+        set.addAll(newGoods.get());
+        logger.debug("salesGoodsType1:" + salesGoodsType1.get().size());
+        logger.debug("salesGoodsType2:" + salesGoodsType2.get().size());
+        logger.debug("salesGoodsType3:" + salesGoodsType3.get().size());
+        logger.debug("newGoods:" + newGoods.get().size());
+
+        return set;
+    }
+
+    @Async("rcmdExecutor")
+    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByScoreFunction(GoodsSearchParams params, ScoreFunctionBuilder scoreFunctionBuilder) throws InterruptedException {
+        List<SkuIdGoodsIds> list = getGoodsIdsTemplate(
+                QueryBuilders.functionScoreQuery(goodsSearchBuilder(params), scoreFunctionBuilder),
+                params.getFrom(), params.getSize(), params.getGoodsType());
+        return CompletableFuture.completedFuture(list);
     }
 
     private List<SkuIdGoodsIds> getSkuIdGoodsIdsFromSRB(SearchRequestBuilder srb) {
@@ -366,54 +410,12 @@ public class EsService {
             if (goodsIdsObj != null) goodsIdsList = (List<String>) goodsIdsObj;
             Object rcmdScoreObj = hit.getSource().get("rcmdScore");
             if (rcmdScoreObj != null) rcmdScore = (Integer) rcmdScoreObj;
-            result.add(new SkuIdGoodsIds(hit.getId(), goodsIdsList, rcmdScore));
+            result.add(new SkuIdGoodsIds(hit.getId(), goodsIdsList, rcmdScore, hit.getScore()));
         }
         return result;
     }
 
-    /**
-     * curl -XGET "192.168.1.152:9200/goods5/3/_search?pretty" -d'{
-     * "query": {
-     * "function_score": {
-     * "functions": [{
-     * "exp": {
-     * "salesNum": {
-     * "origin": 10000,
-     * "offset": 9000,
-     * "scale": 500
-     * }
-     * }
-     * }, {
-     * "exp": {
-     * "createTime": {
-     * "origin": "now",
-     * "scale": "180d",
-     * "decay": "0.8"
-     * }
-     * }
-     * }]
-     * }
-     * },
-     * "from": 0,
-     * "size": 45
-     * }'
-
-     * @return
-     * @throws InterruptedException
-     */
-    public List<SkuIdGoodsIds> getSkuIdsGoodsIdList(GoodsSearchParams params) throws InterruptedException {
-        logger.debug("cityId:{},goodsType:{},from:{},size:{}", params.getCityId(), params.getGoodsType(), params.getFrom(), params.getSize());
-        return getGoodsIdsTemplate(QueryBuilders.functionScoreQuery(
-                QueryBuilders.functionScoreQuery(
-                        goodsSearchBuilder(params),
-                        goodsCreateTimeExpDecayFunction
-                ),
-                goodsCreateTimeExpDecayFunction
-        ), params.getFrom(), params.getSize(), params.getGoodsType());
-    }
-
-
-    public List<SkuIdGoodsIds> getSkuIdGoodsIdsByKeywords(GoodsSearchParams params) {
+    public List<SkuIdGoodsIds> getSkuIdGoodsIdsByLabels(GoodsSearchParams params) {
         return getGoodsIdsTemplate(goodsSearchBuilder(params), params.getFrom(), params.getSize());
     }
 

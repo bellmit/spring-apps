@@ -52,7 +52,6 @@ public class RedisService {
 
     private final String videoPushedKey = "video-pushed:%s:%s";
     private final String goodsPushedKey = "goods-pushed:%s:%s";
-    private final String homePushedGoodsSkuId = "HPSkuId:%s";
 
     @Deprecated
     private final String hateTagsKey = "HateTags:%s";
@@ -387,7 +386,7 @@ public class RedisService {
         ho.delete(newsKeywordsKey, informationId);
     }
 
-    public Set<String> getHomePushedGoodsSkuIds(String userId) {
+/*    public Set<String> getHomePushedGoodsSkuIds(String userId) {
         return redisDB1.opsForSet().members(String.format(homePushedGoodsSkuId, userId));
     }
 
@@ -406,7 +405,7 @@ public class RedisService {
 
     public void deleteHomePushedGoodsByUserId(String userId) {
         redisDB1.delete(String.format(homePushedGoodsSkuId, userId));
-    }
+    }*/
 
 
 }

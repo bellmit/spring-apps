@@ -357,9 +357,9 @@ public class EsService {
         }
     }
 
-    public Set<SkuIdGoodsIds> getSkuIdsBySalesAndNews(String cityId, int pageNo, int totalSize) throws Exception {
+    public Set<SkuIdGoodsIds> getSkuIdsBySalesAndNews(String cityId, int pageNo, int totalSize, double salesPercent) throws Exception {
         checkIfUpdateGoodsTypeCount();
-        int sizeBySales = (int) (totalSize * 0.75);
+        int sizeBySales = (int) (totalSize * salesPercent);
         int sizeByNew = totalSize - sizeBySales;
 
         int[] sizeArray = goodsTypeProportion.getSizeArray(sizeBySales);

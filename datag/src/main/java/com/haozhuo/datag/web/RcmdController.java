@@ -140,10 +140,15 @@ public class RcmdController {
             @RequestParam(value = "size", defaultValue = "40") int size
     ) throws Exception {
         long beginTime = System.currentTimeMillis();
-        //根据商品销量和新品查找商品40篇
-        Set<SkuIdGoodsIds> queryResult = esService.getSkuIdsBySalesAndNews(cityId, pageNo, size);
+        if ("null".equals(cityId)) {
+            cityId = "000000";
+        }
 
-        if (!"null".equals(userId)) { // 有用户ID
+        //根据商品销量和新品查找商品40篇
+        double salesPercent = 0.75;
+        Set<SkuIdGoodsIds> queryResult = esService.getSkuIdsBySalesAndNews(cityId, pageNo, size, salesPercent);
+
+        if (!"null".equals(userId) && queryResult.size() > (size * salesPercent)) { // 有用户ID
             //从ES中查询用户疾病标签
             String labels = esService.getPortraitDiseaseLabelsByUserId(userId);
 

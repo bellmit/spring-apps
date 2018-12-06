@@ -190,7 +190,7 @@ public class DataetlJdbcService {
     public List<Goods> getGoodsList(int from, int size) {
         return dataetlDB.query(
                 String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,search_keywords,city_ids, rcmd_score,goods_type,sales_num,create_time from %s x limit ?, ?", goodsTable),
-                new Object[]{from,size},
+                new Object[]{from, size},
                 new RowMapper<Goods>() {
                     @Override
                     public Goods mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -214,6 +214,7 @@ public class DataetlJdbcService {
                     }
                 });
     }
+
     public List<String> getGoodsSkuIdsByLikeStr(String field, String str) {
         List<String> goodsIdList = null;
         try {
@@ -393,11 +394,11 @@ public class DataetlJdbcService {
                 " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?) ON DUPLICATE KEY UPDATE `name` = ?, `description` = ?, " +
                 "`category` = ?, `sub_category` = ?, `goods_tags` = ?, `search_keywords` = ?, `city_ids` = ?, `rcmd_score` = ?," +
                 " `create_time` = ?, `goods_ids` = ?, `goods_type` = ?, `sales_num` =? ", goodsTable);
-        dataetlDB.update(query, goods.getSkuId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getGoodsDescription(),
+        dataetlDB.update(query, goods.getSkuId(), goods.getGoodsName(), goods.getGoodsDescription(), goods.getCategory(),
                 goods.getSubCategory(), goodsTags, goods.getSearchKeywords(), cityIds, goods.getRcmdScore(), goods.getCreateTime(),
-                goodsIds, goods.getGoodsType(), goods.getSalesNum(),goods.getGoodsName(), goods.getGoodsDescription(),
-                goods.getGoodsDescription(), goods.getSubCategory(), goodsTags, goods.getSearchKeywords(), cityIds,
-                goods.getRcmdScore(), goods.getCreateTime(), goodsIds, goods.getGoodsType(),goods.getSalesNum());
+                goodsIds, goods.getGoodsType(), goods.getSalesNum(), goods.getGoodsName(), goods.getGoodsDescription(),
+                goods.getCategory(), goods.getSubCategory(), goodsTags, goods.getSearchKeywords(), cityIds,
+                goods.getRcmdScore(), goods.getCreateTime(), goodsIds, goods.getGoodsType(), goods.getSalesNum());
     }
 
     public void deleteVideo(long id) {

@@ -323,7 +323,7 @@ public class EsService {
         return boolQueryBuilder;
     }
 
-    private static final String[] defaultGoodsSearchFields = new String[]{"name", "category", "subCategory", "goodsTags", "searchKeywords"};
+    private static final String[] defaultGoodsSearchFields = new String[]{"name", "goodsTags", "searchKeywords"};
 
     private void checkIfUpdateGoodsTypeCount() {
         if (goodsTypeProportion.needUpdate()) {

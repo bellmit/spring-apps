@@ -29,7 +29,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
@@ -74,7 +73,7 @@ public class EsService {
     private final Random random = new Random();
 
     @Value("${app.es.reportlabel-index}")
-    private String reportlabelIndex;
+    private String reportLabelIndex;
 
     private String countryId = "000000";
 
@@ -160,7 +159,7 @@ public class EsService {
      * @return
      */
     public String getLabelsByReportId(String reportId) {
-        SearchRequestBuilder srb = client.prepareSearch(reportlabelIndex).setSize(1)
+        SearchRequestBuilder srb = client.prepareSearch(reportLabelIndex).setSize(1)
                 .setQuery(matchQuery("healthReportId", reportId.trim()));
         logger.debug(srb.toString());
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();

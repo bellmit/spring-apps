@@ -344,8 +344,7 @@ public class RcmdController {
      * 根据infoId从获取article的labels，根据这个labels从good索引的label，content_name，display_label
      * 中匹配出相应的商品
      */
-    @ApiOperation(value = "根据infoId获取相似的资讯、视频、直播、商品  【/getSimi/all】",
-            notes = "")
+    @ApiOperation(value = "根据infoId获取相似的资讯、视频、直播、商品  【/getSimi/all】")
     @RequestMapping(value = "/mul/ALVG/infoAndCity", method = RequestMethod.GET)
     public Object getMulAlvgByInfoAndCity(
             @RequestParam(value = "infoId") String infoId,

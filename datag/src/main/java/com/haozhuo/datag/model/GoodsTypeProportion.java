@@ -5,9 +5,9 @@ package com.haozhuo.datag.model;
  */
 
 public class GoodsTypeProportion {
-    public static final int MAX = 43200000;
-    long updateGoodsTypeNum = -1L;
-    double[] proportionGoodsType = {0.33, 0.33, 0.34};
+    private static final int MAX = 43200000;
+    private long updateGoodsTypeNum = -1L;
+    private double[] proportionGoodsType = {0.33, 0.33, 0.34};
 
     public boolean needUpdate() {
         return System.currentTimeMillis() - updateGoodsTypeNum > MAX;
@@ -17,8 +17,7 @@ public class GoodsTypeProportion {
         int sizeOfGoodsType1 = (int) Math.round(proportionGoodsType[0] * totalSize);
         int sizeOfGoodsType2 = (int) Math.round(proportionGoodsType[1] * totalSize);
         int sizeOfGoodsType3 = totalSize - sizeOfGoodsType1 - sizeOfGoodsType2;
-        int[] result = {sizeOfGoodsType1, sizeOfGoodsType2, sizeOfGoodsType3};
-        return result;
+        return new int[]{sizeOfGoodsType1, sizeOfGoodsType2, sizeOfGoodsType3};
     }
 
     public void setProportionGoodsType(double[] proportionGoodsType) {

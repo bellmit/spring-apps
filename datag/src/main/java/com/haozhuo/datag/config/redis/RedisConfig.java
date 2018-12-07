@@ -11,9 +11,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPoolConfig;
 
-import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
@@ -29,39 +27,39 @@ import static java.util.stream.Collectors.toSet;
  * http://www.cnblogs.com/lchb/articles/7222870.html
  */
 @Configuration
-public class RedisConfig {
+class RedisConfig {
 
     @Value("${spring.redis.sentinel.master}")
-    protected String sentinelMaster;
+    private String sentinelMaster;
 
     @Value("${spring.redis.sentinel.nodes}")
-    protected String sentinelNodes;
+    private String sentinelNodes;
 
     @Value("${spring.redis.pool.max-active:8}")
-    protected int maxTotal;
+    private int maxTotal;
 
     @Value("${spring.redis.pool.min-idle:0}")
-    protected int minIdle;
+    private int minIdle;
 
     @Value("${spring.redis.pool.max-idle:8}")
-    protected int maxIdle;
+    private int maxIdle;
 
     @Value("${spring.redis.pool.max-wait:-1}")
-    protected long maxWaitMillis;
+    private long maxWaitMillis;
 
     @Value("${spring.redis.password:}")
-    protected String password;
+    private String password;
 
     //连接超时时间(毫秒)
     @Value("${spring.redis.timeout:3600}")
-    protected int timeout;
+    private int timeout;
 
-    public RedisSentinelConfiguration redisSentinelConfiguration() {
-        Set<String> setNodes = stream(sentinelNodes.split(",")).map(x -> x.trim()).collect(toSet());
+    private RedisSentinelConfiguration redisSentinelConfiguration() {
+        Set<String> setNodes = stream(sentinelNodes.split(",")).map(String::trim).collect(toSet());
         return new RedisSentinelConfiguration(sentinelMaster, setNodes);
     }
 
-    public JedisPoolConfig jedisPoolConfig() {
+    private JedisPoolConfig jedisPoolConfig() {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(maxTotal);
         poolConfig.setMinIdle(minIdle);
@@ -72,10 +70,11 @@ public class RedisConfig {
         return poolConfig;
     }
 
-    public StringRedisSerializer stringRedisSerializer() {
+    private StringRedisSerializer stringRedisSerializer() {
         return new StringRedisSerializer();
     }
 
+    @SuppressWarnings("deprecation")
     private JedisConnectionFactory buildConnectionFactory(int database) {
         JedisConnectionFactory connectionFactory = new JedisConnectionFactory(redisSentinelConfiguration(), jedisPoolConfig());
         connectionFactory.setUsePool(true);
@@ -86,7 +85,7 @@ public class RedisConfig {
         return connectionFactory;
     }
 
-    protected StringRedisTemplate buildRedisTemplate(RedisConnectionFactory connectionFactory) {
+    private StringRedisTemplate buildRedisTemplate(RedisConnectionFactory connectionFactory) {
         StringRedisTemplate template = new StringRedisTemplate();
         template.setConnectionFactory(connectionFactory);
         template.setValueSerializer(stringRedisSerializer());

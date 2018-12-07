@@ -7,9 +7,10 @@ import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
 /**
  * Created by Lucius on 8/15/18.
  */
+@SuppressWarnings("deprecation")
 @EnableZuulProxy
 @SpringBootApplication
-public class ZuulApplication {
+class ZuulApplication {
     public static void main(String[] args) {
         new SpringApplicationBuilder(ZuulApplication.class).web(true).run(args);
     }

@@ -3,8 +3,6 @@ package com.haozhuo.datag.model;
 import lombok.Setter;
 import lombok.Getter;
 
-import java.util.Random;
-
 /**
  * Created by Lucius on 8/28/18.
  */

@@ -62,7 +62,7 @@ public class Goods {
         if (list == null) {
             return "";
         } else {
-            return list.stream().collect(Collectors.joining(","));
+            return String.join(",", list);
         }
     }
 

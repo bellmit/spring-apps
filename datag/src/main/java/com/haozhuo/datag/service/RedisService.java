@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -29,6 +28,8 @@ import static java.util.stream.Collectors.*;
 /**
  * Created by Lucius on 8/17/18.
  */
+
+@SuppressWarnings({"unchecked", "unused"})
 @Component
 public class RedisService {
     private static final Logger logger = LoggerFactory.getLogger(RedisService.class);
@@ -43,34 +44,36 @@ public class RedisService {
 
     private String curDate;
 
+    @SuppressWarnings("SpellCheckingInspection")
     private String[] lastNdays;
 
     @Value("${app.redis.pushed-key-max-size:400}")
     private int pushedKeyMaxSize;
+
     @Value("${app.redis.expire-days:7}")
     private int expireDays;
 
-    private final String videoPushedKey = "video-pushed:%s:%s";
-    private final String goodsPushedKey = "goods-pushed:%s:%s";
+    private final static String videoPushedKey = "video-pushed:%s:%s";
+    private final static String goodsPushedKey = "goods-pushed:%s:%s";
 
-    @Deprecated
-    private final String hateTagsKey = "HateTags:%s";
+//    @Deprecated
+//    private final static String hateTagsKey = "HateTags:%s";
 
-    @Deprecated
-    private final String loveTagsKey = "LoveTags:%s";
+//    @Deprecated
+//    private final static String loveTagsKey = "LoveTags:%s";
 
 
     @Value("${app.biz.queueRcmdNum:5,4,3,2}")
     private String queueRcmdNumStr;
     private Integer[] queueRcmdNumArray;
 
-    private final String newsKeywordsKey = "news_keywords";
-    private final String newsIndexKeyFormat = "news_ind:%s:%s";
-    private final String userPrefsKeyFormat = "user_prefs:%s";
-    private final String newsRcmdKeyFormat = "news_rcmd:%s:%s";
-    private final String newsPushedKeyFormat = "news_pushed:%s:%s";
-    private final String newsRcmdChannelsKey = "news_rcmd_channels";
-    private final String newsLockFormat = "news_lock:%s";
+    private final static String newsKeywordsKey = "news_keywords";
+    private final static String newsIndexKeyFormat = "news_ind:%s:%s";
+    private final static String userPrefsKeyFormat = "user_prefs:%s";
+    private final static String newsRcmdKeyFormat = "news_rcmd:%s:%s";
+    private final static String newsPushedKeyFormat = "news_pushed:%s:%s";
+    private final static String newsRcmdChannelsKey = "news_rcmd_channels";
+    private final static String newsLockFormat = "news_lock:%s";
 
     private final List<Object> avlHashKeys = Arrays.asList("a", "v", "l");
 
@@ -102,12 +105,11 @@ public class RedisService {
         deleteHashKey(pushedInfoKeys.getKey(), hashKey);
     }
 
-    @Deprecated
-    public void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
+    private void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
         if (redisDB0.hasKey(pushedInfoKeys.getKey()))
             return;
         logger.debug("redis create hash key:{}", pushedInfoKeys.getKey());
-        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), pushedInfoKeys.getChannelRcmdHashKey(), "");
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), PushedInfoKeys.getChannelRcmdHashKey(), "");
         redisDB0.expire(pushedInfoKeys.getKey(), expireDays, TimeUnit.DAYS);
     }
 
@@ -125,7 +127,7 @@ public class RedisService {
                     .filter(i -> JavaUtils.isNotEmpty(newInfoALV.getByIndex(i)))
                     .boxed().collect(
                             toMap(
-                                    i -> pushedInfoKeys.getHashKeyByALVIndex(i),
+                                    pushedInfoKeys::getHashKeyByALVIndex,
                                     i -> Stream.concat(stream(oldInfoALV.getByIndex(i)), stream(newInfoALV.getByIndex(i))).collect(joining(","))
                             )
                     );
@@ -134,41 +136,41 @@ public class RedisService {
         }
     }
 
-    @Deprecated
-    public void addHateTags(String userId, String hateTags) {
-        if (JavaUtils.isNotEmpty(hateTags)) {
-            String key = String.format(hateTagsKey, userId);
-            ListOperations<String, String> oper = redisDB0.opsForList();
-            oper.leftPush(key, hateTags);
-            oper.trim(key, 0, 30); //只保存最近30条记录
-            redisDB0.expire(key, 1, TimeUnit.DAYS); //过期时间1天
-        }
-    }
+//    @Deprecated
+//    public void addHateTags(String userId, String hateTags) {
+//        if (JavaUtils.isNotEmpty(hateTags)) {
+//            String key = String.format(hateTagsKey, userId);
+//            ListOperations<String, String> oper = redisDB0.opsForList();
+//            oper.leftPush(key, hateTags);
+//            oper.trim(key, 0, 30); //只保存最近30条记录
+//            redisDB0.expire(key, 1, TimeUnit.DAYS); //过期时间1天
+//        }
+//    }
+//
+//    @Deprecated
+//    public String getHateTags(String userId) {
+//        return getTags(hateTagsKey, userId);
+//    }
 
-    @Deprecated
-    public String getHateTags(String userId) {
-        return getTags(hateTagsKey, userId);
-    }
+//    public String getLoveTags(String userId) {
+//        return getTags(loveTagsKey, userId);
+//    }
 
-    public String getLoveTags(String userId) {
-        return getTags(loveTagsKey, userId);
-    }
-
-    private String getTags(String keyFormat, String userId) {
-        String key = String.format(keyFormat, userId);
-        //redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
-        List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
-        StringBuffer result = new StringBuffer();
-        for (String hateTags : tagsList) {
-            result.append(hateTags).append(",");
-        }
-        return result.toString();
-    }
+//    private String getTags(String keyFormat, String userId) {
+//        String key = String.format(keyFormat, userId);
+//        //redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
+//        List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
+//        StringBuffer result = new StringBuffer();
+//        for (String hateTags : tagsList) {
+//            result.append(hateTags).append(",");
+//        }
+//        return result.toString();
+//    }
 
     private synchronized void updateDateInfo() {
-        lastNdays = JavaUtils.getLastNdaysArray(expireDays);
+        lastNdays = JavaUtils.getLastDaysArray(expireDays);
         curDate = JavaUtils.getToday();
-        logger.debug("expireDays:{}, curDate:{}, lastNdays:{}", expireDays, curDate, Arrays.asList(lastNdays));
+        logger.debug("expireDays:{}, curDate:{}, last n days:{}", expireDays, curDate, Arrays.asList(lastNdays));
     }
 
     private void checkOrUpdateDateInfo() {
@@ -249,7 +251,7 @@ public class RedisService {
         HashOperations ho = redisDB0.opsForHash();
         ho.put(newsKeywordsKey, strInfoId, simpleArticle.getChannelIdWithKeywords());
 
-        simpleArticle.getKeywords().stream()
+        simpleArticle.getKeywords()
                 .forEach(kw -> ho.put(
                         String.format(newsIndexKeyFormat, String.valueOf(simpleArticle.getChannelId()), kw.getName()),
                         strInfoId,
@@ -291,17 +293,17 @@ public class RedisService {
         return rcmdNewsInfo;
     }
 
-    public boolean unLocked(String userId) {
+    private boolean unLocked(String userId) {
         return redisDB0.getExpire(String.format(newsLockFormat, userId)) <= 0;
     }
 
-    public void setLocked(String userId) {
+    private void setLocked(String userId) {
         redisDB0.opsForValue().set(String.format(newsLockFormat, userId), "1", 15, TimeUnit.SECONDS);
     }
 
     private Integer[] getRcmdNumArray() {
         if (queueRcmdNumArray == null) {
-            queueRcmdNumArray = stream(queueRcmdNumStr.split(",")).map(x -> Integer.parseInt(x)).toArray(Integer[]::new);
+            queueRcmdNumArray = stream(queueRcmdNumStr.split(",")).map(Integer::parseInt).toArray(Integer[]::new);
         }
         return queueRcmdNumArray;
     }
@@ -329,7 +331,7 @@ public class RedisService {
                         info.addRcmdChannelId(channelId);
                     }
                     info.addNews(tmp.getT1());
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
 
                 }
             }
@@ -341,7 +343,7 @@ public class RedisService {
         return info;
     }
 
-    public void addPushedNewsSet(String userId, String channelId, List<String> values) {
+    private void addPushedNewsSet(String userId, String channelId, List<String> values) {
         if (values == null || values.size() == 0) {
             return;
         }
@@ -371,7 +373,7 @@ public class RedisService {
     }
 
     public void deleteKeywordsOfArticleInRedis(String informationId) {
-        //get channelId and keywords from Redis.news_keywords where hashKey = infomationId
+        //get channelId and keywords from Redis.news_keywords where hashKey = informationId
         HashOperations ho = redisDB0.opsForHash();
         SimpleArticle simpleArticle = getNewsKeywords(ho, informationId);
         if (simpleArticle.isEmpty())
@@ -382,7 +384,7 @@ public class RedisService {
                 .map(kw -> String.format(newsIndexKeyFormat, simpleArticle.getChannelId(), kw.getName()))
                 .forEach(key -> ho.delete(key, informationId));
 
-        //delete hashValue from Redis.news_keywords where hashKey = infomationId
+        //delete hashValue from Redis.news_keywords where hashKey = informationId
         ho.delete(newsKeywordsKey, informationId);
     }
 

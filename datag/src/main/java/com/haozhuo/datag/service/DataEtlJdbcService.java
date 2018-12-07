@@ -10,40 +10,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.haozhuo.datag.model.Goods.listToStr;
-import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
 
 /**
  * Created by Lucius on 8/16/18.
  */
+@SuppressWarnings({"WeakerAccess", "JavaDoc"})
 @Component
-public class DataetlJdbcService {
-    private static final Logger logger = LoggerFactory.getLogger(DataetlJdbcService.class);
+public class DataEtlJdbcService {
+    private static final Logger logger = LoggerFactory.getLogger(DataEtlJdbcService.class);
 
     public Map<String, String[]> channelEsTypeMap;
-    public final Map<String, String> labelIdNameMap = new HashMap<>();
-    public final Map<String, String> labelNameIdMap = new HashMap<>();
+    private final Map<String, String> labelIdNameMap = new HashMap<>();
+    private final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String goodsTable;
     private final String liveTable;
     private final String videoTable;
     private final String articleTable;
     private final String articleTags;
-    public final static List<String> stopwords = new ArrayList<>();
+    public final static List<String> stopWords = new ArrayList<>();
 
     @Qualifier("dataetlJdbc") //选择jdbc连接池
     private final JdbcTemplate dataetlDB;
 
     @Autowired
-    public DataetlJdbcService(JdbcTemplate jdbcTemplate, Environment env) {
+    public DataEtlJdbcService(JdbcTemplate jdbcTemplate, Environment env) {
         this.dataetlDB = jdbcTemplate;
         liveTable = env.getProperty("app.mysql.live");
         videoTable = env.getProperty("app.mysql.video");
@@ -53,45 +49,31 @@ public class DataetlJdbcService {
 
         updateChannelEsTypeMap();
         initLabelMap();
-        initStopwords();
+        initStopWords();
         logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
     }
 
     private void initLabelMap() {
-        List<Tuple<String, String>> list = dataetlDB.query("select id, label from disease_label", new RowMapper<Tuple<String, String>>() {
-            @Override
-            public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Tuple<String, String>(resultSet.getString("id"), resultSet.getString("label"));
-            }
-        });
+        List<Tuple<String, String>> list = dataetlDB.query("select id, label from disease_label",
+                (resultSet, i) -> new Tuple<>(resultSet.getString("id"), resultSet.getString("label")));
         for (Tuple<String, String> tuple : list) {
             labelIdNameMap.put(tuple.getT1(), tuple.getT2());
             labelNameIdMap.put(tuple.getT2(), tuple.getT1());
         }
     }
 
-    private void initStopwords() {
-        List<String> list = dataetlDB.query("select name from stop_words;", new RowMapper<String>() {
-            @Override
-            public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                return resultSet.getString("name");
-            }
-        });
-        stopwords.addAll(list);
+    private void initStopWords() {
+        List<String> list = dataetlDB.query("select name from stop_words;", (resultSet, i) -> resultSet.getString("name"));
+        stopWords.addAll(list);
     }
 
     private void updateChannelEsTypeMap() {
         List<Tuple<String, String>> list = dataetlDB.query("select parent_id as channelId, channel_id as categoryId  from channel where parent_id >0 union \n" +
-                "select  channel_id as channelId,parent_id as categoryId from channel where parent_id = 0", new RowMapper<Tuple<String, String>>() {
-            @Override
-            public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Tuple<>(resultSet.getString("channelId"), resultSet.getString("categoryId"));
-            }
-        });
+                "select  channel_id as channelId,parent_id as categoryId from channel where parent_id = 0", (resultSet, i) -> new Tuple<>(resultSet.getString("channelId"), resultSet.getString("categoryId")));
         channelEsTypeMap = list.stream().collect(groupingBy(Tuple::getT1, mapping(x -> x.getT1() + "_" + x.getT2(), toList())))
-                .entrySet().stream().collect(toMap(x -> x.getKey(), x -> x.getValue().stream().toArray(String[]::new)));
-        logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + stream(x.getValue()).collect(joining(","))).collect(joining(" | ")));
+                .entrySet().stream().collect(toMap(Map.Entry::getKey, x -> x.getValue().toArray(new String[0])));
+        logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + String.join(",", x.getValue())).collect(joining(" | ")));
 
     }
 
@@ -108,12 +90,7 @@ public class DataetlJdbcService {
             labelIds = dataetlDB.queryForObject(
                     "select label_ids from report_userid_label where user_id = ?",
                     new Object[]{userId},
-                    new RowMapper<String>() {
-                        @Override
-                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                            return resultSet.getString("label_ids");
-                        }
-                    });
+                    (resultSet, i) -> resultSet.getString("label_ids"));
         } catch (Exception ex) {
             logger.info("report_userid_label中没有这个userId:{}", userId);
         }
@@ -128,7 +105,7 @@ public class DataetlJdbcService {
      * @return
      */
     public String getLabelStrByUserId(String userId) {
-        return getLabelSetByUserId(userId).stream().collect(joining(","));
+        return String.join(",", getLabelSetByUserId(userId));
     }
 
     /**
@@ -140,7 +117,7 @@ public class DataetlJdbcService {
     public Set<String> getLabelSetByUserId(String userId) {
         return getReportLabelIdList(userId).stream()
                 .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
-                .filter(x -> x != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 
@@ -151,12 +128,7 @@ public class DataetlJdbcService {
         } else {
             sql = "select id,label as name from disease_label";
         }
-        List<Tuple<String, String>> list = dataetlDB.query(sql, new RowMapper<Tuple<String, String>>() {
-            @Override
-            public Tuple<String, String> mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new Tuple<String, String>(resultSet.getString("name"), resultSet.getString("id"));
-            }
-        });
+        List<Tuple<String, String>> list = dataetlDB.query(sql, (resultSet, i) -> new Tuple<>(resultSet.getString("name"), resultSet.getString("id")));
         Map<String, String> result = new HashMap<>();
         for (Tuple<String, String> tuple : list) {
             result.put(tuple.getT1(), tuple.getT2());
@@ -165,53 +137,49 @@ public class DataetlJdbcService {
         return result;
     }
 
-    public String getInfoTagsById(Long infoId) {
-        String tags = null;
-        try {
-            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            tags = dataetlDB.queryForObject(
-                    String.format("select title, tags from %s x where x.information_id = ?", articleTable),
-                    new Object[]{infoId},
-                    new RowMapper<String>() {
-                        @Override
-                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                            // Optional.ofNullable() 表示传入的参数可能为null
-                            // orElse() 表示如果传入的是null就赋予另一个值
-                            return Optional.ofNullable(resultSet.getString("tags"))
-                                    .orElse(resultSet.getString("title"));
-                        }
-                    });
-        } catch (Exception ex) {
-            logger.debug("getInfoTagsById error", ex);
-        }
-        return tags;
-    }
+// --Commented out by Inspection START (12/7/18 2:46 PM):
+//    public String getInfoTagsById(Long infoId) {
+//        String tags = null;
+//        try {
+//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+//            tags = dataetlDB.queryForObject(
+//                    String.format("select title, tags from %s x where x.information_id = ?", articleTable),
+//                    new Object[]{infoId},
+//                    (resultSet, i) -> {
+//                        // Optional.ofNullable() 表示传入的参数可能为null
+//                        // orElse() 表示如果传入的是null就赋予另一个值
+//                        return Optional.ofNullable(resultSet.getString("tags"))
+//                                .orElse(resultSet.getString("title"));
+//                    });
+//        } catch (Exception ex) {
+//            logger.debug("getInfoTagsById error", ex);
+//        }
+//        return tags;
+//    }
+// --Commented out by Inspection STOP (12/7/18 2:46 PM)
 
     public List<Goods> getGoodsList(int from, int size) {
         return dataetlDB.query(
                 String.format("select sku_id,goods_ids,name,description,category,sub_category,goods_tags,search_keywords,city_ids, rcmd_score,goods_type,sales_num,create_time from %s x limit ?, ?", goodsTable),
                 new Object[]{from, size},
-                new RowMapper<Goods>() {
-                    @Override
-                    public Goods mapRow(ResultSet resultSet, int i) throws SQLException {
-                        // Optional.ofNullable() 表示传入的参数可能为null
-                        // orElse() 表示如果传入的是null就赋予另一个值
-                        Goods goods = new Goods();
-                        goods.setSkuId(resultSet.getString("sku_id"));
-                        goods.setGoodsIds(Arrays.asList(resultSet.getString("goods_ids").split(",")));
-                        goods.setGoodsName(resultSet.getString("name"));
-                        goods.setGoodsDescription(resultSet.getString("description"));
-                        goods.setCategory(resultSet.getString("category"));
-                        goods.setSubCategory(resultSet.getString("sub_category"));
-                        goods.setGoodsTags(Arrays.asList(resultSet.getString("goods_tags").split(",")));
-                        goods.setSearchKeywords(resultSet.getString("search_keywords"));
-                        goods.setRcmdScore(resultSet.getInt("rcmd_score"));
-                        goods.setGoodsType(resultSet.getInt("goods_type"));
-                        goods.setSalesNum(resultSet.getInt("sales_num"));
-                        goods.setCityIds(Arrays.asList(resultSet.getString("city_ids").split(",")));
-                        goods.setCreateTime(resultSet.getString("create_time"));
-                        return goods;
-                    }
+                (resultSet, i) -> {
+                    // Optional.ofNullable() 表示传入的参数可能为null
+                    // orElse() 表示如果传入的是null就赋予另一个值
+                    Goods goods = new Goods();
+                    goods.setSkuId(resultSet.getString("sku_id"));
+                    goods.setGoodsIds(Arrays.asList(resultSet.getString("goods_ids").split(",")));
+                    goods.setGoodsName(resultSet.getString("name"));
+                    goods.setGoodsDescription(resultSet.getString("description"));
+                    goods.setCategory(resultSet.getString("category"));
+                    goods.setSubCategory(resultSet.getString("sub_category"));
+                    goods.setGoodsTags(Arrays.asList(resultSet.getString("goods_tags").split(",")));
+                    goods.setSearchKeywords(resultSet.getString("search_keywords"));
+                    goods.setRcmdScore(resultSet.getInt("rcmd_score"));
+                    goods.setGoodsType(resultSet.getInt("goods_type"));
+                    goods.setSalesNum(resultSet.getInt("sales_num"));
+                    goods.setCityIds(Arrays.asList(resultSet.getString("city_ids").split(",")));
+                    goods.setCreateTime(resultSet.getString("create_time"));
+                    return goods;
                 });
     }
 
@@ -222,13 +190,10 @@ public class DataetlJdbcService {
             goodsIdList = dataetlDB.query(
                     String.format("select sku_id from %s x where x.%s like ?", goodsTable, field),
                     new Object[]{str},
-                    new RowMapper<String>() {
-                        @Override
-                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                            // Optional.ofNullable() 表示传入的参数可能为null
-                            // orElse() 表示如果传入的是null就赋予另一个值
-                            return resultSet.getString("sku_id");
-                        }
+                    (resultSet, i) -> {
+                        // Optional.ofNullable() 表示传入的参数可能为null
+                        // orElse() 表示如果传入的是null就赋予另一个值
+                        return resultSet.getString("sku_id");
                     });
         } catch (Exception ex) {
             logger.debug("getGoodsSkuIdsByLikeStr error", ex);
@@ -249,12 +214,7 @@ public class DataetlJdbcService {
             labels = dataetlDB.queryForObject(
                     String.format("select tags from %s where id = ?", videoTable),
                     new Object[]{videoId},
-                    new RowMapper<String>() {
-                        @Override
-                        public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                            return resultSet.getString("tags");
-                        }
-                    });
+                    (resultSet, i) -> resultSet.getString("tags"));
         } catch (Exception ex) {
             logger.debug("getVideoTagsById error", ex);
             logger.info("video4中没有这个id:{}", videoId);
@@ -262,26 +222,23 @@ public class DataetlJdbcService {
         return labels;
     }
 
-    /**
-     * 根据infoId获取Tags
-     */
-    public String getTagsByInfoId(String infoId) {
-        String tags = "";
-        try {
-            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            String sql = String.format("select x.tags from  %s x where x.information_id =?", articleTable);
-            logger.debug("sql:{}", sql);
-            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, new RowMapper<String>() {
-                @Override
-                public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return resultSet.getString("tags");
-                }
-            });
-        } catch (Exception ex) {
-            logger.debug("getTagsByInfoId error", ex);
-        }
-        return tags;
-    }
+// --Commented out by Inspection START (12/7/18 2:49 PM):
+//    /**
+//     * 根据infoId获取Tags
+//     */
+//    public String getTagsByInfoId(String infoId) {
+//        String tags = "";
+//        try {
+//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+//            String sql = String.format("select x.tags from  %s x where x.information_id =?", articleTable);
+//            logger.debug("sql:{}", sql);
+//            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, (resultSet, i) -> resultSet.getString("tags"));
+//        } catch (Exception ex) {
+//            logger.debug("getTagsByInfoId error", ex);
+//        }
+//        return tags;
+//    }
+// --Commented out by Inspection STOP (12/7/18 2:49 PM)
 
     /**
      * 根据infoId获取Tags
@@ -292,12 +249,7 @@ public class DataetlJdbcService {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             String sql = String.format("select concat(%s) as tags from %s  where information_id = ?", articleTags, articleTable);
             logger.debug("sql:{}", sql);
-            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, new RowMapper<String>() {
-                @Override
-                public String mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return resultSet.getString("tags");
-                }
-            });
+            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, (resultSet, i) -> resultSet.getString("tags"));
         } catch (Exception ex) {
             logger.debug("getTagsByInfoId error", ex);
         }
@@ -326,12 +278,14 @@ public class DataetlJdbcService {
 //
 //    }
 
-    public String getLabelIdsByNames(String labelNames) {
-        return stream(labelNames.split(","))
-                .map(labelName -> this.labelNameIdMap.getOrDefault(labelName, null))
-                .filter(x -> x != null)
-                .collect(Collectors.joining(","));
-    }
+// --Commented out by Inspection START (12/7/18 2:48 PM):
+//    public String getLabelIdsByNames(String labelNames) {
+//        return stream(labelNames.split(","))
+//                .map(labelName -> this.labelNameIdMap.getOrDefault(labelName, null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.joining(","));
+//    }
+// --Commented out by Inspection STOP (12/7/18 2:48 PM)
 
     public void updateVideo(Video video) {
         String query = String.format("INSERT INTO `%s` (`id`, `title`, `status`, `url`, `channel_id`, `category_id`, " +

@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 /**
  * Created by Lucius on 8/13/18.
  */
+@SuppressWarnings("ALL")
 @Configuration
 public class JdbcConfig {
     @Primary

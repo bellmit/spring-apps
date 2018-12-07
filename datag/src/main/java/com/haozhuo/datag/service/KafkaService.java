@@ -14,14 +14,16 @@ import org.springframework.stereotype.Component;
 /**
  * Created by Lucius on 8/14/18.
  */
+@SuppressWarnings("unchecked")
 @Component
 public class KafkaService {
     private static final Logger logger = LoggerFactory.getLogger(KafkaService.class);
 
     private final KafkaTemplate kafkaTemplate;
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @SuppressWarnings("WeakerAccess")
     @Autowired
     public KafkaService(KafkaTemplate kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;

@@ -1,6 +1,6 @@
 package com.haozhuo.datag.model.textspilt;
 
-import com.haozhuo.datag.service.DataetlJdbcService;
+import com.haozhuo.datag.service.DataEtlJdbcService;
 import org.ansj.app.keyword.Keyword;
 import org.ansj.domain.Term;
 import org.ansj.recognition.impl.StopRecognition;
@@ -15,6 +15,7 @@ import java.util.*;
 /**
  * Created by Lucius on 10/16/18.
  */
+@SuppressWarnings("ALL")
 public class MyKeyWordComputer<T extends Analysis> {
     private static Logger logger = LoggerFactory.getLogger(MyKeyWordComputer.class);
 
@@ -22,7 +23,7 @@ public class MyKeyWordComputer<T extends Analysis> {
         long beginTime = System.currentTimeMillis();
         StopRecognition filter = new StopRecognition();
 
-        List<String> stopWords = DataetlJdbcService.stopwords;
+        List<String> stopWords = DataEtlJdbcService.stopWords;
         for (String stopWord : stopWords) {
             filter.insertStopWords(stopWord); //过滤单词
         }

@@ -4,7 +4,7 @@ import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.NewsRcmdMsg;
 import com.haozhuo.datag.model.PushedInfoKeys;
 import com.haozhuo.datag.model.RcmdNewsInfo;
-import com.haozhuo.datag.service.DataetlJdbcService;
+import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.KafkaService;
 import com.haozhuo.datag.service.RedisService;
@@ -29,14 +29,13 @@ import static java.util.stream.Collectors.joining;
 @Component
 public class InfoRcmdService {
     private static final Logger logger = LoggerFactory.getLogger(InfoRcmdService.class);
-    @Deprecated
     public static final String channelRcmdId = "10000";
-    private int randomLiveOrVideoSize = 1;
+    private final int randomLiveOrVideoSize = 1;
 
-    public static final String channelTypeRCMD = "R";
-    public static final String channelTypeArticle = "A";
-    public static final String channelTypeVideo = "V";
-    public static final String channelTypeLive = "L";
+    private static final String channelTypeRCMD = "R";
+    // --Commented out by Inspection (12/7/18 3:06 PM):public static final String channelTypeArticle = "A";
+    private static final String channelTypeVideo = "V";
+    private static final String channelTypeLive = "L";
 
     public static final String allCategoryId = "0";
 
@@ -44,13 +43,13 @@ public class InfoRcmdService {
 
     private final RedisService redisService;
 
-    private final DataetlJdbcService dataetlJdbcService;
+    private final DataEtlJdbcService dataetlJdbcService;
 
     private final KafkaService kafkaService;
 
 
     @Autowired
-    public InfoRcmdService(EsService esService, RedisService redisService, DataetlJdbcService dataetlJdbcService, KafkaService kafkaService) {
+    public InfoRcmdService(EsService esService, RedisService redisService, DataEtlJdbcService dataetlJdbcService, KafkaService kafkaService) {
         this.esService = esService;
         this.redisService = redisService;
         this.dataetlJdbcService = dataetlJdbcService;
@@ -58,21 +57,21 @@ public class InfoRcmdService {
     }
 
 
-    public String getLoveTags(String userId, String categoryId) {
+    private String getLoveTags(String userId, String categoryId) {
         if (allCategoryId.equals(categoryId)) {
-            //获取用户感兴趣的标签
-            String loveTags = redisService.getLoveTags(userId);
-            logger.debug("userId:{}, loveTags:{}", userId, loveTags);
+//            //获取用户感兴趣的标签
+//            String loveTags = redisService.getLoveTags(userId);
+//            logger.debug("userId:{}, loveTags:{}", userId, loveTags);
             //获取用户报告标签
             String reportTags = dataetlJdbcService.getLabelStrByUserId(userId);
             logger.debug("userId:{}, reportTags:{}", userId, reportTags);
-            return loveTags + "," + reportTags;
+            return reportTags;
         } else {
             return "";
         }
     }
 
-    Random rand = new Random();
+    private final Random rand = new Random();
 
     private String[] getRcmdIds(String tags, int size, String esIndex, String hateTags, String[] pushedIds, String... esTypes) {
         String[] tagArray = tags.split(",");
@@ -156,7 +155,7 @@ public class InfoRcmdService {
             RcmdNewsInfo rcmdNewsInfo = redisService.getRcmdNews(userId, compSize);
 
             checkIfRequestRcmd(rcmdNewsInfo, userId);
-            articleIds = rcmdNewsInfo.getNews().stream().toArray(String[]::new);
+            articleIds = rcmdNewsInfo.getNews().toArray(new String[0]);
 
             if (articleIds.length < compSize) {
                 articleIds = esService.commonRecommend(esService.getArticleIndex(), hateTags, pushedALV.getArticle(), compSize);
@@ -179,7 +178,7 @@ public class InfoRcmdService {
             RcmdNewsInfo rcmdNewsInfo = redisService.getRcmdNewsByChannel(userId, channelId, compSize);
 
             checkIfRequestRcmd(rcmdNewsInfo, userId);
-            articleIds = rcmdNewsInfo.getNews().stream().toArray(String[]::new);
+            articleIds = rcmdNewsInfo.getNews().toArray(new String[0]);
             if (articleIds.length < compSize) {
                 logger.info("用户 {} 的 channelId {}:Redis中没有数据，从ES中取数据", userId, channelId);
                 articleIds = esService.commonRecommend(esService.getArticleIndex(), (String[]) ArrayUtils.addAll(articleIds, pushedALV.getArticle()), compSize, esTypes);

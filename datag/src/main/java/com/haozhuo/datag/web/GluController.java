@@ -1,7 +1,7 @@
 package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.model.glu.ReportObjData;
-import com.haozhuo.datag.service.DataetlJdbcService;
+import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.biz.GluService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RequestMapping(value = "/glu")
 @RestController
-public class GluController {
+class GluController {
     private static final Logger logger = LoggerFactory.getLogger(GluController.class);
     @Autowired
     private GluService gluService;
     @Autowired
-    private DataetlJdbcService dataetlJdbcService;
+    private DataEtlJdbcService dataetlJdbcService;
 
     @GetMapping("/highGluPermit/{reportId}")
     @ApiOperation(value = "输入reportId，判断该报告是否符合高血糖准入,返回1表示准入,0表示不准入")

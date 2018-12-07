@@ -24,9 +24,10 @@ import static java.util.stream.Collectors.toList;
  * Created by Lucius on 8/16/18.
  */
 
+@SuppressWarnings({"SameReturnValue", "unused"})
 @RequestMapping(value = "/rcmd")
 @RestController
-public class RcmdController {
+class RcmdController {
     private static final Logger logger = LoggerFactory.getLogger(RcmdController.class);
 
     private final EsService esService;
@@ -35,15 +36,15 @@ public class RcmdController {
 
     private final KafkaService kafkaService;
 
-    private final DataetlJdbcService dataetlJdbcService;
+    private final DataEtlJdbcService dataetlJdbcService;
 
     private final InfoRcmdService infoRcmdService;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
 
     @Autowired
-    public RcmdController(EsService esService, RedisService redisService, KafkaService kafkaService, DataetlJdbcService dataetlJdbcService) {
+    private RcmdController(EsService esService, RedisService redisService, KafkaService kafkaService, DataEtlJdbcService dataetlJdbcService) {
         this.esService = esService;
         this.redisService = redisService;
         this.kafkaService = kafkaService;
@@ -401,7 +402,7 @@ public class RcmdController {
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "jsonStr") String jsonStr) {
         long beginTime = System.currentTimeMillis();
-        AbnormalParam abnormal = null;
+        AbnormalParam abnormal;
         try {
             abnormal = mapper.readValue(jsonStr, AbnormalParam.class);
         } catch (IOException e) {
@@ -540,22 +541,20 @@ public class RcmdController {
     @GetMapping(value = "/existKeywords/{keywordArray}")
     public List<String> getExistsKwList(@PathVariable(value = "keywordArray") String[] keywordArray) {
         long beginTime = System.currentTimeMillis();
-        List<String> list = stream(keywordArray).filter(keyword -> esService.isExistKeyword(keyword)).collect(toList());
+        List<String> list = stream(keywordArray).filter(esService::isExistKeyword).collect(toList());
         logger.info("/existKeywords/{}  cost:{} ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return list;
     }
 
 
-    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签【新增】",
-            notes = "业务逻辑:  \n" +
-                    "根据用户屏蔽的文章，得到用户不感兴趣的标签，将此标签存入Redis的HateTag:{userId}中。")
+    @ApiOperation(value = "根据用户屏蔽的文章,存储用户不感兴趣的标签【新增】")
     @GetMapping(value = "/article/not_interested")
     public Object setNotInterestedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
         //为视频、直播推荐
-        String tags = dataetlJdbcService.getInfoTagsById(infoId);
-        redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
+        //String tags = dataetlJdbcService.getInfoTagsById(infoId);
+        //redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
         kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString(), "", false, true, 2));
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";

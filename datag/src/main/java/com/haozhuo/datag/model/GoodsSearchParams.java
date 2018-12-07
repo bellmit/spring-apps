@@ -1,10 +1,7 @@
 package com.haozhuo.datag.model;
 
 import com.haozhuo.datag.common.Utils;
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.Getter;
 
 import java.util.Arrays;
 

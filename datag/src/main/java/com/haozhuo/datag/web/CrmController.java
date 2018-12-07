@@ -1,7 +1,7 @@
 package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.model.crm.UserIdTagsId;
-import com.haozhuo.datag.service.DataetlJdbcService;
+import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -17,12 +17,12 @@ import java.util.Map;
  */
 @RequestMapping(value = "/crm")
 @RestController
-public class CrmController {
+class CrmController {
     private static final Logger logger = LoggerFactory.getLogger(CrmController.class);
     @Autowired
     private EsService esService;
     @Autowired
-    private DataetlJdbcService dataetlJdbcService;
+    private DataEtlJdbcService dataetlJdbcService;
 
     @GetMapping("/portrait/{userIds}")
     @ApiOperation(value = "根据userIds返回用户画像", notes = "多个userId使用逗号隔开")

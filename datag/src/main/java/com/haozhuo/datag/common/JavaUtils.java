@@ -1,8 +1,6 @@
 package com.haozhuo.datag.common;
 
 
-import org.springframework.util.StringUtils;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -12,8 +10,9 @@ import java.util.stream.IntStream;
 /**
  * Created by Lucius on 8/18/18.
  */
+@SuppressWarnings("WeakerAccess")
 public class JavaUtils {
-    public static String getNdaysAgo(int n, String format) {
+    public static String getSeveralDaysAgo(int n, String format) {
         Date dNow = new Date();//当前时间
         Calendar calendar = Calendar.getInstance(); //得到日历
         calendar.setTime(dNow);
@@ -26,16 +25,12 @@ public class JavaUtils {
         return new SimpleDateFormat(format).format(dBefore);
     }
 
-    public static String getNdaysAgo(int n) {
-        return getNdaysAgo(n, "yyyy-MM-dd");
+    public static String getSeveralDaysAgo(int n) {
+        return getSeveralDaysAgo(n, "yyyy-MM-dd");
     }
 
-    public static String[] getLastNdaysArray(int n) {
-        return IntStream.range(0, n).boxed().map(i -> getNdaysAgo(i)).toArray(String[]::new);
-    }
-    public static void main(String[] args) {
-        System.out.println(StringUtils.arrayToCommaDelimitedString(getLastNdaysArray(10)));
-        StringUtils.arrayToCommaDelimitedString(getLastNdaysArray(10));
+    public static String[] getLastDaysArray(int n) {
+        return IntStream.range(0, n).boxed().map(JavaUtils::getSeveralDaysAgo).toArray(String[]::new);
     }
 
     public static String getCurrentFormat(String format) {
@@ -55,6 +50,7 @@ public class JavaUtils {
         return (str == null) || "".equals(str.trim());
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isEmpty(Object obj) {
         return obj == null;
     }

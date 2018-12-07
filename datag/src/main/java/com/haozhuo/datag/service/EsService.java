@@ -35,6 +35,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
+@SuppressWarnings({"unchecked", "unused", "WeakerAccess"})
 @Component
 public class EsService {
     private static final Logger logger = LoggerFactory.getLogger(EsService.class);
@@ -70,18 +71,17 @@ public class EsService {
     @Value("${app.es.reportlabel-index}")
     private String reportLabelIndex;
 
-    private String countryId = "000000";
+    private final static String countryId = "000000";
 
     private final GoodsTypeProportion goodsTypeProportion = new GoodsTypeProportion();
 
     @Autowired
     private TransportClient client;
-    private GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8);
-    private GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
-    private GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, 0.9);
-    private ExponentialDecayFunctionBuilder goodsCreateTimeExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("createTime", "now", "180d", "0d", 0.8);
-    private ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
-
+    private final GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8);
+    private final GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
+    private final GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, 0.9);
+    private final ExponentialDecayFunctionBuilder goodsCreateTimeExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("createTime", "now", "180d", "0d", 0.8);
+    private final ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
 
     public EsService() {
 
@@ -102,7 +102,7 @@ public class EsService {
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
     public String[] personalizedRecommend(String index, String tags, String hateTags, String[] pushedIds, int size, String... types) {
-        String tagField = getTagField();
+        String tagField = "tags";
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
@@ -111,10 +111,10 @@ public class EsService {
         return recommend(index, query, size, types);
     }
 
-    private String[] getIndexByCondition(String index, QueryBuilder condition, String[] excludeIds, int from, int size) {
+    private String[] getIndexByCondition(String index, QueryBuilder condition, String[] excludeIds, int size) {
         logger.debug("es index:{}", index);
         SearchRequestBuilder srb = client.prepareSearch(index)
-                .setFrom(from)
+                .setFrom(0)
                 .setSize(size)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(condition)
@@ -130,12 +130,9 @@ public class EsService {
         }
     }
 
-    private String getTagField() {
-        return "tags";
-    }
 
     public String[] commonRecommend(String index, String hateTags, String[] pushedIds, int size, String... types) {
-        String tagField = getTagField();
+        String tagField = "tags";
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
@@ -162,7 +159,8 @@ public class EsService {
 
     }
 
-    private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param, String... fieldNames) {
+    private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param) {
+        String fieldNames = "tags";
         BoolQueryBuilder builder = QueryBuilders.boolQuery();
         if (param.getExceptionItemName() != null)
             builder.should(QueryBuilders.multiMatchQuery(param.getExceptionItemName(), fieldNames).boost(80));
@@ -251,7 +249,7 @@ public class EsService {
         return list;
     }
 
-    public List<String> getPortraitDiseaseLabelListByUserId(String userIds) {
+    private List<String> getPortraitDiseaseLabelListByUserId(String userIds) {
         GetResponse response = client.prepareGet(portraitIndex, "docs", userIds).get();
         Map<String, Object> source = response.getSource();
         List<String> diseaseLabelList;
@@ -264,7 +262,7 @@ public class EsService {
     }
 
     public String getPortraitDiseaseLabelsByUserId(String userId) {
-        return Utils.removeStopWords(getPortraitDiseaseLabelListByUserId(userId).stream().collect(joining(",")));
+        return Utils.removeStopWords(String.join(",", getPortraitDiseaseLabelListByUserId(userId)));
     }
 
     //------------------- portrait end ----------------------------------
@@ -470,15 +468,15 @@ public class EsService {
 
     //---------------------- article start -----------------------------------
 
-    private String[] getArticleIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
-        return getIndexByCondition(articleIndex, condition, excludeIds, from, size);
+    private String[] getArticleIdsByCondition(QueryBuilder condition, String[] excludeIds, int size) {
+        return getIndexByCondition(articleIndex, condition, excludeIds, size);
     }
 
     public String[] getArticleIds(String text, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"tags"};
         }
-        String[] ids = getArticleIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
+        String[] ids = getArticleIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, size);
         logger.debug("text:{}, article ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
@@ -489,7 +487,7 @@ public class EsService {
 
     public List<String> getArticleIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(articleIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "tags")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param)).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
@@ -511,7 +509,7 @@ public class EsService {
     }
 
     private String[] getArticleIdsRandomly(String[] excludeIds, int size) {
-        return getArticleIdsByCondition(QueryBuilders.matchAllQuery(), excludeIds, 0, size);
+        return getArticleIdsByCondition(QueryBuilders.matchAllQuery(), excludeIds, size);
     }
 
     public void updateArticle(Article article) {
@@ -534,15 +532,15 @@ public class EsService {
 
     //---------------------- live start -----------------------------------
 
-    private String[] getLiveIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
-        return getIndexByCondition(liveIndex, condition, excludeIds, from, size);
+    private String[] getLiveIdsByCondition(QueryBuilder condition, String[] excludeIds, int size) {
+        return getIndexByCondition(liveIndex, condition, excludeIds, size);
     }
 
     public String[] getLivesIds(String tags, String[] excludeIds, int size, String... fieldNames) {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"tags"};
         }
-        String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(tags, fieldNames), excludeIds, 0, size);
+        String[] ids = getLiveIdsByCondition(QueryBuilders.multiMatchQuery(tags, fieldNames), excludeIds, size);
         logger.debug("tags:{}, live ids:{}", tags, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
@@ -568,7 +566,7 @@ public class EsService {
 
     public List<String> getLiveIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(liveIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "tags")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param)).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
     //---------------------- live end -----------------------------------
@@ -602,7 +600,7 @@ public class EsService {
 
     public List<String> getVideoIdsByAbnorm(AbnormalParam param, int size) {
         SearchRequestBuilder srb = client.prepareSearch(videoIndex)
-                .setQuery(getLiveOrVideoBasicBuilder(param, "tags")).setSize(size);
+                .setQuery(getLiveOrVideoBasicBuilder(param)).setSize(size);
         return EsUtils.getDocIdsAsList(srb);
     }
 
@@ -613,7 +611,7 @@ public class EsService {
         if (fieldNames.length == 0) {
             fieldNames = new String[]{"tags"};
         }
-        String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, 0, size);
+        String[] ids = getVideoIdsByCondition(QueryBuilders.multiMatchQuery(text, fieldNames), excludeIds, size);
         logger.debug("tags:{}, video ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
@@ -634,11 +632,12 @@ public class EsService {
         //去掉这些对匹配结果有负面影响的词
         String replacedTags = Utils.removeStopWords(tags);
         logger.debug("replacedLabel:{}", replacedTags);
-        return getVideoIdsByCondition(matchQuery("tags", replacedTags), new String[]{videoId}, 0, size);
+        return getVideoIdsByCondition(matchQuery("tags", replacedTags), new String[]{videoId}, size);
     }
 
-    private String[] getVideoIdsByCondition(QueryBuilder condition, String[] excludeIds, int from, int size) {
-        return getIndexByCondition(videoIndex, condition, excludeIds, from, size);
+    @SuppressWarnings("SameParameterValue")
+    private String[] getVideoIdsByCondition(QueryBuilder condition, String[] excludeIds, int size) {
+        return getIndexByCondition(videoIndex, condition, excludeIds, size);
     }
 
     //---------------------- video end -----------------------------------

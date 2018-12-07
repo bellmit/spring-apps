@@ -61,16 +61,16 @@ public class InfoALV {
         }
     }
 
-    public void addArticle(String[] newIds) {
+    private void addArticle(String[] newIds) {
         //和下面addLive和addVideo的效果一样
         Optional.ofNullable(newIds).ifPresent(ids -> article = Stream.concat(stream(article), stream(ids)).toArray(String[]::new));
     }
 
-    public void addLive(String[] newIds) {
+    private void addLive(String[] newIds) {
         Optional.ofNullable(newIds).ifPresent(ids -> live = (String[]) ArrayUtils.addAll(live, ids));
     }
 
-    public void addVideo(String[] newIds) {
+    private void addVideo(String[] newIds) {
         Optional.ofNullable(newIds).ifPresent(ids -> video = (String[]) ArrayUtils.addAll(video, ids));
     }
 }

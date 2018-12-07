@@ -7,11 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 import static java.util.stream.Collectors.joining;
@@ -33,17 +30,12 @@ public class YjkMallJdbcService {
     public int getGoodsSaleNum(List<String> goodsIdList) {
         int saleNum = 0;
         String sql = String.format("select ifnull (sum(count),0) as sale_num from mall_order x where x.goods_id in " +
-                " (%s) and x.`status` >= 2 and Createtime >='%s'", goodsIdList.stream().collect(joining("','", "'", "'")), JavaUtils.getNdaysAgo(goodsSalesDays));
+                " (%s) and x.`status` >= 2 and Createtime >='%s'", goodsIdList.stream().collect(joining("','", "'", "'")), JavaUtils.getSeveralDaysAgo(goodsSalesDays));
         logger.info(sql);
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             saleNum = yjkMallDB.queryForObject(sql,
-                    new RowMapper<Integer>() {
-                        @Override
-                        public Integer mapRow(ResultSet resultSet, int i) throws SQLException {
-                            return resultSet.getInt("sale_num");
-                        }
-                    });
+                    (resultSet, i) -> resultSet.getInt("sale_num"));
         } catch (Exception ex) {
             logger.debug("getProdRiskEvaluation", ex);
         }

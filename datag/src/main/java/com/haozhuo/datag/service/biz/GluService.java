@@ -11,7 +11,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -19,17 +18,18 @@ import static java.util.stream.Collectors.toList;
 /**
  * Created by Lucius on 8/27/18.
  */
+@SuppressWarnings({"unused", "ConstantConditions"})
 @Component
 public class GluService {
     private static final Logger logger = LoggerFactory.getLogger(GluService.class);
 
     private final Map<String, String> checkIndexRegexMap;
     private final Map<String, Tuple<Double, Double>> textRefMap;
-    private final String excludeRegex = ".*(比|/|\\\\).*";
+    private final static String excludeRegex = ".*([比/\\\\]).*";
     @Autowired
     private RestTemplateBuilder restTemplate;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
     @Value("${app.rest.glu}")
     private String url;
 
@@ -56,9 +56,9 @@ public class GluService {
     public ReportObjData getAndParseReport(Long reportId) {
         try {
             ReportHttpMsg reportHttpMsg = restTemplate.build().getForObject(String.format(url, reportId), ReportHttpMsg.class);
-            String userInfoJson = reportHttpMsg.getData().getUserInfo().replaceAll("\\\"", "\"");
+            String userInfoJson = reportHttpMsg.getData().getUserInfo().replaceAll("\"", "\"");
             UserInfo userInfo = mapper.readValue(userInfoJson, UserInfo.class);
-            String reportJson = reportHttpMsg.getData().getReportContent().replaceAll("\\\"", "\"");
+            String reportJson = reportHttpMsg.getData().getReportContent().replaceAll("\"", "\"");
             Report report = mapper.readValue(reportJson, Report.class);
             return new ReportObjData(userInfo, report);
         } catch (Exception e) {
@@ -84,17 +84,16 @@ public class GluService {
         if (parsedTextRefList.size() != 2) //参考范围解析后不符合要求
             return false;
         Tuple<Double, Double> minMaxRefStd = textRefMap.get(checkIndexNameStd);
-        Double minCompare = Math.abs(parsedTextRefList.get(0) - minMaxRefStd.getT1()) / (minMaxRefStd.getT1()); //参考范围和标准参考范围的最小值的偏差
-        Double maxCompare = Math.abs(parsedTextRefList.get(1) - minMaxRefStd.getT2()) / (minMaxRefStd.getT2()); //参考范围和标准参考范围的最大值的偏差
+        double minCompare = Math.abs(parsedTextRefList.get(0) - minMaxRefStd.getT1()) / (minMaxRefStd.getT1()); //参考范围和标准参考范围的最小值的偏差
+        double maxCompare = Math.abs(parsedTextRefList.get(1) - minMaxRefStd.getT2()) / (minMaxRefStd.getT2()); //参考范围和标准参考范围的最大值的偏差
         if (minCompare > 0.1 || maxCompare > 0.1) //参考范围与标准参考范围偏差太大。不符合要求
             return false;
         List<Double> parsedResultValueList = findDoubles(resultValue);
         if (parsedResultValueList.size() != 1) //结果值解析后不符合要求
             return false;
         Double value = parsedResultValueList.get(0);
-        if ("血糖（空腹）".equals(checkIndexNameStd) && (value < 3.9 || value > 7)) //验证空腹血糖的结果值是否在正常范围内
-            return false;
-        return true;
+        //验证空腹血糖的结果值是否在正常范围内
+        return !"血糖（空腹）".equals(checkIndexNameStd) || (!(value < 3.9) && value <= 7);
     }
 
     private boolean isLegalValue(String checkIndexNameStd, String resultValue, String textRef) {
@@ -110,9 +109,9 @@ public class GluService {
     }
 
     private List<Double> findDoubles(String text) {
-        return stream(text.split("[^\\d\\.]"))
+        return stream(text.split("[^\\d.]"))
                 .filter(x -> !"".equals(x))
-                .mapToDouble(x -> Double.parseDouble(x))
+                .mapToDouble(Double::parseDouble)
                 .boxed().collect(toList());
     }
 
@@ -123,7 +122,7 @@ public class GluService {
                 .filter(checkIndex -> !"".equals(checkIndex))
                 .collect(toList());
 
-        Set<String> legalCheckIndexSet = new HashSet(legalCheckIndexList);
+        Set<String> legalCheckIndexSet = new HashSet<>(legalCheckIndexList);
         logger.info(legalCheckIndexSet.toString());
         return (legalCheckIndexList.size() == legalCheckIndexSet.size()) && legalCheckIndexSet.size() == checkIndexRegexMap.size();
     }

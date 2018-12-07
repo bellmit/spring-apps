@@ -30,7 +30,7 @@ public class PushedInfoKeys {
         return String.format("%s_%s_v", channelId, categoryId);
     }
 
-    public String getArticleHashKey() {
+    private String getArticleHashKey() {
         return String.format("%s_%s_a", channelId, categoryId);
     }
 

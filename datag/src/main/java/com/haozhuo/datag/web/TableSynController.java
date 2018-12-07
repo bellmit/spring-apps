@@ -3,7 +3,7 @@ package com.haozhuo.datag.web;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.service.EsService;
-import com.haozhuo.datag.service.DataetlJdbcService;
+import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.RedisService;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import com.haozhuo.datag.model.textspilt.TFIDF;
@@ -15,21 +15,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
 import java.util.List;
 
 
 /**
  * Created by Lucius on 8/22/18.
  */
+@SuppressWarnings({"SameReturnValue", "WeakerAccess"})
 @RequestMapping(value = "/table-syn")
 @RestController
-public class TableSynController {
+class TableSynController {
     private static final Logger logger = LoggerFactory.getLogger(TableSynController.class);
     @Autowired
     private EsService esService;
     @Autowired
-    private DataetlJdbcService dataetlJdbcService;
+    private DataEtlJdbcService dataetlJdbcService;
 
     @Autowired
     private YjkMallJdbcService yjkMallJdbcService;

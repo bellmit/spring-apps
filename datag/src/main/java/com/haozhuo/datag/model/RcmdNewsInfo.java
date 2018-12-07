@@ -11,16 +11,16 @@ import java.util.List;
  */
 
 public class RcmdNewsInfo {
-    private static List<String> allChannelIds = Arrays.asList("1", "2", "3", "4", "5");
+    private static final List<String> allChannelIds = Arrays.asList("1", "2", "3", "4", "5");
 
     public static List<String> getAllChannelIds() {
         Collections.shuffle(allChannelIds);
         return allChannelIds;
     }
 
-    boolean initAllChannels = false;
-    List<String> requestRcmdChannels = new ArrayList<>();
-    List<String> news = new ArrayList<>();
+    private boolean initAllChannels = false;
+    private final List<String> requestRcmdChannels = new ArrayList<>();
+    private List<String> news = new ArrayList<>();
 
 
     public boolean isInitAllChannels() {

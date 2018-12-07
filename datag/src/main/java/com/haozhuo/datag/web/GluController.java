@@ -26,7 +26,7 @@ public class GluController {
     private DataetlJdbcService dataetlJdbcService;
 
     @GetMapping("/highGluPermit/{reportId}")
-    @ApiOperation(value = "输入reportId，判断该报告是否符合高血糖准入,返回1表示准入,0表示不准入", notes = "")
+    @ApiOperation(value = "输入reportId，判断该报告是否符合高血糖准入,返回1表示准入,0表示不准入")
     public Object getHighGluPermit(@PathVariable(value = "reportId") Long reportId) {
         long beginTime = System.currentTimeMillis();
         ReportObjData reportObjData = gluService.getAndParseReport(reportId);

@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -62,10 +61,6 @@ public class EsService {
         return liveIndex;
     }
 
-    public String getGoodsIndex() {
-        return goodsIndex;
-    }
-
     public String getArticleIndex() {
         return articleIndex;
     }
@@ -88,7 +83,7 @@ public class EsService {
     private ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
 
 
-    public EsService(Environment env) {
+    public EsService() {
 
     }
 
@@ -329,7 +324,7 @@ public class EsService {
             goodsTypeProportion.setProportionGoodsType(goodsTypeCount());
             goodsTypeProportion.setUpdateGoodsTypeNum(System.currentTimeMillis());
             logger.info("UpdateGoodsTypeCount:" +
-                    stream(goodsTypeProportion.getProportionGoodsType()).mapToObj(x -> String.valueOf(x)).collect(joining(",")));
+                    stream(goodsTypeProportion.getProportionGoodsType()).mapToObj(String::valueOf).collect(joining(",")));
         }
     }
 
@@ -392,7 +387,7 @@ public class EsService {
     }
 
     @Async("rcmdExecutor")
-    public CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByScoreFunction(GoodsSearchParams params, ScoreFunctionBuilder scoreFunctionBuilder) throws InterruptedException {
+    private CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByScoreFunction(GoodsSearchParams params, ScoreFunctionBuilder<ExponentialDecayFunctionBuilder> scoreFunctionBuilder) {
         List<SkuIdGoodsIds> list = getGoodsIdsTemplate(
                 QueryBuilders.functionScoreQuery(goodsSearchBuilder(params), scoreFunctionBuilder),
                 params.getFrom(), params.getSize(), params.getGoodsType());
@@ -520,7 +515,7 @@ public class EsService {
     }
 
     public void updateArticle(Article article) {
-        deleteIdByQuery(articleIndex, String.valueOf(String.valueOf(article.getInformationId())));
+        deleteIdByQuery(articleIndex, String.valueOf(article.getInformationId()));
         Map<String, Object> map = new HashMap<>();
         map.put("tags", article.getTags());
         map.put("title", article.getTitle());
@@ -582,7 +577,7 @@ public class EsService {
     //---------------------- video start -----------------------------------
 
     public void updateVideo(Video video) {
-        deleteIdByQuery(videoIndex, String.valueOf(String.valueOf(video.getId())));
+        deleteIdByQuery(videoIndex, String.valueOf(video.getId()));
         Map<String, Object> map = new HashMap<>();
         map.put("tags", video.getTags());
         map.put("title", video.getTitle());

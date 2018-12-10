@@ -27,7 +27,7 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings({"SameReturnValue", "unused"})
 @RequestMapping(value = "/rcmd")
 @RestController
-class RcmdController {
+public class RcmdController {
     private static final Logger logger = LoggerFactory.getLogger(RcmdController.class);
 
     private final EsService esService;

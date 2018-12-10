@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @RequestMapping(value = "/crm")
 @RestController
-class CrmController {
+public class CrmController {
     private static final Logger logger = LoggerFactory.getLogger(CrmController.class);
     @Autowired
     private EsService esService;

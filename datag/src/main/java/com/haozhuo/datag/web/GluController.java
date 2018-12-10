@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RequestMapping(value = "/glu")
 @RestController
-class GluController {
+public class GluController {
     private static final Logger logger = LoggerFactory.getLogger(GluController.class);
     @Autowired
     private GluService gluService;

@@ -24,7 +24,7 @@ import java.util.List;
 @SuppressWarnings({"SameReturnValue", "WeakerAccess"})
 @RequestMapping(value = "/table-syn")
 @RestController
-class TableSynController {
+public class TableSynController {
     private static final Logger logger = LoggerFactory.getLogger(TableSynController.class);
     @Autowired
     private EsService esService;

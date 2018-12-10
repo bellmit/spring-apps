@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RequestMapping(value = "/bisys")
 @RestController
-class BisysController {
+public class BisysController {
     private static final Logger logger = LoggerFactory.getLogger(BisysController.class);
 
     @Autowired

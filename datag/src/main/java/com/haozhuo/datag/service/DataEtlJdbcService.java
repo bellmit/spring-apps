@@ -26,7 +26,7 @@ public class DataEtlJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(DataEtlJdbcService.class);
 
     public Map<String, String[]> channelEsTypeMap;
-    private final Map<String, String> labelIdNameMap = new HashMap<>();
+    //private final Map<String, String> labelIdNameMap = new HashMap<>();
     private final Map<String, String> labelNameIdMap = new HashMap<>();
     private final String goodsTable;
     private final String liveTable;
@@ -50,7 +50,7 @@ public class DataEtlJdbcService {
         updateChannelEsTypeMap();
         initLabelMap();
         initStopWords();
-        logger.debug("labelIdNameMap:{}", labelIdNameMap);
+        //logger.debug("labelIdNameMap:{}", labelIdNameMap);
         logger.debug("labelNameIdMap:{}", labelNameIdMap);
     }
 
@@ -58,7 +58,7 @@ public class DataEtlJdbcService {
         List<Tuple<String, String>> list = dataetlDB.query("select id, label from disease_label",
                 (resultSet, i) -> new Tuple<>(resultSet.getString("id"), resultSet.getString("label")));
         for (Tuple<String, String> tuple : list) {
-            labelIdNameMap.put(tuple.getT1(), tuple.getT2());
+            //labelIdNameMap.put(tuple.getT1(), tuple.getT2());
             labelNameIdMap.put(tuple.getT2(), tuple.getT1());
         }
     }
@@ -98,28 +98,28 @@ public class DataEtlJdbcService {
     }
 
 
-    /**
-     * 根据userId获取用户的labelNames
-     *
-     * @param userId
-     * @return
-     */
-    public String getLabelStrByUserId(String userId) {
-        return String.join(",", getLabelSetByUserId(userId));
-    }
-
-    /**
-     * 根据userId获取用户的labelNames
-     *
-     * @param userId
-     * @return
-     */
-    public Set<String> getLabelSetByUserId(String userId) {
-        return getReportLabelIdList(userId).stream()
-                .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-    }
+//    /**
+//     * 根据userId获取用户的labelNames
+//     *
+//     * @param userId
+//     * @return
+//     */
+//    public String getLabelStrByUserId(String userId) {
+//        return String.join(",", getLabelSetByUserId(userId));
+//    }
+//
+//    /**
+//     * 根据userId获取用户的labelNames
+//     *
+//     * @param userId
+//     * @return
+//     */
+//    public Set<String> getLabelSetByUserId(String userId) {
+//        return getReportLabelIdList(userId).stream()
+//                .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toSet());
+//    }
 
     public Map<String, String> getPortraitMap(int type) {
         String sql;

@@ -70,25 +70,27 @@ public class RcmdController {
             @PathVariable(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int pageSize) {
         long beginTime = System.currentTimeMillis();
-        String[] alreadyPushedGoods = redisService.getPushedGoods(userId);
+        String[] alreadyPushedSkuIds = redisService.getPushedGoodsSkuIds(userId);
         //从mysql查出userId的label
-        String userLabels = dataetlJdbcService.getLabelStrByUserId(userId);
-        GoodsSearchParams params = new GoodsSearchParams().size(pageSize).excludeSkuIds(alreadyPushedGoods);
+        String userLabels = esService.getPortraitDiseaseLabelsByUserId(userId);
+
+        GoodsSearchParams params = new GoodsSearchParams().size(pageSize).excludeSkuIds(alreadyPushedSkuIds);
         if (userLabels != null && !"".equals(userLabels)) {
             params.keywords(userLabels);
         }
         logger.debug(params.toString());
         //根据userId的label匹配es中good索引中的label，返回内容。
-        String[] result = esService.getGoodsIdsByKeywords(params);
-
+        List<SkuIdGoodsIds> result = esService.getSkuIdGoodsIdsByLabels(params);
+        String[] skuIds = result.stream().map(SkuIdGoodsIds::getSkuId).toArray(String[]::new);
+        String[] goodsIds = result.stream().map(SkuIdGoodsIds::getRandomGoodsId).toArray(String[]::new);
         //如果返回的数量小于pageSize，删除Redis中推过的商品列表的key
-        redisService.setPushedGoods(userId, result);
+        redisService.addPushedGoodsSkuIds(userId, skuIds);
         //如果返回的数据小于pageSize,则认为所有的视频都被推荐了，那么将Redis中推过的视频列表的key删除，使得所有视频可以重新推送
-        if (result.length < pageSize) {
-            redisService.deleteGoodsPushedKey(userId);
+        if (result.size() < pageSize) {
+            redisService.deletePushedGoodsSkuIds(userId);
         }
         logger.info("/goods/userId/{}?size={}  cost: {}ms", userId, pageSize, System.currentTimeMillis() - beginTime);
-        return result;
+        return goodsIds;
     }
 
     /**
@@ -202,7 +204,7 @@ public class RcmdController {
         long beginTime = System.currentTimeMillis();
         String[] alreadyPushedVideos = redisService.getPushedVideos(userId);
         logger.debug("alreadyPushedVideos:{}", StringUtils.arrayToCommaDelimitedString(alreadyPushedVideos));
-        String userLabels = dataetlJdbcService.getLabelStrByUserId(userId);
+        String userLabels = esService.getPortraitDiseaseLabelsByUserId(userId);
 
         //最后需要把查到的结果存入Redis的已推荐的key中
         String[] result = esService.getVideoIds(userLabels, alreadyPushedVideos, size);
@@ -251,7 +253,7 @@ public class RcmdController {
     @GetMapping(value = "/labels/userId/{userId}")
     public String getLablesByUserId(@PathVariable(value = "userId") String userId) {
         long beginTime = System.currentTimeMillis();
-        String result = dataetlJdbcService.getLabelStrByUserId(userId);
+        String result = esService.getPortraitDiseaseLabelsByUserId(userId);
         logger.info("/labels/userId/{}  cost: {}ms", userId, System.currentTimeMillis() - beginTime);
         return result;
     }

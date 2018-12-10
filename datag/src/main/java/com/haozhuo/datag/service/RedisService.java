@@ -196,22 +196,22 @@ public class RedisService {
      *
      * @return
      */
-    public String[] getPushedGoods(String userId) {
+    public String[] getPushedGoodsSkuIds(String userId) {
         return getPushedKeys(userId, goodsPushedKey);
     }
 
-    private void setSets(String key, String[] value) {
+    private void addSets(String key, String[] value) {
         if (value.length == 0) return;
         redisDB0.opsForSet().add(key, value);
         redisDB0.expire(key, expireDays, TimeUnit.DAYS);
     }
 
     public void setPushedVideos(String userId, String[] pushedVideoIds) {
-        setSets(String.format(videoPushedKey, userId, curDate), pushedVideoIds);
+        addSets(String.format(videoPushedKey, userId, curDate), pushedVideoIds);
     }
 
-    public void setPushedGoods(String userId, String[] pushedGoodsIds) {
-        setSets(String.format(goodsPushedKey, userId, curDate), pushedGoodsIds);
+    public void addPushedGoodsSkuIds(String userId, String[] pushedGoodsIds) {
+        addSets(String.format(goodsPushedKey, userId, curDate), pushedGoodsIds);
     }
 
     private void deletePushedKey(String userId, String key) {
@@ -225,7 +225,7 @@ public class RedisService {
         deletePushedKey(userId, videoPushedKey);
     }
 
-    public void deleteGoodsPushedKey(String userId) {
+    public void deletePushedGoodsSkuIds(String userId) {
         deletePushedKey(userId, goodsPushedKey);
     }
 

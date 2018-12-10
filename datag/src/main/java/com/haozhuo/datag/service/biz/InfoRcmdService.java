@@ -63,7 +63,7 @@ public class InfoRcmdService {
 //            String loveTags = redisService.getLoveTags(userId);
 //            logger.debug("userId:{}, loveTags:{}", userId, loveTags);
             //获取用户报告标签
-            String reportTags = dataetlJdbcService.getLabelStrByUserId(userId);
+            String reportTags = esService.getPortraitDiseaseLabelsByUserId(userId);
             logger.debug("userId:{}, reportTags:{}", userId, reportTags);
             return reportTags;
         } else {

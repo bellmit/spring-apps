@@ -132,9 +132,8 @@ public class EsService {
 
 
     public String[] commonRecommend(String index, String hateTags, String[] pushedIds, int size, String... types) {
-        String tagField = "tags";
         QueryBuilder query = QueryBuilders.boolQuery()
-                .mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
+                .mustNot(matchQuery("tags", Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
         return recommend(index, query, size, types);
     }
@@ -199,13 +198,11 @@ public class EsService {
      * lv03,jbg02|159|zc03,jbg11,61
      */
     private BoolQueryBuilder getQueryBuilderForPortrait(String strTagIds) {
-
-        String fieldName = "tagIds";
         BoolQueryBuilder builder = QueryBuilders.boolQuery();
         for (String oneLevelTagIds : strTagIds.split("\\|")) {
             BoolQueryBuilder builder2 = QueryBuilders.boolQuery();
             for (String tagId : oneLevelTagIds.split(",")) {
-                builder2.must(QueryBuilders.termQuery(fieldName, tagId));
+                builder2.must(QueryBuilders.termQuery("tagIds", tagId));
             }
             builder.should(builder2);
         }
@@ -303,12 +300,10 @@ public class EsService {
                             .should(matchQuery("cityIds", countryId))
             );
         }
-
         String[] excludeSkuIds = params.getExcludeSkuIds();
         if (excludeSkuIds != null && excludeSkuIds.length > 0) {
             boolQueryBuilder.mustNot(QueryBuilders.idsQuery().addIds(excludeSkuIds));
         }
-
         if (params.getKeywords() != null) {
             boolQueryBuilder.must(QueryBuilders.multiMatchQuery(params.getKeywords(), defaultGoodsSearchFields));
         }
@@ -359,7 +354,6 @@ public class EsService {
         CompletableFuture<List<SkuIdGoodsIds>> newGoods = getFutureSkuIdsByScoreFunction(
                 new GoodsSearchParams().cityId(cityId).pageNo(pageNo).size(sizeByNew), goodsCreateTimeExpDecayFunction);
 
-
         CompletableFuture<List<SkuIdGoodsIds>> salesGoodsType1 = getFutureSkuIdsByScoreFunction(
                 new GoodsSearchParams().cityId(cityId).pageNo(pageNo).goodsType("1").size(sizeArray[0]), goodsSaleNumExpDecayFunction);
 
@@ -380,16 +374,7 @@ public class EsService {
         logger.debug("salesGoodsType2:" + salesGoodsType2.get().size());
         logger.debug("salesGoodsType3:" + salesGoodsType3.get().size());
         logger.debug("newGoods:" + newGoods.get().size());
-
         return set;
-    }
-
-    @Async("rcmdExecutor")
-    private CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByScoreFunction(GoodsSearchParams params, ScoreFunctionBuilder<ExponentialDecayFunctionBuilder> scoreFunctionBuilder) {
-        List<SkuIdGoodsIds> list = getGoodsIdsTemplate(
-                QueryBuilders.functionScoreQuery(goodsSearchBuilder(params), scoreFunctionBuilder),
-                params.getFrom(), params.getSize(), params.getGoodsType());
-        return CompletableFuture.completedFuture(list);
     }
 
     private List<SkuIdGoodsIds> getSkuIdGoodsIdsFromSRB(SearchRequestBuilder srb) {
@@ -405,6 +390,14 @@ public class EsService {
             result.add(new SkuIdGoodsIds(hit.getId(), goodsIdsList, rcmdScore, hit.getScore()));
         }
         return result;
+    }
+
+    @Async("rcmdExecutor")
+    private CompletableFuture<List<SkuIdGoodsIds>> getFutureSkuIdsByScoreFunction(GoodsSearchParams params, ScoreFunctionBuilder<ExponentialDecayFunctionBuilder> scoreFunctionBuilder) {
+        List<SkuIdGoodsIds> list = getGoodsIdsTemplate(
+                QueryBuilders.functionScoreQuery(goodsSearchBuilder(params), scoreFunctionBuilder),
+                params.getFrom(), params.getSize(), params.getGoodsType());
+        return CompletableFuture.completedFuture(list);
     }
 
     public List<SkuIdGoodsIds> getSkuIdGoodsIdsByLabels(GoodsSearchParams params) {

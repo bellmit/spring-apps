@@ -251,7 +251,7 @@ public class RcmdController {
                     "业务逻辑:  \n" +
                     "从mysql中的dynamic_userid_label表和report_userid_label中查出用户的label。  ")
     @GetMapping(value = "/labels/userId/{userId}")
-    public String getLablesByUserId(@PathVariable(value = "userId") String userId) {
+    public String getLabelsByUserId(@PathVariable(value = "userId") String userId) {
         long beginTime = System.currentTimeMillis();
         String result = esService.getPortraitDiseaseLabelsByUserId(userId);
         logger.info("/labels/userId/{}  cost: {}ms", userId, System.currentTimeMillis() - beginTime);
@@ -270,7 +270,7 @@ public class RcmdController {
                     "业务逻辑:  \n" +
                     "根据reportId从ES的reportlabel索引找到该报告的标签")
     @GetMapping(value = "/labels/reportId/{reportId}")
-    public String getLablesByReportId(@PathVariable(value = "reportId") String reportId) {
+    public String getLabelsByReportId(@PathVariable(value = "reportId") String reportId) {
         long beginTime = System.currentTimeMillis();
         String result = esService.getLabelsByReportId(reportId);
         logger.info("/labels/reportId/{}  cost: {}ms", reportId, System.currentTimeMillis() - beginTime);
@@ -486,17 +486,21 @@ public class RcmdController {
         long beginTime = System.currentTimeMillis();
         Map<String, List<String>> map = new HashMap<>();
         for (String keyword : keywordArray) {
-            String[] liveIds = esService.getLivesIds(keyword, 1);
-            String[] videoIds = esService.getVideoIds(keyword, 3 - liveIds.length);
-            String[] articleIds = esService.getArticleIds(keyword, size - liveIds.length - videoIds.length);
-            List<String> result = new ArrayList<>();
-            result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
-            result.addAll(addTypeForIds(Arrays.asList(liveIds), "live"));
-            result.addAll(addTypeForIds(Arrays.asList(articleIds), "article"));
-            map.put(keyword, result);
+            map.put(keyword, getAlvByKeywords(size, keyword));
         }
         logger.info("/mul/ALV/keywordArray/{} cost: {}ms", StringUtils.arrayToCommaDelimitedString(keywordArray), System.currentTimeMillis() - beginTime);
         return map;
+    }
+
+    private List<String> getAlvByKeywords(int size, String keyword) {
+        String[] liveIds = esService.getLivesIds(keyword, 1);
+        String[] videoIds = esService.getVideoIds(keyword, 3 - liveIds.length);
+        String[] articleIds = esService.getArticleIds(keyword, size - liveIds.length - videoIds.length);
+        List<String> result = new ArrayList<>();
+        result.addAll(addTypeForIds(Arrays.asList(videoIds), "video"));
+        result.addAll(addTypeForIds(Arrays.asList(liveIds), "live"));
+        result.addAll(addTypeForIds(Arrays.asList(articleIds), "article"));
+        return result;
     }
 
     private List<String> addTypeForIds(List<String> ids, String type) {

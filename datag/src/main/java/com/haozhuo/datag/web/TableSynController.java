@@ -256,6 +256,5 @@ public class TableSynController {
         } else {
             return "密码错误!";
         }
-
     }
 }

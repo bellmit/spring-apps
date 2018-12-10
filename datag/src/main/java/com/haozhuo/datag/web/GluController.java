@@ -35,5 +35,4 @@ public class GluController {
         logger.info("reportId:{},isLegal:{},cost:{}ms", reportId, isLegal, System.currentTimeMillis() - beginTime);
         return isLegal;
     }
-
 }

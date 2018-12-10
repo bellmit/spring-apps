@@ -56,13 +56,6 @@ public class RedisService {
     private final static String videoPushedKey = "video-pushed:%s:%s";
     private final static String goodsPushedKey = "goods-pushed:%s:%s";
 
-//    @Deprecated
-//    private final static String hateTagsKey = "HateTags:%s";
-
-//    @Deprecated
-//    private final static String loveTagsKey = "LoveTags:%s";
-
-
     @Value("${app.biz.queueRcmdNum:5,4,3,2}")
     private String queueRcmdNumStr;
     private Integer[] queueRcmdNumArray;
@@ -136,37 +129,6 @@ public class RedisService {
         }
     }
 
-//    @Deprecated
-//    public void addHateTags(String userId, String hateTags) {
-//        if (JavaUtils.isNotEmpty(hateTags)) {
-//            String key = String.format(hateTagsKey, userId);
-//            ListOperations<String, String> oper = redisDB0.opsForList();
-//            oper.leftPush(key, hateTags);
-//            oper.trim(key, 0, 30); //只保存最近30条记录
-//            redisDB0.expire(key, 1, TimeUnit.DAYS); //过期时间1天
-//        }
-//    }
-//
-//    @Deprecated
-//    public String getHateTags(String userId) {
-//        return getTags(hateTagsKey, userId);
-//    }
-
-//    public String getLoveTags(String userId) {
-//        return getTags(loveTagsKey, userId);
-//    }
-
-//    private String getTags(String keyFormat, String userId) {
-//        String key = String.format(keyFormat, userId);
-//        //redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
-//        List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
-//        StringBuffer result = new StringBuffer();
-//        for (String hateTags : tagsList) {
-//            result.append(hateTags).append(",");
-//        }
-//        return result.toString();
-//    }
-
     private synchronized void updateDateInfo() {
         lastNdays = JavaUtils.getLastDaysArray(expireDays);
         curDate = JavaUtils.getToday();
@@ -178,7 +140,6 @@ public class RedisService {
             updateDateInfo();
         }
     }
-
 
     private String[] getPushedKeys(String userId, String key) {
         checkOrUpdateDateInfo();
@@ -409,5 +370,41 @@ public class RedisService {
         redisDB1.delete(String.format(homePushedGoodsSkuId, userId));
     }*/
 
+//    @Deprecated
+//    private final static String hateTagsKey = "HateTags:%s";
+
+//    @Deprecated
+//    private final static String loveTagsKey = "LoveTags:%s"
+
+//    @Deprecated
+//    public void addHateTags(String userId, String hateTags) {
+//        if (JavaUtils.isNotEmpty(hateTags)) {
+//            String key = String.format(hateTagsKey, userId);
+//            ListOperations<String, String> oper = redisDB0.opsForList();
+//            oper.leftPush(key, hateTags);
+//            oper.trim(key, 0, 30); //只保存最近30条记录
+//            redisDB0.expire(key, 1, TimeUnit.DAYS); //过期时间1天
+//        }
+//    }
+//
+//    @Deprecated
+//    public String getHateTags(String userId) {
+//        return getTags(hateTagsKey, userId);
+//    }
+
+//    public String getLoveTags(String userId) {
+//        return getTags(loveTagsKey, userId);
+//    }
+
+//    private String getTags(String keyFormat, String userId) {
+//        String key = String.format(keyFormat, userId);
+//        //redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
+//        List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
+//        StringBuffer result = new StringBuffer();
+//        for (String hateTags : tagsList) {
+//            result.append(hateTags).append(",");
+//        }
+//        return result.toString();
+//    }
 
 }

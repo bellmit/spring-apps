@@ -12,7 +12,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.haozhuo.datag.model.Goods.listToStr;
 import static java.util.stream.Collectors.*;
@@ -98,29 +97,6 @@ public class DataEtlJdbcService {
     }
 
 
-//    /**
-//     * 根据userId获取用户的labelNames
-//     *
-//     * @param userId
-//     * @return
-//     */
-//    public String getLabelStrByUserId(String userId) {
-//        return String.join(",", getLabelSetByUserId(userId));
-//    }
-//
-//    /**
-//     * 根据userId获取用户的labelNames
-//     *
-//     * @param userId
-//     * @return
-//     */
-//    public Set<String> getLabelSetByUserId(String userId) {
-//        return getReportLabelIdList(userId).stream()
-//                .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.toSet());
-//    }
-
     public Map<String, String> getPortraitMap(int type) {
         String sql;
         if (type == 1) {
@@ -136,27 +112,6 @@ public class DataEtlJdbcService {
         }
         return result;
     }
-
-// --Commented out by Inspection START (12/7/18 2:46 PM):
-//    public String getInfoTagsById(Long infoId) {
-//        String tags = null;
-//        try {
-//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-//            tags = dataetlDB.queryForObject(
-//                    String.format("select title, tags from %s x where x.information_id = ?", articleTable),
-//                    new Object[]{infoId},
-//                    (resultSet, i) -> {
-//                        // Optional.ofNullable() 表示传入的参数可能为null
-//                        // orElse() 表示如果传入的是null就赋予另一个值
-//                        return Optional.ofNullable(resultSet.getString("tags"))
-//                                .orElse(resultSet.getString("title"));
-//                    });
-//        } catch (Exception ex) {
-//            logger.debug("getInfoTagsById error", ex);
-//        }
-//        return tags;
-//    }
-// --Commented out by Inspection STOP (12/7/18 2:46 PM)
 
     public List<Goods> getGoodsList(int from, int size) {
         return dataetlDB.query(
@@ -203,7 +158,6 @@ public class DataEtlJdbcService {
 
     /**
      * 根据videoId获取videoLabels
-     *
      * @param videoId
      * @return
      */
@@ -222,24 +176,6 @@ public class DataEtlJdbcService {
         return labels;
     }
 
-// --Commented out by Inspection START (12/7/18 2:49 PM):
-//    /**
-//     * 根据infoId获取Tags
-//     */
-//    public String getTagsByInfoId(String infoId) {
-//        String tags = "";
-//        try {
-//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-//            String sql = String.format("select x.tags from  %s x where x.information_id =?", articleTable);
-//            logger.debug("sql:{}", sql);
-//            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, (resultSet, i) -> resultSet.getString("tags"));
-//        } catch (Exception ex) {
-//            logger.debug("getTagsByInfoId error", ex);
-//        }
-//        return tags;
-//    }
-// --Commented out by Inspection STOP (12/7/18 2:49 PM)
-
     /**
      * 根据infoId获取Tags
      */
@@ -256,36 +192,6 @@ public class DataEtlJdbcService {
         return tags;
     }
 
-//    @Deprecated
-//    public String getLabelsByInfoId(String infoId) {
-//        String labelsIds = "";
-//        try {
-//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-//            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
-//                @Override
-//                public String mapRow(ResultSet resultSet, int i) throws SQLException {
-//                    return resultSet.getString("disease_label_ids");
-//                }
-//            });
-//        } catch (Exception ex) {
-//            logger.debug("getTagsByInfoId error", ex);
-//        }
-//
-//        return stream(labelsIds.split(","))
-//                .map(labelName -> labelIdNameMap.getOrDefault(labelName, null))
-//                .filter(x -> x != null)
-//                .collect(Collectors.joining(","));
-//
-//    }
-
-// --Commented out by Inspection START (12/7/18 2:48 PM):
-//    public String getLabelIdsByNames(String labelNames) {
-//        return stream(labelNames.split(","))
-//                .map(labelName -> this.labelNameIdMap.getOrDefault(labelName, null))
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.joining(","));
-//    }
-// --Commented out by Inspection STOP (12/7/18 2:48 PM)
 
     public void updateVideo(Video video) {
         String query = String.format("INSERT INTO `%s` (`id`, `title`, `status`, `url`, `channel_id`, `category_id`, " +
@@ -303,7 +209,6 @@ public class DataEtlJdbcService {
                 " `category_id`, `tags`, `create_time`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY " +
                 " UPDATE `status` = ?, `title` = ?, `image` = ?, `images` = ?, `content` = ?, `channel_id` = ?, `category_id` = ?," +
                 " `tags` = ?, `create_time` = ?, `update_time` = ?", articleTable);
-
         dataetlDB.update(query, article.getInformationId(), article.getStatus(), article.getTitle(), article.getImage(), article.getImages(),
                 article.getContent(), article.getChannelId(), article.getCategoryId(), article.getTags(), article.getCreateTime(), article.getUpdateTime(),
                 article.getStatus(), article.getTitle(), article.getImage(), article.getImages(), article.getContent(), article.getChannelId(), article.getCategoryId(),
@@ -380,4 +285,100 @@ public class DataEtlJdbcService {
         String date = JavaUtils.getCurrent();
         dataetlDB.update("INSERT INTO `permit_users` (`date`,`health_report_id`,`flag`) VALUES (?, ?, ?) on duplicate key update date=?", date, healthReportId, flag, date);
     }
+
+
+
+//    /**
+//     * 根据userId获取用户的labelNames
+//     *
+//     * @param userId
+//     * @return
+//     */
+//    public String getLabelStrByUserId(String userId) {
+//        return String.join(",", getLabelSetByUserId(userId));
+//    }
+//
+//    /**
+//     * 根据userId获取用户的labelNames
+//     *
+//     * @param userId
+//     * @return
+//     */
+//    public Set<String> getLabelSetByUserId(String userId) {
+//        return getReportLabelIdList(userId).stream()
+//                .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toSet());
+//    }
+
+// --Commented out by Inspection START (12/7/18 2:46 PM):
+//    public String getInfoTagsById(Long infoId) {
+//        String tags = null;
+//        try {
+//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+//            tags = dataetlDB.queryForObject(
+//                    String.format("select title, tags from %s x where x.information_id = ?", articleTable),
+//                    new Object[]{infoId},
+//                    (resultSet, i) -> {
+//                        // Optional.ofNullable() 表示传入的参数可能为null
+//                        // orElse() 表示如果传入的是null就赋予另一个值
+//                        return Optional.ofNullable(resultSet.getString("tags"))
+//                                .orElse(resultSet.getString("title"));
+//                    });
+//        } catch (Exception ex) {
+//            logger.debug("getInfoTagsById error", ex);
+//        }
+//        return tags;
+//    }
+// --Commented out by Inspection STOP (12/7/18 2:46 PM)
+
+// --Commented out by Inspection START (12/7/18 2:49 PM):
+//    /**
+//     * 根据infoId获取Tags
+//     */
+//    public String getTagsByInfoId(String infoId) {
+//        String tags = "";
+//        try {
+//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+//            String sql = String.format("select x.tags from  %s x where x.information_id =?", articleTable);
+//            logger.debug("sql:{}", sql);
+//            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, (resultSet, i) -> resultSet.getString("tags"));
+//        } catch (Exception ex) {
+//            logger.debug("getTagsByInfoId error", ex);
+//        }
+//        return tags;
+//    }
+// --Commented out by Inspection STOP (12/7/18 2:49 PM)
+
+
+//    @Deprecated
+//    public String getLabelsByInfoId(String infoId) {
+//        String labelsIds = "";
+//        try {
+//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+//            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
+//                @Override
+//                public String mapRow(ResultSet resultSet, int i) throws SQLException {
+//                    return resultSet.getString("disease_label_ids");
+//                }
+//            });
+//        } catch (Exception ex) {
+//            logger.debug("getTagsByInfoId error", ex);
+//        }
+//
+//        return stream(labelsIds.split(","))
+//                .map(labelName -> labelIdNameMap.getOrDefault(labelName, null))
+//                .filter(x -> x != null)
+//                .collect(Collectors.joining(","));
+//
+//    }
+
+// --Commented out by Inspection START (12/7/18 2:48 PM):
+//    public String getLabelIdsByNames(String labelNames) {
+//        return stream(labelNames.split(","))
+//                .map(labelName -> this.labelNameIdMap.getOrDefault(labelName, null))
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.joining(","));
+//    }
+// --Commented out by Inspection STOP (12/7/18 2:48 PM)
 }

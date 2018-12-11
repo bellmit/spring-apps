@@ -113,9 +113,8 @@ public class RcmdController {
             @RequestParam(value = "pageNum", defaultValue = "1") int pageNum) {
         long beginTime = System.currentTimeMillis();
         String labels = esService.getLabelsByReportId(reportId);
-        if ("".equals(labels))
-            return null;
-        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams().keywords(labels).from((pageNum - 1) * pageSize).size(pageSize));
+        if ("".equals(labels)) labels = null;
+        String[] result = esService.getGoodsIdsByKeywords(new GoodsSearchParams().keywords(labels).pageNo(pageNum).size(pageSize));
         logger.info("/goods/reportId/{}?pageSize={}&pageNum={}  cost: {}ms", reportId, pageSize, pageNum, System.currentTimeMillis() - beginTime);
         return result;
     }

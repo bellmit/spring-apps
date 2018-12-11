@@ -28,7 +28,9 @@ public class GoodsSearchParams {
     }
 
     public GoodsSearchParams keywords(String keywords) {
-        this.keywords = Utils.removeStopWords(keywords);
+        if (keywords != null) {
+            this.keywords = Utils.removeStopWords(keywords);
+        }
         return this;
     }
 

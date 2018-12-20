@@ -2,14 +2,15 @@ app:
   es:
     video-index: video4
     live-index: live4
-    goods-index: goods5 ## update!!
+    goods-index: goods5
     article-index: article4
     reportlabel-index: reportlabel
+    goods-search-fields: name,category,goodsTags,searchKeywords,description
   mysql:
     article: article4
     video: video4
     live: live4
-    goods: goods5 ## update!!
+    goods: goods5
   redis:
     expire-days: 15
     pushed-key-max-size: 200
@@ -19,7 +20,7 @@ app:
       prefs-update: prefs-update
   biz:
     #goodsScoreDecay: 0.9 ## delete !
-    goodsSalesDays: 90 ## new add!
+    goodsSalesDays: 90
     queueRcmdNum: 5,4,3,2
     articleTags: title,tags,keywords
   rest:

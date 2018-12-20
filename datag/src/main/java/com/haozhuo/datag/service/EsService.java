@@ -18,6 +18,7 @@ import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.core.env.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,7 @@ public class EsService {
 
     private final GoodsTypeProportion goodsTypeProportion = new GoodsTypeProportion();
 
+    private final String[] goodsSearchFields;
     @Autowired
     private TransportClient client;
     private final GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8);
@@ -83,8 +85,9 @@ public class EsService {
     private final ExponentialDecayFunctionBuilder goodsCreateTimeExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("createTime", "now", "180d", "0d", 0.8);
     private final ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
 
-    public EsService() {
-
+    public EsService(Environment env) {
+        goodsSearchFields = env.getProperty("app.es.goods-search-fields","name,goodsTags").split(",");
+        logger.info("goodsSearchFields:{}", Arrays.asList(goodsSearchFields));
     }
 
     private String[] recommend(String index, QueryBuilder query, int size, String... types) {
@@ -305,12 +308,11 @@ public class EsService {
             boolQueryBuilder.mustNot(QueryBuilders.idsQuery().addIds(excludeSkuIds));
         }
         if (params.getKeywords() != null) {
-            boolQueryBuilder.must(QueryBuilders.multiMatchQuery(params.getKeywords(), defaultGoodsSearchFields));
+            boolQueryBuilder.must(QueryBuilders.multiMatchQuery(params.getKeywords(), goodsSearchFields));
         }
         return boolQueryBuilder;
     }
 
-    private static final String[] defaultGoodsSearchFields = new String[]{"name", "goodsTags", "searchKeywords"};
 
     private void checkIfUpdateGoodsTypeCount() {
         if (goodsTypeProportion.needUpdate()) {

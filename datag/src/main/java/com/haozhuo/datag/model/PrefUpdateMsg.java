@@ -14,9 +14,5 @@ import lombok.Setter;
 public class PrefUpdateMsg {
     int msgId;
     String userId;
-    String infoId;
-    String keywords;
-    Boolean isPositive;
-    Boolean updateRcmdList;
-    int flag;
+    String info;
 }

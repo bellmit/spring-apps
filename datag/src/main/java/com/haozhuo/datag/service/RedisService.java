@@ -1,7 +1,6 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
-import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.InfoALV;
 import com.haozhuo.datag.model.PushedInfoKeys;
 import com.haozhuo.datag.model.RcmdNewsInfo;
@@ -56,17 +55,19 @@ public class RedisService {
     private final static String videoPushedKey = "video-pushed:%s:%s";
     private final static String goodsPushedKey = "goods-pushed:%s:%s";
 
-    @Value("${app.biz.queueRcmdNum:5,4,3,2}")
+    @Value("${app.biz.queueRcmdNum:5,4,3,3}")
     private String queueRcmdNumStr;
     private Integer[] queueRcmdNumArray;
 
     private final static String newsKeywordsKey = "news_keywords";
     private final static String newsIndexKeyFormat = "news_ind:%s:%s";
-    private final static String userPrefsKeyFormat = "user_prefs:%s";
+
     private final static String newsRcmdKeyFormat = "news_rcmd:%s:%s";
     private final static String newsPushedKeyFormat = "news_pushed:%s:%s";
     private final static String newsRcmdChannelsKey = "news_rcmd_channels";
     private final static String newsLockFormat = "news_lock:%s";
+
+    private final static String newsBasePref = "base_pref:%s";
 
     private final List<Object> avlHashKeys = Arrays.asList("a", "v", "l");
 
@@ -90,12 +91,12 @@ public class RedisService {
         return pushedIds;
     }
 
-    public void deleteHashKeyByPushedInfoKeys(PushedInfoKeys pushedInfoKeys) {
+    public void deletePushedInfoKeysAll(PushedInfoKeys pushedInfoKeys) {
         deleteHashKey(pushedInfoKeys.getKey(), pushedInfoKeys.getALVHashKeys().toArray());
     }
 
-    public void deleteHashKeyByPushedInfoKeys(PushedInfoKeys pushedInfoKeys, String hashKey) {
-        deleteHashKey(pushedInfoKeys.getKey(), hashKey);
+    public void deletePushedInfoKey(String key, String hashKey) {
+        deleteHashKey(key, hashKey);
     }
 
     private void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
@@ -220,36 +221,19 @@ public class RedisService {
                 ));
     }
 
-    public List<MyKeyword> getUserPref(String userId, String channelId) {
-        Object obj = redisDB0.opsForHash().get(String.format(userPrefsKeyFormat, userId), channelId);
-        return MyKeyword.parseKeywordsFromString((String) obj);
-    }
-
-    private void setUserPref(HashOperations ho, String userId, String channelId, List<MyKeyword> prefList) {
-        String strPref = prefList.stream()
-                .map(kw -> kw.getName() + ":" + kw.getScore()).collect(joining(","));
-        ho.put(String.format(userPrefsKeyFormat, userId), channelId, strPref);
-    }
-
-    private Tuple<List<String>, Boolean> getNewsByUserAndChannel(String userId, String channelId, int count) {
-        String rcmdKey = String.format(newsRcmdKeyFormat, userId, channelId);
-        SetOperations so = redisDB0.opsForSet();
-        List<String> news = so.pop(rcmdKey, count);
-        boolean requestRcmd = false;
-        if (so.size(rcmdKey) < 10) {
-            requestRcmd = true;
-        }
-        addPushedNewsSet(userId, channelId, news);
-        return new Tuple<>(news, requestRcmd);
-    }
-
 
     public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
-        Tuple<List<String>, Boolean> tup = getNewsByUserAndChannel(userId, channelId, count);
+        String rcmdKey = String.format(newsRcmdKeyFormat, userId, channelId);
+        SetOperations newsSet = redisDB0.opsForSet();
+        List<String> news = newsSet.pop(rcmdKey, count);
+
+        addPushedNewsSet(userId, channelId, news);
+
         RcmdNewsInfo rcmdNewsInfo = new RcmdNewsInfo();
-        rcmdNewsInfo.addNews(tup.getT1());
-        if (tup.getT2()) {
-            rcmdNewsInfo.addRcmdChannelId(channelId);
+        rcmdNewsInfo.addNews(news);
+
+        if (newsSet.size(rcmdKey) < count) { //如果推荐池中的数量已经少于count,那么告知推荐
+            rcmdNewsInfo.addChannelId(channelId);
         }
         return rcmdNewsInfo;
     }
@@ -279,7 +263,7 @@ public class RedisService {
         String[] queueChannelIds = queue.toString().split(",");
         if (queueChannelIds.length < queueRcmdNumArray.length) {
             if (unLocked(userId)) {
-                info.setInitAllChannels(true);
+                info.addDefaultChannelIds();
                 setLocked(userId);
             }
         } else {
@@ -287,19 +271,15 @@ public class RedisService {
                 try {
                     String channelId = queueChannelIds[i];
                     int subCount = queueRcmdNumArray[i];
-                    Tuple<List<String>, Boolean> tmp = getNewsByUserAndChannel(userId, channelId, subCount);
-                    if (tmp.getT2()) {
-                        info.addRcmdChannelId(channelId);
+                    RcmdNewsInfo subNewsInfo = getRcmdNewsByChannel(userId, channelId, subCount);
+                    if (subNewsInfo.getChannelIdList().size() > 0) {
+                        info.addChannelId(channelId);
                     }
-                    info.addNews(tmp.getT1());
+                    info.addNews(subNewsInfo.getNews());
                 } catch (Exception ignored) {
-
                 }
             }
-            if (count < info.getNews().size()) {
-                Collections.shuffle(info.getNews());
-                info.setNews(info.getNews().subList(0, count));
-            }
+            Collections.shuffle(info.getNews());
         }
         return info;
     }
@@ -349,62 +329,8 @@ public class RedisService {
         ho.delete(newsKeywordsKey, informationId);
     }
 
-/*    public Set<String> getHomePushedGoodsSkuIds(String userId) {
-        return redisDB1.opsForSet().members(String.format(homePushedGoodsSkuId, userId));
+    public Set<String> getPositiveBasePref(String userId, int count) {
+        return redisDB0.opsForZSet().reverseRangeByScore(String.format(newsBasePref, userId), 1D, Double.MAX_VALUE, 0, count);
     }
-
-    public String[] getHomePushedGoodsSkuIdsArray(String userId) {
-        return getHomePushedGoodsSkuIds(userId).toArray(new String[]{});
-    }
-
-    public void addHomePushedGoodsByUserId(String userId, String... skuIds) {
-        if (skuIds.length > 0) {
-            String key = String.format(homePushedGoodsSkuId, userId);
-            logger.debug(key);
-            redisDB1.opsForSet().add(key, skuIds);
-            redisDB1.expire(key, 1, TimeUnit.DAYS);
-        }
-    }
-
-    public void deleteHomePushedGoodsByUserId(String userId) {
-        redisDB1.delete(String.format(homePushedGoodsSkuId, userId));
-    }*/
-
-//    @Deprecated
-//    private final static String hateTagsKey = "HateTags:%s";
-
-//    @Deprecated
-//    private final static String loveTagsKey = "LoveTags:%s"
-
-//    @Deprecated
-//    public void addHateTags(String userId, String hateTags) {
-//        if (JavaUtils.isNotEmpty(hateTags)) {
-//            String key = String.format(hateTagsKey, userId);
-//            ListOperations<String, String> oper = redisDB0.opsForList();
-//            oper.leftPush(key, hateTags);
-//            oper.trim(key, 0, 30); //只保存最近30条记录
-//            redisDB0.expire(key, 1, TimeUnit.DAYS); //过期时间1天
-//        }
-//    }
-//
-//    @Deprecated
-//    public String getHateTags(String userId) {
-//        return getTags(hateTagsKey, userId);
-//    }
-
-//    public String getLoveTags(String userId) {
-//        return getTags(loveTagsKey, userId);
-//    }
-
-//    private String getTags(String keyFormat, String userId) {
-//        String key = String.format(keyFormat, userId);
-//        //redisDB0.expire(key, expireDays * 3, TimeUnit.DAYS);
-//        List<String> tagsList = redisDB0.opsForList().range(key, 0, 10);
-//        StringBuffer result = new StringBuffer();
-//        for (String hateTags : tagsList) {
-//            result.append(hateTags).append(",");
-//        }
-//        return result.toString();
-//    }
 
 }

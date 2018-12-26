@@ -104,10 +104,10 @@ public class EsService {
     /**
      * curl -XGET "192.168.1.152:9200/article4/_search?pretty" -d '{"size":10,"query":{"function_score":{"query":{"bool":{"should":[{"multi_match":{"query":"风湿关节炎食疗方剂","fields":["title","tags"],"boost":3}},{"multi_match":{"query":"肺炎近视","fields":["title","tags"],"boost":1}}],"must_not":[{"match":{"tags":"近视"}},{"ids":{"values":["131025","131574","131808"]}}]}},"functions":[{"gauss":{"create_time":{"origin":"now","scale":"30d","offset":"15d","decay":"0.8"}}}]}}}'
      */
-    public String[] personalizedRecommend(String index, String tags, String hateTags, String[] pushedIds, int size, String... types) {
+    public String[] personalizedRecommend(String index, String tags, String[] pushedIds, int size, String... types) {
         String tagField = "tags";
         QueryBuilder query = QueryBuilders.boolQuery()
-                .mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
+                //.mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
                 .should(matchQuery(tagField, Utils.removeStopWords(tags)).boost(3));
 
@@ -134,12 +134,12 @@ public class EsService {
     }
 
 
-    public String[] commonRecommend(String index, String hateTags, String[] pushedIds, int size, String... types) {
-        QueryBuilder query = QueryBuilders.boolQuery()
-                .mustNot(matchQuery("tags", Utils.removeStopWords(hateTags)))
-                .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
-        return recommend(index, query, size, types);
-    }
+//    public String[] commonRecommend(String index, String[] pushedIds, int size, String... types) {
+//        QueryBuilder query = QueryBuilders.boolQuery()
+//                //.mustNot(matchQuery("tags", Utils.removeStopWords(hateTags)))
+//                .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
+//        return recommend(index, query, size, types);
+//    }
 
     public String[] commonRecommend(String index, String[] pushedIds, int size, String... types) {
         QueryBuilder query = QueryBuilders.boolQuery()

@@ -326,6 +326,7 @@ public class RcmdController {
             @RequestParam(value = "categoryId", defaultValue = InfoRcmdService.allCategoryId) String categoryId,
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
+
         if ("R".equalsIgnoreCase(channelType))  //推荐频道下没有分类
             categoryId = InfoRcmdService.allCategoryId;
         return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
@@ -560,7 +561,7 @@ public class RcmdController {
         //为视频、直播推荐
         //String tags = dataetlJdbcService.getInfoTagsById(infoId);
         //redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
-        kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString(), "", false, true, 2));
+        kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString()));
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";
     }

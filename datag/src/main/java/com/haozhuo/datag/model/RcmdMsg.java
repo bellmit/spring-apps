@@ -13,14 +13,14 @@ import lombok.Setter;
 @Setter
 @Getter
 @AllArgsConstructor
-public class NewsRcmdMsg {
+public class RcmdMsg {
     String userId;
     String channelId;
     int flag;
-
+    boolean canUpdateBasePref;
     @Override
     public String toString() {
-        return "NewsRcmdMsg{" +
+        return "RcmdMsg{" +
                 "userId='" + userId + '\'' +
                 ", channelId='" + channelId + '\'' +
                 ", flag=" + flag +

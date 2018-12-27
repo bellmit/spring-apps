@@ -24,7 +24,7 @@ public class YjkMallJdbcService {
     @Autowired
     @Qualifier("yjkMallJdbc") //选择jdbc连接池
     private JdbcTemplate yjkMallDB;
-    @Value("${app.biz.goodsSalesDays:90}")
+    @Value("${app.biz.goods-sales-days:90}")
     private int goodsSalesDays;
 
     public int getGoodsSaleNum(List<String> goodsIdList) {

@@ -44,7 +44,7 @@ public class DataEtlJdbcService {
         videoTable = env.getProperty("app.mysql.video");
         articleTable = env.getProperty("app.mysql.article");
         goodsTable = env.getProperty("app.mysql.goods");
-        articleTags = env.getProperty("app.biz.articleTags", "title,tags,keywords");
+        articleTags = env.getProperty("app.biz.article-tags", "title,tags,keywords");
 
         updateChannelEsTypeMap();
         initLabelMap();

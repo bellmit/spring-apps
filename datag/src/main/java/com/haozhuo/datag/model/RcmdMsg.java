@@ -18,12 +18,14 @@ public class RcmdMsg {
     String channelId;
     int flag;
     boolean canUpdateBasePref;
+
     @Override
     public String toString() {
         return "RcmdMsg{" +
                 "userId='" + userId + '\'' +
                 ", channelId='" + channelId + '\'' +
                 ", flag=" + flag +
+                ", canUpdateBasePref=" + canUpdateBasePref +
                 '}';
     }
 }

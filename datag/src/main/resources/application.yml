@@ -19,10 +19,10 @@ app:
       news-rcmd-request: news-rcmd-request
       prefs-update: prefs-update
   biz:
-    #goodsScoreDecay: 0.9 ## delete !
-    goodsSalesDays: 90
-    queueRcmdNum: 5,4,3,3
-    articleTags: title,tags,keywords
+    send-rcmd-msg: false
+    goods-sales-days: 90
+    queue-rcmd-num: 5,4,3,3
+    article-tags: title,tags,keywords
   rest:
     glu: http://192.168.1.178:10011/getReportContent?healthReportId=%s
 

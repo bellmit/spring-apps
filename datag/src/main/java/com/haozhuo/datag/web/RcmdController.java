@@ -11,6 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,14 +43,13 @@ public class RcmdController {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-
     @Autowired
-    private RcmdController(EsService esService, RedisService redisService, KafkaService kafkaService, DataEtlJdbcService dataetlJdbcService) {
+    private RcmdController(Environment env,EsService esService, RedisService redisService, KafkaService kafkaService, DataEtlJdbcService dataetlJdbcService) {
         this.esService = esService;
         this.redisService = redisService;
         this.kafkaService = kafkaService;
         this.dataetlJdbcService = dataetlJdbcService;
-        infoRcmdService = new InfoRcmdService(esService, redisService, dataetlJdbcService, kafkaService);
+        infoRcmdService = new InfoRcmdService(Boolean.valueOf(env.getProperty("app.biz.send-rcmd-msg", "false")), esService, redisService, dataetlJdbcService, kafkaService);
     }
 
     /**

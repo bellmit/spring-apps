@@ -55,7 +55,7 @@ public class RedisService {
     private final static String videoPushedKey = "video-pushed:%s:%s";
     private final static String goodsPushedKey = "goods-pushed:%s:%s";
 
-    @Value("${app.biz.queueRcmdNum:5,4,3,3}")
+    @Value("${app.biz.queue-rcmd-num:5,4,3,3}")
     private String queueRcmdNumStr;
     private Integer[] queueRcmdNumArray;
 

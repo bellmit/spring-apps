@@ -565,4 +565,15 @@ public class RcmdController {
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
         return "success!";
     }
+
+    @ApiOperation(value = "异常疾病标准化", notes="注意：现接口的参数和返回消息与原接口不同。   \n" +
+            "现接口:   \n" +
+            "curl -X GET --header 'Accept: application/json' 'http://192.168.20.227:8766/datag/rcmd/norm_tags?abnormals=肝功能异常,幽门螺旋杆菌抗体增高'   \n    " +
+            "原接口:   \n" +
+            "curl -X POST  --header 'Accept: application/json' -d '{\"abnormal\":[\"肝功能异常\", \"幽门螺旋杆菌抗体 增高\"]}' 'http://192.168.20.228:5020/getNormTag'")
+    @GetMapping(value = "/norm_tags")
+    public Object getNormTag(
+            @RequestParam (value = "abnormals") String abnormals) {
+        return dataetlJdbcService.getNormTags(abnormals);
+    }
 }

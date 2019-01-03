@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 import static com.haozhuo.datag.model.Goods.listToStr;
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
 
 /**
@@ -25,8 +26,9 @@ public class DataEtlJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(DataEtlJdbcService.class);
 
     public Map<String, String[]> channelEsTypeMap;
-    //private final Map<String, String> labelIdNameMap = new HashMap<>();
     private final Map<String, String> labelNameIdMap = new HashMap<>();
+    private List<DiseaseNorm> diseaseNormList ;
+    private final String regEx="[\\s+`~!@#$%^&*()+=|{}':;'\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
     private final String goodsTable;
     private final String liveTable;
     private final String videoTable;
@@ -50,7 +52,9 @@ public class DataEtlJdbcService {
         initLabelMap();
         initStopWords();
         //logger.debug("labelIdNameMap:{}", labelIdNameMap);
-        logger.debug("labelNameIdMap:{}", labelNameIdMap);
+        diseaseNormList = getDiseaseNormList();
+        logger.debug("diseaseNormList:{}", diseaseNormList);
+        //logger.debug("labelNameIdMap:{}", labelNameIdMap);
     }
 
     private void initLabelMap() {
@@ -60,6 +64,17 @@ public class DataEtlJdbcService {
             //labelIdNameMap.put(tuple.getT1(), tuple.getT2());
             labelNameIdMap.put(tuple.getT2(), tuple.getT1());
         }
+    }
+
+    private List<DiseaseNorm> getDiseaseNormList() {
+        return dataetlDB.query("select unnorm, norm from disease_norm x where x.norm in" +
+                       " ('肝功能异常','幽门螺旋杆菌感染','血清谷丙转氨酶增高','尿隐血阳性','谷氨酰转肽酶增高'," +
+                       " '前列腺增生','肝囊肿','血清总胆红素增高','直接胆红素增高','间接胆红素增高','前列腺囊肿'," +
+                       " '乙肝小三阳','血清乳酸脱氢酶增高','血清碱性磷酸酶增高','肾脏损害','前列腺回声异常'," +
+                       " '前列腺特异性抗原增高','甲胎蛋白增高','血清结合胆红素偏高','尿胆红素阳性','铁蛋白增高'," +
+                       " '前列腺炎','肝脏增大','肝硬化','CA50增高','前列腺占位性病变')",
+                (resultSet, i) -> new DiseaseNorm(resultSet.getString("unnorm"), resultSet.getString("norm")));
+
     }
 
     private void initStopWords() {
@@ -74,26 +89,6 @@ public class DataEtlJdbcService {
                 .entrySet().stream().collect(toMap(Map.Entry::getKey, x -> x.getValue().toArray(new String[0])));
         logger.info("updateChannelEsTypeMap:{}", channelEsTypeMap.entrySet().stream().map(x -> x.getKey() + "->" + String.join(",", x.getValue())).collect(joining(" | ")));
 
-    }
-
-    /**
-     * 根据userId，获取最近一份报告的疾病labelIds
-     *
-     * @param userId
-     * @return
-     */
-    private List<String> getReportLabelIdList(String userId) {
-        String labelIds = "";
-        try {
-            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            labelIds = dataetlDB.queryForObject(
-                    "select label_ids from report_userid_label where user_id = ?",
-                    new Object[]{userId},
-                    (resultSet, i) -> resultSet.getString("label_ids"));
-        } catch (Exception ex) {
-            logger.info("report_userid_label中没有这个userId:{}", userId);
-        }
-        return Arrays.asList(labelIds.split(","));
     }
 
 
@@ -112,6 +107,8 @@ public class DataEtlJdbcService {
         }
         return result;
     }
+
+
 
     public List<Goods> getGoodsList(int from, int size) {
         return dataetlDB.query(
@@ -174,6 +171,27 @@ public class DataEtlJdbcService {
             logger.info("video4中没有这个id:{}", videoId);
         }
         return labels;
+    }
+
+
+    public Set<String> getNormTags(String abnormals) {
+        String[] abnormalArray = abnormals.replaceAll(regEx,"")
+                .replaceAll("Ⅰ","1")
+                .replaceAll("Ⅱ","2")
+                .toLowerCase()
+                .split(",");
+        return stream(abnormalArray)
+                .map(abnormal -> getNormTag(abnormal)).filter(x->x!=null)
+                .collect(toSet());
+    }
+
+    private String getNormTag(String abnormal){
+        for(DiseaseNorm diseaseNorm:diseaseNormList) {
+            if(abnormal.contains(diseaseNorm.getUnNorm())) {
+                return diseaseNorm.getNorm();
+            }
+        }
+        return null;
     }
 
     /**
@@ -285,100 +303,4 @@ public class DataEtlJdbcService {
         String date = JavaUtils.getCurrent();
         dataetlDB.update("INSERT INTO `permit_users` (`date`,`health_report_id`,`flag`) VALUES (?, ?, ?) on duplicate key update date=?", date, healthReportId, flag, date);
     }
-
-
-
-//    /**
-//     * 根据userId获取用户的labelNames
-//     *
-//     * @param userId
-//     * @return
-//     */
-//    public String getLabelStrByUserId(String userId) {
-//        return String.join(",", getLabelSetByUserId(userId));
-//    }
-//
-//    /**
-//     * 根据userId获取用户的labelNames
-//     *
-//     * @param userId
-//     * @return
-//     */
-//    public Set<String> getLabelSetByUserId(String userId) {
-//        return getReportLabelIdList(userId).stream()
-//                .map(labelId -> this.labelIdNameMap.getOrDefault(labelId, null))
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.toSet());
-//    }
-
-// --Commented out by Inspection START (12/7/18 2:46 PM):
-//    public String getInfoTagsById(Long infoId) {
-//        String tags = null;
-//        try {
-//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-//            tags = dataetlDB.queryForObject(
-//                    String.format("select title, tags from %s x where x.information_id = ?", articleTable),
-//                    new Object[]{infoId},
-//                    (resultSet, i) -> {
-//                        // Optional.ofNullable() 表示传入的参数可能为null
-//                        // orElse() 表示如果传入的是null就赋予另一个值
-//                        return Optional.ofNullable(resultSet.getString("tags"))
-//                                .orElse(resultSet.getString("title"));
-//                    });
-//        } catch (Exception ex) {
-//            logger.debug("getInfoTagsById error", ex);
-//        }
-//        return tags;
-//    }
-// --Commented out by Inspection STOP (12/7/18 2:46 PM)
-
-// --Commented out by Inspection START (12/7/18 2:49 PM):
-//    /**
-//     * 根据infoId获取Tags
-//     */
-//    public String getTagsByInfoId(String infoId) {
-//        String tags = "";
-//        try {
-//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-//            String sql = String.format("select x.tags from  %s x where x.information_id =?", articleTable);
-//            logger.debug("sql:{}", sql);
-//            tags = dataetlDB.queryForObject(sql, new Object[]{infoId}, (resultSet, i) -> resultSet.getString("tags"));
-//        } catch (Exception ex) {
-//            logger.debug("getTagsByInfoId error", ex);
-//        }
-//        return tags;
-//    }
-// --Commented out by Inspection STOP (12/7/18 2:49 PM)
-
-
-//    @Deprecated
-//    public String getLabelsByInfoId(String infoId) {
-//        String labelsIds = "";
-//        try {
-//            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-//            labelsIds = dataetlDB.queryForObject("select x.disease_label_ids from  article x where x.information_id =?", new Object[]{infoId}, new RowMapper<String>() {
-//                @Override
-//                public String mapRow(ResultSet resultSet, int i) throws SQLException {
-//                    return resultSet.getString("disease_label_ids");
-//                }
-//            });
-//        } catch (Exception ex) {
-//            logger.debug("getTagsByInfoId error", ex);
-//        }
-//
-//        return stream(labelsIds.split(","))
-//                .map(labelName -> labelIdNameMap.getOrDefault(labelName, null))
-//                .filter(x -> x != null)
-//                .collect(Collectors.joining(","));
-//
-//    }
-
-// --Commented out by Inspection START (12/7/18 2:48 PM):
-//    public String getLabelIdsByNames(String labelNames) {
-//        return stream(labelNames.split(","))
-//                .map(labelName -> this.labelNameIdMap.getOrDefault(labelName, null))
-//                .filter(Objects::nonNull)
-//                .collect(Collectors.joining(","));
-//    }
-// --Commented out by Inspection STOP (12/7/18 2:48 PM)
 }

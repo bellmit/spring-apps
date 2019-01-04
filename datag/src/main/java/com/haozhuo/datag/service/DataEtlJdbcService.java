@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
 import java.util.*;
 
 import static com.haozhuo.datag.model.Goods.listToStr;
@@ -27,8 +28,9 @@ public class DataEtlJdbcService {
 
     public Map<String, String[]> channelEsTypeMap;
     private final Map<String, String> labelNameIdMap = new HashMap<>();
-    private List<DiseaseNorm> diseaseNormList ;
-    private final String regEx="[\\s+`~!@#$%^&*()+=|{}':;'\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
+    private List<DiseaseNorm> someDiseaseNormList;
+    private List<DiseaseNorm> allDiseaseNormList;
+    private final String regEx = "[\\s+`~!@#$%^&*()+=|{}':;'\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
     private final String goodsTable;
     private final String liveTable;
     private final String videoTable;
@@ -52,8 +54,9 @@ public class DataEtlJdbcService {
         initLabelMap();
         initStopWords();
         //logger.debug("labelIdNameMap:{}", labelIdNameMap);
-        diseaseNormList = getDiseaseNormList();
-        logger.debug("diseaseNormList:{}", diseaseNormList);
+        someDiseaseNormList = getSomeDiseaseNormList();
+        allDiseaseNormList = getAllDiseaseNormList();
+        logger.debug("someDiseaseNormList:{}", someDiseaseNormList);
         //logger.debug("labelNameIdMap:{}", labelNameIdMap);
     }
 
@@ -66,13 +69,19 @@ public class DataEtlJdbcService {
         }
     }
 
-    private List<DiseaseNorm> getDiseaseNormList() {
+    private List<DiseaseNorm> getSomeDiseaseNormList() {
         return dataetlDB.query("select unnorm, norm from disease_norm x where x.norm in" +
-                       " ('肝功能异常','幽门螺旋杆菌感染','血清谷丙转氨酶增高','尿隐血阳性','谷氨酰转肽酶增高'," +
-                       " '前列腺增生','肝囊肿','血清总胆红素增高','直接胆红素增高','间接胆红素增高','前列腺囊肿'," +
-                       " '乙肝小三阳','血清乳酸脱氢酶增高','血清碱性磷酸酶增高','肾脏损害','前列腺回声异常'," +
-                       " '前列腺特异性抗原增高','甲胎蛋白增高','血清结合胆红素偏高','尿胆红素阳性','铁蛋白增高'," +
-                       " '前列腺炎','肝脏增大','肝硬化','CA50增高','前列腺占位性病变')",
+                        " ('肝功能异常','幽门螺旋杆菌感染','血清谷丙转氨酶增高','尿隐血阳性','谷氨酰转肽酶增高'," +
+                        " '前列腺增生','肝囊肿','血清总胆红素增高','直接胆红素增高','间接胆红素增高','前列腺囊肿'," +
+                        " '乙肝小三阳','血清乳酸脱氢酶增高','血清碱性磷酸酶增高','肾脏损害','前列腺回声异常'," +
+                        " '前列腺特异性抗原增高','甲胎蛋白增高','血清结合胆红素偏高','尿胆红素阳性','铁蛋白增高'," +
+                        " '前列腺炎','肝脏增大','肝硬化','CA50增高','前列腺占位性病变')",
+                (resultSet, i) -> new DiseaseNorm(resultSet.getString("unnorm"), resultSet.getString("norm")));
+
+    }
+
+    private List<DiseaseNorm> getAllDiseaseNormList() {
+        return dataetlDB.query("select unnorm, norm from disease_norm x",
                 (resultSet, i) -> new DiseaseNorm(resultSet.getString("unnorm"), resultSet.getString("norm")));
 
     }
@@ -107,7 +116,6 @@ public class DataEtlJdbcService {
         }
         return result;
     }
-
 
 
     public List<Goods> getGoodsList(int from, int size) {
@@ -155,6 +163,7 @@ public class DataEtlJdbcService {
 
     /**
      * 根据videoId获取videoLabels
+     *
      * @param videoId
      * @return
      */
@@ -174,20 +183,33 @@ public class DataEtlJdbcService {
     }
 
 
+    public String getSingleNormTag(String abnormal) {
+        String regexNormTag = abnormal.replaceAll(regEx, "")
+                .replaceAll("Ⅰ", "1")
+                .replaceAll("Ⅱ", "2")
+                .replaceAll("Ⅲ", "3")
+                .toLowerCase();
+        String result = getNormTag(regexNormTag, allDiseaseNormList);
+        if (result == null) {
+            result = regexNormTag;
+        }
+        return result;
+    }
+
     public Set<String> getNormTags(String abnormals) {
-        String[] abnormalArray = abnormals.replaceAll(regEx,"")
-                .replaceAll("Ⅰ","1")
-                .replaceAll("Ⅱ","2")
+        String[] abnormalArray = abnormals.replaceAll(regEx, "")
+                .replaceAll("Ⅰ", "1")
+                .replaceAll("Ⅱ", "2")
                 .toLowerCase()
                 .split(",");
         return stream(abnormalArray)
-                .map(abnormal -> getNormTag(abnormal)).filter(x->x!=null)
+                .map(abnormal -> getNormTag(abnormal, someDiseaseNormList)).filter(x -> x != null)
                 .collect(toSet());
     }
 
-    private String getNormTag(String abnormal){
-        for(DiseaseNorm diseaseNorm:diseaseNormList) {
-            if(abnormal.contains(diseaseNorm.getUnNorm())) {
+    private String getNormTag(String abnormal, List<DiseaseNorm> normList) {
+        for (DiseaseNorm diseaseNorm : normList) {
+            if (abnormal.contains(diseaseNorm.getUnNorm())) {
                 return diseaseNorm.getNorm();
             }
         }

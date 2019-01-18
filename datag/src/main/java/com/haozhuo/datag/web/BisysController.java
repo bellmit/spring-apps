@@ -24,6 +24,13 @@ public class BisysController {
         return bisysJdbcService.getProdRiskEvaluation();
     }
 
+
+    @GetMapping("/daily/test_content")
+    @ApiOperation(value = "", notes = "json test")
+    public Object getContentUrl(@RequestParam(value = "date", defaultValue="all") String date) {
+        return bisysJdbcService.getContentUrl(date);
+    }
+
 }
 
 

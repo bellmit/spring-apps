@@ -25,10 +25,16 @@ public class BisysController {
     }
 
 
-    @GetMapping("/daily/test_content")
-    @ApiOperation(value = "", notes = "json test")
-    public Object getContentUrl(@RequestParam(value = "date", defaultValue="all") String date) {
-        return bisysJdbcService.getContentUrl(date);
+    @GetMapping("/opsMallOrder")
+    @ApiOperation(value = "", notes = "")
+    public Object getOpsMallOrder(@RequestParam(value = "id") int id,
+                                  @RequestParam(value = "date") String date,
+                                  @RequestParam(value = "endDate",defaultValue = "null") String endDate
+                               ) {
+        if("null".equals(endDate))
+            endDate = date;
+
+        return bisysJdbcService.getOpsMallOrder(id,date,endDate);
     }
 
 }

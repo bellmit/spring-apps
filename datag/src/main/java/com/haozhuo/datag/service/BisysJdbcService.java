@@ -1,7 +1,6 @@
 package com.haozhuo.datag.service;
 
-import com.haozhuo.datag.model.DiseaseNorm;
-import com.haozhuo.datag.model.bisys.ContentUrl;
+import com.haozhuo.datag.model.bisys.OpsMallOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,28 +36,30 @@ public class BisysJdbcService {
         return pv;
     }
 
-    public List<ContentUrl> getContentUrl(String date) {
-        List<ContentUrl> list = null;
+    public List<OpsMallOrder> getOpsMallOrder(int id, String date, String endDate) {
+        List<OpsMallOrder> list = null;
         try {
             String sql;
             Object[] params;
 
-            if("all".equals(date)){
-                sql = "select date, location, url, url_pv, url_uv from content_url";
-                params = new Object[]{};
-            } else {
-                sql = "select date, location, url, url_pv, url_uv from content_url where date = ?";
-                params = new Object[]{date};
-            }
+            sql = "select date, order_num, order_amount, pay_order_num, pay_order_amount, apply_order_num, " +
+                    " apply_order_amount,refund_order_num,refund_order_amount from ops_mall_order where date >= ? and date <=? and genre=?";
+            params = new Object[]{date, endDate, OpsMallOrder.getGenre(id)};
 
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(sql,params,
-                    (resultSet, i) -> new ContentUrl(
+            list = bisysDB.query(sql, params,
+                    (resultSet, i) ->
+                            new OpsMallOrder(
+                            id,
                             resultSet.getString("date"),
-                            resultSet.getString("location"),
-                            resultSet.getString("url"),
-                            resultSet.getInt("url_pv"),
-                            resultSet.getInt("url_uv")
+                            resultSet.getInt("order_num"),
+                            resultSet.getDouble("order_amount"),
+                            resultSet.getInt("pay_order_num"),
+                            resultSet.getDouble("pay_order_amount"),
+                            resultSet.getInt("apply_order_num"),
+                            resultSet.getDouble("apply_order_amount"),
+                            resultSet.getInt("refund_order_num"),
+                            resultSet.getDouble("refund_order_amount")
                     ));
         } catch (Exception ex) {
             logger.debug("getProdRiskEvaluation", ex);

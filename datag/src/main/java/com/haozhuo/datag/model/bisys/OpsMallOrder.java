@@ -1,7 +1,10 @@
 package com.haozhuo.datag.model.bisys;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.haozhuo.datag.common.JavaUtils;
 import lombok.AllArgsConstructor;
+
+import java.math.BigDecimal;
 
 /**
  * Created by Lucius on 1/17/19.
@@ -35,104 +38,58 @@ public class OpsMallOrder {
 
     //毛利润率
     public Double getGrossProfit() {
+        double value = 0D;
         switch (id) {
             case 1:
-                return payOrderAmount - payOrderNum * 22;
             case 2:
-                return payOrderAmount - payOrderNum * 22;
+                value = payOrderAmount - payOrderNum * 22;break;
             case 3:
-                return payOrderAmount * 0.3;
+                value = payOrderAmount * 0.3;break;
             case 4:
-                return payOrderAmount - payOrderNum * 5;
+                value =payOrderAmount - payOrderNum * 5;break;
             case 5:
-                return payOrderAmount - payOrderNum * 15;
+                value = payOrderAmount - payOrderNum * 15;break;
             case 6:
-                return payOrderAmount;
             case 7:
-                return 1.2;
             case 8:
-                return 1.2;
+                value = payOrderAmount;break;
             case 9:
-                return 1.2;
-            default:
-                return 1.2;
+                if (payOrderNum > 0) {
+                    value = payOrderAmount - 15;
+                }
+                break;
         }
+        return JavaUtils.retainDecimal(value,2);
+    }
+
+    public double round(double value){
+        return new BigDecimal(value).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
     //毛利润率
     public Double getGrossProfitRate() {
-        switch (id) {
-            case 1:
-                return 1.2;
-            case 2:
-                return 1.2;
-            case 3:
-                return 1.2;
-            case 4:
-                return 1.2;
-            case 5:
-                return 1.2;
-            case 6:
-                return 1.2;
-            case 7:
-                return 1.2;
-            case 8:
-                return 1.2;
-            case 9:
-                return 1.2;
-            default:
-                return 1.2;
+        if (payOrderNum == 0) {
+            return 0D;
+        } else {
+            return JavaUtils.retainDecimal(getGrossProfit() / payOrderAmount,4);
         }
     }
 
     //支付转化率
     public Double getConversionRateOfPayment() {
-        switch (id) {
-            case 1:
-                return 1.2;
-            case 2:
-                return 1.2;
-            case 3:
-                return 1.2;
-            case 4:
-                return 1.2;
-            case 5:
-                return 1.2;
-            case 6:
-                return 1.2;
-            case 7:
-                return 1.2;
-            case 8:
-                return 1.2;
-            case 9:
-                return 1.2;
-            default:
-                return 1.2;
+        if (orderNum == 0) {
+            return 0D;
+        } else {
+            return JavaUtils.retainDecimal(Double.valueOf(payOrderNum) / orderNum,2);
         }
+
     }
 
     //退款率
     public Double getRefundRate() {
-        switch (id) {
-            case 1:
-                return 1.2;
-            case 2:
-                return 1.2;
-            case 3:
-                return 1.2;
-            case 4:
-                return 1.2;
-            case 5:
-                return 1.2;
-            case 6:
-                return 1.2;
-            case 7:
-                return 1.2;
-            case 8:
-                return 1.2;
-            case 9:
-                return 1.2;
-            default:
-                return 1.2;
+        if (payOrderNum == 0) {
+            return 0D;
+        } else {
+            return JavaUtils.retainDecimal(Double.valueOf(refundOrderNum) / payOrderNum,4);
         }
     }
 

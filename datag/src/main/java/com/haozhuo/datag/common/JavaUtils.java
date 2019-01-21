@@ -1,6 +1,7 @@
 package com.haozhuo.datag.common;
 
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -12,6 +13,9 @@ import java.util.stream.IntStream;
  */
 @SuppressWarnings("WeakerAccess")
 public class JavaUtils {
+    public static double retainDecimal(double number, int bits){
+        return new BigDecimal(number).setScale(bits, BigDecimal.ROUND_HALF_UP).doubleValue();
+    }
     public static String getSeveralDaysAgo(int n, String format) {
         Date dNow = new Date();//当前时间
         Calendar calendar = Calendar.getInstance(); //得到日历

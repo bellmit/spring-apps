@@ -1,8 +1,8 @@
 package com.haozhuo.datag.model.bisys;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.haozhuo.datag.common.JavaUtils;
-import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  * Created by Lucius on 1/17/19.
  */
 
-@AllArgsConstructor
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OpsMallOrder {
     int id;
@@ -24,20 +24,83 @@ public class OpsMallOrder {
     //支付金额
     double payOrderAmount;
     //申请退款笔数
-    int applyOrderNum;
+    int applyRefundOrderNum;
     //申请退款金额
-    double applyOrderAmount;
+    double applyRefundOrderAmount;
     //退款完成笔数
     int refundOrderNum;
     //退款完成金额
     double refundOrderAmount;
 
+    public OpsMallOrder(int id, String date, int orderNum, double orderAmount, int payOrderNum, double payOrderAmount, int applyRefundOrderNum, double applyRefundOrderAmount, int refundOrderNum, double refundOrderAmount) {
+        this.id = id;
+        this.date = date;
+        this.orderNum = orderNum;
+        this.orderAmount = orderAmount;
+        this.payOrderNum = payOrderNum;
+        this.payOrderAmount = payOrderAmount;
+        this.applyRefundOrderNum = applyRefundOrderNum;
+        this.applyRefundOrderAmount = applyRefundOrderAmount;
+        this.refundOrderNum = refundOrderNum;
+        this.refundOrderAmount = refundOrderAmount;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    double grossProfit = -1;
+    double grossProfitRate = -1;
+    double payConversionRate = -1;
+    double refundRate = -1;
+    double refundGrossProfit = -1;
+
+
+
+    public void setRefundGrossProfit(double refundGrossProfit) {
+        this.refundGrossProfit = refundGrossProfit;
+    }
+
+    public double getRefundGrossProfit() {
+        return refundGrossProfit;
+    }
+
+    public void setGrossProfit(double grossProfit) {
+        this.grossProfit = grossProfit;
+    }
+
+    public void setGrossProfitRate(double grossProfitRate) {
+        this.grossProfitRate = grossProfitRate;
+    }
+
+    public void setPayConversionRate(double payConversionRate) {
+        this.payConversionRate = payConversionRate;
+    }
+
+    public void setRefundRate(double refundRate) {
+        this.refundRate = refundRate;
+    }
+
     public OpsMallOrder(int id) {
         this.id = id;
     }
 
-    //毛利润率
+    @JsonIgnore
+    public boolean isInputMallOrder(){
+        return isInputMallOrder(id);
+    }
+
+    public static boolean  isInputMallOrder(int id ) {
+        return id >= 10 && id <= 12;
+    }
+
+    //毛利润
     public Double getGrossProfit() {
+
+        if(isInputMallOrder() && grossProfit >= 0) {
+            return  grossProfit;
+        }
+
         double value = 0D;
         switch (id) {
             case 1:
@@ -65,8 +128,13 @@ public class OpsMallOrder {
     public double round(double value){
         return new BigDecimal(value).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
+
     //毛利润率
     public Double getGrossProfitRate() {
+        if(isInputMallOrder() && grossProfitRate >= 0) {
+            return grossProfitRate;
+        }
+
         if (payOrderNum == 0) {
             return 0D;
         } else {
@@ -75,7 +143,11 @@ public class OpsMallOrder {
     }
 
     //支付转化率
-    public Double getConversionRateOfPayment() {
+    public Double getPayConversionRate() {
+        if(isInputMallOrder() && payConversionRate >= 0) {
+            return payConversionRate;
+        }
+
         if (orderNum == 0) {
             return 0D;
         } else {
@@ -86,11 +158,20 @@ public class OpsMallOrder {
 
     //退款率
     public Double getRefundRate() {
+        if(isInputMallOrder() && refundRate >= 0) {
+            return  refundRate;
+        }
+
         if (payOrderNum == 0) {
             return 0D;
         } else {
             return JavaUtils.retainDecimal(Double.valueOf(refundOrderNum) / payOrderNum,4);
         }
+    }
+
+    @JsonIgnore
+    public String getGenre(){
+        return getGenre(id);
     }
 
     public static String getGenre(int id) {
@@ -113,6 +194,12 @@ public class OpsMallOrder {
                 return "高血糖风险评估";
             case 9:
                 return "冠心病";
+            case 10:
+                return "健管服务";
+            case 11:
+                return "绿通";
+            case 12:
+                return "美维口腔";
             default:
                 return "";
         }
@@ -158,20 +245,20 @@ public class OpsMallOrder {
         this.payOrderAmount = payOrderAmount;
     }
 
-    public int getApplyOrderNum() {
-        return applyOrderNum;
+    public int getApplyRefundOrderNum() {
+        return applyRefundOrderNum;
     }
 
-    public void setApplyOrderNum(int applyOrderNum) {
-        this.applyOrderNum = applyOrderNum;
+    public void setApplyRefundOrderNum(int applyRefundOrderNum) {
+        this.applyRefundOrderNum = applyRefundOrderNum;
     }
 
-    public double getApplyOrderAmount() {
-        return applyOrderAmount;
+    public double getApplyRefundOrderAmount() {
+        return applyRefundOrderAmount;
     }
 
-    public void setApplyOrderAmount(double applyOrderAmount) {
-        this.applyOrderAmount = applyOrderAmount;
+    public void setApplyRefundOrderAmount(double applyRefundOrderAmount) {
+        this.applyRefundOrderAmount = applyRefundOrderAmount;
     }
 
     public int getRefundOrderNum() {
@@ -188,5 +275,9 @@ public class OpsMallOrder {
 
     public void setRefundOrderAmount(double refundOrderAmount) {
         this.refundOrderAmount = refundOrderAmount;
+    }
+
+    public int getId() {
+        return id;
     }
 }

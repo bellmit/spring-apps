@@ -2,6 +2,8 @@ package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.model.bisys.HealthCheck;
 import com.haozhuo.datag.model.bisys.OpsMallOrder;
+import com.haozhuo.datag.model.bisys.Register;
+import com.haozhuo.datag.model.bisys.YouApp;
 import com.haozhuo.datag.service.BisysJdbcService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -62,7 +64,7 @@ public class BisysController {
 
     @PostMapping("/dailyReport/jhz/add/mallOrderInput")
     @ApiOperation(value = "手动填写的表单：id -> 10:键管服务; 11:绿通; 12:美维口腔")
-    public Object setMallOrderInput(@RequestBody OpsMallOrder mallOrder) {
+    public Object addMallOrderInput(@RequestBody OpsMallOrder mallOrder) {
         bisysJdbcService.updateMallOrderInput(mallOrder);
         return "success!";
     }
@@ -84,7 +86,7 @@ public class BisysController {
 
     @PostMapping("/dailyReport/tjz/add/HealthCheckFromWeChat")
     @ApiOperation(value = "体检渠道统计 手动输入 来源于微信", notes = "需要以下字段，字段意思请看/dailyReport/healthCheck。 {\"date\": \"2019-10-10\", \"orderNum\": 0, \"payOrderNum\": 10, \"payOrderAmount\": 0, \"refundWinNum\": 0, \"refundWinAmount\": 0, \"payUseNum\": 10, \"payProfitAmount\": 10,\"refundSuccessAmount\": 0}")
-    public Object setHealthCheckFromWeChat(@RequestBody HealthCheck healthCheck) {
+    public Object addHealthCheckFromWeChat(@RequestBody HealthCheck healthCheck) {
         bisysJdbcService.updateServiceTransactionWeChat(healthCheck);
         return "success!";
     }
@@ -108,6 +110,12 @@ public class BisysController {
         return bisysJdbcService.getYouApp(date, endDate);
     }
 
+    @PostMapping("/dailyReport/app/add/YouApp")
+    @ApiOperation(value = "添加优健康App数据", notes = "os：平台. 合计:0, Android:1, iOS:2; downloadUsers：下载用户(打开);  totalDownloadUsers：累计下载用户; activeUsers：活跃用户; startNum：启动次数")
+    public Object addYouApp(@RequestBody YouApp youApp) {
+        return bisysJdbcService.updateYouApp(youApp);
+    }
+
     @GetMapping("/dailyReport/app/register")
     @ApiOperation(value = "注册用户数据", notes = "downloadUsers:下载用户合计,totalDownloadUsers:累计下载用户,registerUsers:注册用户,totalRegisterUsers:累计注册用户, downloadUnregister:下载未注册,activeUsers:活跃用户,startNum:启动次数;")
     public Object getRegister(@RequestParam(value = "date") String date,
@@ -115,6 +123,38 @@ public class BisysController {
         if ("null".equals(endDate))
             endDate = date;
         return bisysJdbcService.getRegister(date, endDate);
+    }
+
+    @GetMapping("/dailyReport/app/userRetention")
+    @ApiOperation(value = "优健康App用户留存率", notes = "")
+    public Object getUserRetention(@RequestParam(value = "date") String date,
+                              @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
+        if ("null".equals(endDate))
+            endDate = date;
+        return bisysJdbcService.getUserRetention(date, endDate);
+    }
+
+    @GetMapping("/dailyReport/app/accessData")
+    @ApiOperation(value = "优知相关访问数据", notes = "")
+    public Object getAccessData(@RequestParam(value = "date") String date,
+                                @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
+        if ("null".equals(endDate))
+            endDate = date;
+        return bisysJdbcService.getAccessData(date, endDate);
+    }
+
+    @GetMapping("/dailyReport/app/smsCity")
+    @ApiOperation(value = "城市短信注册明细", notes = "字段意思请看 /dailyReport/app/sms")
+    public Object getSmsCity() {
+        return bisysJdbcService.getSmsCity();
+    }
+
+    @PostMapping("/dailyReport/app/add/register")
+    @ApiOperation(value = "添加注册用户数据", notes = "需要传入的json为: {\"date\": \"2019-10-10\",\"registerUsers\": 10,\"totalRegisterUsers\": 10,\"downloadUnregister\":12},  \n" +
+            "其中registerUsers:注册用户,totalRegisterUsers:累计注册用户, downloadUnregister:下载未注册量.其他几个字段从/dailyReport/app/YouApp中获取，所以不需要输入")
+    public Object setRegister(@RequestBody Register register) {
+        bisysJdbcService.updateRegister(register);
+        return "success!";
     }
 
 }

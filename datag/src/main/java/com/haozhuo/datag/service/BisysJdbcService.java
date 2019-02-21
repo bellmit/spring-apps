@@ -24,7 +24,7 @@ public class BisysJdbcService {
     @Qualifier("bisysJdbc") //选择jdbc连接池
     private JdbcTemplate bisysDB;
 
-    private final static String dailyYouAppQuerySQL =  "select `date`, os, download_users, total_download_users, active_users," +
+    private final static String dailyYouAppQuerySQL = "select `date`, os, download_users, total_download_users, active_users," +
             "start_num from daily_app union select `date`, 0 as os, sum(download_users) as download_users, " +
             "sum(total_download_users) as total_download_users, sum(active_users) as active_users, sum(start_num) as start_num " +
             "from daily_app where date >=? and date <= ? group by `date` ";
@@ -83,7 +83,6 @@ public class BisysJdbcService {
             "refund_success_amount from daily_service_transaction_wechat where `date` >= ? and `date` <= ?) total group by `date`";
 
 
-
     public long getProdRiskEvaluation() {
         long pv = 0;
         try {
@@ -111,16 +110,41 @@ public class BisysJdbcService {
     }
 
     public void updateServiceTransactionWeChat(HealthCheck healthCheck) {
-            String updateTime = JavaUtils.getCurrent();
-            bisysDB.update(serviceTransactionWeChatUpdateSQL,healthCheck.getDate(), healthCheck.getOrderNum(),
-                    healthCheck.getPayOrderNum(),healthCheck.getPayOrderAmount(),healthCheck.getRefundWinNum(),
-                    healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(),healthCheck.getPayProfitAmount(),
-                    healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getOrderNum(),
-                    healthCheck.getPayOrderNum(),healthCheck.getPayOrderAmount(),healthCheck.getRefundWinNum(),
-                    healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(),healthCheck.getPayProfitAmount(),
-                    healthCheck.getRefundSuccessAmount(), updateTime);
+        String updateTime = JavaUtils.getCurrent();
+        bisysDB.update(serviceTransactionWeChatUpdateSQL, healthCheck.getDate(), healthCheck.getOrderNum(),
+                healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
+                healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
+                healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getOrderNum(),
+                healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
+                healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
+                healthCheck.getRefundSuccessAmount(), updateTime);
     }
 
+    private static final String youAppUpdateSQL = "INSERT INTO `daily_app` (`date`, `os`, `download_users`, `total_download_users`, `active_users`," +
+            " `start_num`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?, " +
+            "`total_download_users` = ?, `active_users` = ?, `start_num` = ?, `update_time` = ?";
+
+    public String updateYouApp(YouApp youApp) {
+        String updateTime = JavaUtils.getCurrent();
+        if (youApp.getOs() == 1 || youApp.getOs() == 2) {
+            bisysDB.update(youAppUpdateSQL, youApp.getDate(), youApp.getOs(), youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
+                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime, youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
+                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime);
+            return "success!";
+        } else {
+            return "os字段只能是 1：Android，2:iOS";
+        }
+    }
+
+    private static final String registerUpdateSQL = "INSERT INTO `daily_register` (`date`, `register_users`, `total_register_users`," +
+            " `download_unregister`, `update_time`) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `register_users` = ?, `total_register_users` = ?, `download_unregister` = ?, `update_time` = ?";
+
+    public void updateRegister(Register register) {
+        String updateTime = JavaUtils.getCurrent();
+        bisysDB.update(registerUpdateSQL, register.getDate(), register.getRegisterUsers(), register.getTotalRegisterUsers(),
+                register.getDownloadUnregister(), updateTime, register.getRegisterUsers(), register.getTotalRegisterUsers(),
+                register.getDownloadUnregister(), updateTime);
+    }
 
     public List<OpsMallOrder> getOpsMallOrder(int typeId, String date, String endDate) {
         List<OpsMallOrder> list = null;
@@ -162,7 +186,7 @@ public class BisysJdbcService {
     }
 
 
-    public List<Sms> getSms(String date, String endDate){
+    public List<Sms> getSms(String date, String endDate) {
         List<Sms> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
@@ -189,7 +213,7 @@ public class BisysJdbcService {
         return list;
     }
 
-    public List<YouApp> getYouApp(String date, String endDate){
+    public List<YouApp> getYouApp(String date, String endDate) {
         List<YouApp> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
@@ -211,7 +235,7 @@ public class BisysJdbcService {
     }
 
 
-    public List<Register> getRegister(String date, String endDate){
+    public List<Register> getRegister(String date, String endDate) {
         List<Register> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
@@ -282,17 +306,13 @@ public class BisysJdbcService {
         return list;
     }
 
+    private static final String uplusGoodsQuerySQL = "select goods_name, order_num, order_amount from manage_uplus_goods where date = ? ";
+
     public List<UplusGoods> getUplusGoods() {
         List<UplusGoods> list = null;
         try {
-            String sql;
-            Object[] params;
-
-            sql = "select goods_name, order_num, order_amount from manage_uplus_goods where date = ? ";
-            params = new Object[]{JavaUtils.getSeveralDaysAgo(1)};
-
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(sql, params,
+            list = bisysDB.query(uplusGoodsQuerySQL , new Object[]{JavaUtils.getSeveralDaysAgo(1)},
                     (resultSet, i) ->
                             new UplusGoods(
                                     resultSet.getString("goods_name"),
@@ -300,6 +320,86 @@ public class BisysJdbcService {
                                     resultSet.getDouble("order_amount")));
         } catch (Exception ex) {
             logger.error("getUplusGoods error", ex);
+        }
+        return list;
+    }
+
+    private static final String userRetentionQuerySQL = "SELECT `date`, after_day_1, after_day_3, after_day_7 from boss_user_day_retention where  `date` >= ? and `date` <= ?";
+
+    public List<UserRetention> getUserRetention(String date, String endDate) {
+        List<UserRetention> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(userRetentionQuerySQL, new Object[]{date, endDate},
+                    (resultSet, i) ->
+                  new UserRetention(
+                          resultSet.getString("date"),
+                          resultSet.getDouble("after_day_1"),
+                          resultSet.getDouble("after_day_3"),
+                          resultSet.getDouble("after_day_7"))
+            );
+        } catch (Exception ex) {
+            logger.error("getUserRetention error", ex);
+        }
+        return list;
+    }
+
+    private static final String accessDataQuerySQL = "select `date`,'详情页相关推荐' as source, sum(pv) as pv, sum(uv) as uv from content_info_data x " +
+            " where x.source like '%详情页%' and `date` >= ? and `date` <= ? group by `date` " +
+            " union " +
+            " select `date`, " +
+            " case source when '搜索结果页' then '搜索导入流量' else source END as source, " +
+            " pv, uv from content_info_data x where x.source  in ('优知','搜索结果页','全部') and `date` >= ? and `date` <= ?";
+
+
+    public List<AccessData> getAccessData(String date, String endDate) {
+        List<AccessData> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query( accessDataQuerySQL, new Object[]{date, endDate, date, endDate},
+                    (resultSet, i) ->
+                            new AccessData(
+                                    resultSet.getString("date"),
+                                    resultSet.getString("source"),
+                                    resultSet.getInt("pv"),
+                                    resultSet.getInt("uv"))
+            );
+        } catch (Exception ex) {
+            logger.error("getAccessData error", ex);
+        }
+        return list;
+    }
+
+    private static final String smsCityQuerySQL = "select city_name,sms_one_num,sms_one_register_num,old_num,sms_one_rate,sms_one_cost,sms_two_num, " +
+            "sms_two_register_num,sms_two_rate,sms_two_cost,sms_register_num,sms_cost,sms_rate from ops_factory_city " +
+            " where `date` = (select max(`date`) from ops_factory_city) and city_name != ''";
+
+    public List<SmsCity> getSmsCity() {
+        List<SmsCity> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(smsCityQuerySQL, new Object[]{},
+                    (resultSet, i) ->{
+                        SmsCity smsCity = new SmsCity();
+                        smsCity.setCityName(resultSet.getString("city_name"));
+                        smsCity.setOneSmsNum(resultSet.getInt("sms_one_num"));
+                        smsCity.setOneSmsRegisterNum(resultSet.getInt("sms_one_register_num"));
+                        smsCity.setOldUserNum(resultSet.getInt("old_num"));
+                        smsCity.setOneRate(resultSet.getDouble("sms_one_rate"));
+                        smsCity.setOneSmsCost(resultSet.getDouble("sms_one_cost"));
+                        smsCity.setTwoSmsNum(resultSet.getInt("sms_two_num"));
+                        smsCity.setTwoSmsRegisterNum(resultSet.getInt("sms_two_register_num"));
+                        smsCity.setTwoRate(resultSet.getDouble("sms_two_rate"));
+                        smsCity.setTwoSmsCost(resultSet.getDouble("sms_two_cost"));
+                        smsCity.setSmsRegisterNum(resultSet.getInt("sms_register_num"));
+                        smsCity.setTotalCost(resultSet.getDouble("sms_cost"));
+                        smsCity.setTotalRate(resultSet.getDouble("sms_rate"));
+                        return smsCity;
+                    }
+
+            );
+        } catch (Exception ex) {
+            logger.error("getSmsCity error", ex);
         }
         return list;
     }

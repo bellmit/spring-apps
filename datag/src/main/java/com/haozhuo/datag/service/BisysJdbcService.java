@@ -25,7 +25,8 @@ public class BisysJdbcService {
     private JdbcTemplate bisysDB;
 
     private final static String dailyYouAppQuerySQL = "select `date`, os, download_users, total_download_users, active_users," +
-            "start_num from daily_app union select `date`, 0 as os, sum(download_users) as download_users, " +
+            "start_num from daily_app where date >=? and date <= ? " +
+            " union select `date`, 0 as os, sum(download_users) as download_users, " +
             "sum(total_download_users) as total_download_users, sum(active_users) as active_users, sum(start_num) as start_num " +
             "from daily_app where date >=? and date <= ? group by `date` ";
 
@@ -217,7 +218,7 @@ public class BisysJdbcService {
         List<YouApp> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate},
+            list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate, date, endDate},
                     (resultSet, i) -> {
                         YouApp youApp = new YouApp();
                         youApp.setActiveUsers(resultSet.getInt("active_users"));
@@ -280,6 +281,70 @@ public class BisysJdbcService {
         return list;
     }
 
+    private static final String kindOrderQuerySQL = "select * from manage_kind_order where `date` >= ? and `date` <= ?";
+    private static final String kindGoodsQuerySQL = "select * from manage_kind_goods where `date` = (select max(`date`) from manage_kind_goods)";
+
+    public List<KindOrder> getKindOrder(String date, String endDate) {
+        List<KindOrder> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(kindOrderQuerySQL, new Object[]{date, endDate},
+                    (resultSet, i) -> {
+                        KindOrder kindOrder = new KindOrder();
+                        kindOrder.setDate(resultSet.getString("date"));
+                        kindOrder.setChannelType(resultSet.getString("channel_type"));
+                        kindOrder.setPayNum(resultSet.getInt("pay_num"));
+                        kindOrder.setPayAmount(resultSet.getDouble("pay_amount"));
+                        kindOrder.setUserNum(resultSet.getInt("user_num"));
+                        kindOrder.setPrice(resultSet.getDouble("price"));
+                        kindOrder.setCost(resultSet.getDouble("cost"));
+                        kindOrder.setProfit(resultSet.getDouble("profit"));
+                        kindOrder.setProfitRate(resultSet.getDouble("profit_rate"));
+                        kindOrder.setRefundNum(resultSet.getInt("refund_num"));
+                        kindOrder.setRefundAmount(resultSet.getDouble("refund_amount"));
+                        kindOrder.setTotalFee(resultSet.getDouble("refund_amount"));
+                        return kindOrder;
+                    }
+            );
+        } catch (Exception ex) {
+            logger.error("getHealthCheck error", ex);
+        }
+        return list;
+    }
+
+    public List<KindGoods> getKindGoods() {
+        List<KindGoods> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(kindGoodsQuerySQL, new Object[]{},
+                    (resultSet, i) ->
+                            new KindGoods(
+                                    resultSet.getString("date"),
+                                    resultSet.getString("goods_name"),
+                                    resultSet.getInt("goods_num"),
+                                    resultSet.getDouble("total_fee")
+                            )
+            );
+        } catch (Exception ex) {
+            logger.error("getHealthCheck error", ex);
+        }
+        return list;
+    }
+
+    private static final String kindOrderUpdateSQL = "INSERT INTO `manage_kind_order` (`date`, `channel_type`, `pay_num`," +
+            " `pay_amount`, `user_num`, `price`, `cost`, `profit`, `profit_rate`, `refund_num`, `refund_amount`, `total_fee`, `update_time`)" +
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `pay_num` = ?, `pay_amount` = ?, `user_num` = ?, `price` = ?," +
+            " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `update_time` = ?";
+
+    public void updateKindOrderWeChat(KindOrder kindOrder) {
+        String updateTime = JavaUtils.getCurrent();
+        bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",
+                kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
+                kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(),
+                updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
+                kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), updateTime);
+    }
+
     public List<HealthCheck> getHealthCheck(boolean isTotal, String date, String endDate) {
         List<HealthCheck> list = null;
         try {
@@ -306,13 +371,31 @@ public class BisysJdbcService {
         return list;
     }
 
-    private static final String uplusGoodsQuerySQL = "select goods_name, order_num, order_amount from manage_uplus_goods where date = ? ";
+    private static final String uplusStatQuerySQL = "select `date`, sum(order_num) as order_num, sum(order_amount) as order_amount from manage_uplus_goods where `date` >=? and `date` <= ? group by `date` ";
+
+    public List<UplusStat> getUplusStat(String date, String endDate) {
+        List<UplusStat> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(uplusStatQuerySQL, new Object[]{date, endDate},
+                    (resultSet, i) ->
+                            new UplusStat(
+                                    resultSet.getString("date"),
+                                    resultSet.getInt("order_num"),
+                                    resultSet.getDouble("order_amount")));
+        } catch (Exception ex) {
+            logger.error("getUplusStat error", ex);
+        }
+        return list;
+    }
+
+    private static final String uplusGoodsQuerySQL = "select goods_name, order_num, order_amount from manage_uplus_goods where `date` = (select max(`date`) from manage_uplus_goods)";
 
     public List<UplusGoods> getUplusGoods() {
         List<UplusGoods> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(uplusGoodsQuerySQL , new Object[]{JavaUtils.getSeveralDaysAgo(1)},
+            list = bisysDB.query(uplusGoodsQuerySQL, new Object[]{},
                     (resultSet, i) ->
                             new UplusGoods(
                                     resultSet.getString("goods_name"),
@@ -332,11 +415,11 @@ public class BisysJdbcService {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(userRetentionQuerySQL, new Object[]{date, endDate},
                     (resultSet, i) ->
-                  new UserRetention(
-                          resultSet.getString("date"),
-                          resultSet.getDouble("after_day_1"),
-                          resultSet.getDouble("after_day_3"),
-                          resultSet.getDouble("after_day_7"))
+                            new UserRetention(
+                                    resultSet.getString("date"),
+                                    resultSet.getDouble("after_day_1"),
+                                    resultSet.getDouble("after_day_3"),
+                                    resultSet.getDouble("after_day_7"))
             );
         } catch (Exception ex) {
             logger.error("getUserRetention error", ex);
@@ -356,7 +439,7 @@ public class BisysJdbcService {
         List<AccessData> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query( accessDataQuerySQL, new Object[]{date, endDate, date, endDate},
+            list = bisysDB.query(accessDataQuerySQL, new Object[]{date, endDate, date, endDate},
                     (resultSet, i) ->
                             new AccessData(
                                     resultSet.getString("date"),
@@ -379,7 +462,7 @@ public class BisysJdbcService {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(smsCityQuerySQL, new Object[]{},
-                    (resultSet, i) ->{
+                    (resultSet, i) -> {
                         SmsCity smsCity = new SmsCity();
                         smsCity.setCityName(resultSet.getString("city_name"));
                         smsCity.setOneSmsNum(resultSet.getInt("sms_one_num"));

@@ -1,9 +1,6 @@
 package com.haozhuo.datag.web;
 
-import com.haozhuo.datag.model.bisys.HealthCheck;
-import com.haozhuo.datag.model.bisys.OpsMallOrder;
-import com.haozhuo.datag.model.bisys.Register;
-import com.haozhuo.datag.model.bisys.YouApp;
+import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.service.BisysJdbcService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -21,6 +18,19 @@ public class BisysController {
 
     @Autowired
     private BisysJdbcService bisysJdbcService;
+
+    private static final String  healthCheckNotes =  "注释: date:日期, orderNum:订单总数, payOrderNum:成交笔数, " +
+            "payOrderAmount:成交金额, refundWinNum:退款笔数, refundWinAmount:退款金额, payUseNum:用户数, payProfitAmount:成交成本, " +
+            "refundSuccessAmount:退款成本, orderPrice:订单单价, perCustomerTransaction:客单价, 毛利润:grossProfit, " +
+            "毛利润率:grossProfitRate, actualPayAmount:实收金额, actualProfit:实际利润, actualProfitRate:实际利润率";
+
+    private static final String kindNotes = "注释：渠道:channelType; 支付笔数:payNum; 支付金额: payAmount; 用户数:userNum; 客单价:price; " +
+            "成本:cost; 毛利润:profit; 利润率:profitRate; 退款笔数:refundNum; 退款金额:refundAmount; 实际营收:totalFee;";
+
+
+    private static final String smsNotes = "factorySmsNum:体检中心数量,oneSmsNum:短信数量,oneSmsRegisterNum:短信注册量,oldUserNum:老用户数," +
+            "oneRate:转化率,oneSmsCost:用户成本,twoSmsNum:二次短信,twoSmsRegisterNum:二次注册,twoRate:二次转化, twoSmsCost:二次成本," +
+            "smsRegisterNum:汇总注册,totalRate:总体转化,totalCost:总体成本";
 
     @GetMapping("/ProdRiskEvaluation")
     @ApiOperation(value = "直接调用接口", notes = "业务：查询prod_risk_evaluation的点击首页_风险评估的次数(PV，累加)")
@@ -57,10 +67,19 @@ public class BisysController {
 
     @GetMapping("/dailyReport/jhz/uplusGoods")
     @ApiOperation(value = "Uplus会员-消费订单", notes = "返回结果的字段注释: goods_name:uplus会员商品名称; order_num:下单笔数; order_amount:下单金额")
-    public Object getUplusGoods() {
+    public Object getUplusGoods(@RequestParam(value = "date") String date,
+                                @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
         return bisysJdbcService.getUplusGoods();
     }
 
+    @GetMapping("/dailyReport/jhz/uplusStat")
+    @ApiOperation(value = "Uplus会员-消费统计", notes = "返回结果的字段注释: order_num:下单笔数; order_amount:下单金额")
+    public Object getUplusStat(@RequestParam(value = "date") String date,
+                               @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
+        if ("null".equals(endDate))
+            endDate = date;
+        return bisysJdbcService.getUplusStat(date, endDate);
+    }
 
     @PostMapping("/dailyReport/jhz/add/mallOrderInput")
     @ApiOperation(value = "手动填写的表单：id -> 10:键管服务; 11:绿通; 12:美维口腔")
@@ -70,10 +89,7 @@ public class BisysController {
     }
 
     @GetMapping("/dailyReport/tjz/healthCheck")
-    @ApiOperation(value = "体检渠道数据", notes = "返回结果的字段注释: date:日期, orderNum:订单总数, payOrderNum:成交笔数, " +
-            "payOrderAmount:成交金额, refundWinNum:退款笔数, refundWinAmount:退款金额, payUseNum:用户数, payProfitAmount:成交成本, " +
-            "refundSuccessAmount:退款成本, orderPrice:订单单价, perCustomerTransaction:客单价, 毛利润:grossProfit, " +
-            "毛利润率:grossProfitRate, actualPayAmount:实收金额, actualProfit:实际利润, actualProfitRate:实际利润率")
+    @ApiOperation(value = "体检渠道数据", notes = healthCheckNotes)
     public Object getHealthCheck(
             @RequestParam(value = "isTotal", defaultValue = "false") boolean isTotal,
             @RequestParam(value = "date") String date,
@@ -85,15 +101,14 @@ public class BisysController {
     }
 
     @PostMapping("/dailyReport/tjz/add/HealthCheckFromWeChat")
-    @ApiOperation(value = "体检渠道统计 手动输入 来源于微信", notes = "需要以下字段，字段意思请看/dailyReport/healthCheck。 {\"date\": \"2019-10-10\", \"orderNum\": 0, \"payOrderNum\": 10, \"payOrderAmount\": 0, \"refundWinNum\": 0, \"refundWinAmount\": 0, \"payUseNum\": 10, \"payProfitAmount\": 10,\"refundSuccessAmount\": 0}")
+    @ApiOperation(value = "添加体检渠道统计(微信)", notes = "{\"date\": \"2019-10-10\", \"orderNum\": 0, \"payOrderNum\": 10, \"payOrderAmount\": 0, \"refundWinNum\": 0, \"refundWinAmount\": 0, \"payUseNum\": 10, \"payProfitAmount\": 10,\"refundSuccessAmount\": 0}  ;  " + healthCheckNotes)
     public Object addHealthCheckFromWeChat(@RequestBody HealthCheck healthCheck) {
         bisysJdbcService.updateServiceTransactionWeChat(healthCheck);
         return "success!";
     }
 
-
     @GetMapping("/dailyReport/app/sms")
-    @ApiOperation(value = "短信效果统计", notes = "factorySmsNum:体检中心数量,oneSmsNum:短信数量,oneSmsRegisterNum:短信注册量,oldUserNum:老用户数,oneRate:转化率,oneSmsCost:用户成本,twoSmsNum:二次短信,twoSmsRegisterNum:二次注册,twoRate:二次转化, twoSmsCost:二次成本,smsRegisterNum:汇总注册,totalRate:总体转化,totalCost:总体成本")
+    @ApiOperation(value = "短信效果统计", notes = smsNotes)
     public Object getSms(@RequestParam(value = "date") String date,
                          @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
         if ("null".equals(endDate))
@@ -119,23 +134,23 @@ public class BisysController {
     @GetMapping("/dailyReport/app/register")
     @ApiOperation(value = "注册用户数据", notes = "downloadUsers:下载用户合计,totalDownloadUsers:累计下载用户,registerUsers:注册用户,totalRegisterUsers:累计注册用户, downloadUnregister:下载未注册,activeUsers:活跃用户,startNum:启动次数;")
     public Object getRegister(@RequestParam(value = "date") String date,
-                            @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
+                              @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
         if ("null".equals(endDate))
             endDate = date;
         return bisysJdbcService.getRegister(date, endDate);
     }
 
     @GetMapping("/dailyReport/app/userRetention")
-    @ApiOperation(value = "优健康App用户留存率", notes = "")
+    @ApiOperation(value = "优健康App用户留存率")
     public Object getUserRetention(@RequestParam(value = "date") String date,
-                              @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
+                                   @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
         if ("null".equals(endDate))
             endDate = date;
         return bisysJdbcService.getUserRetention(date, endDate);
     }
 
     @GetMapping("/dailyReport/app/accessData")
-    @ApiOperation(value = "优知相关访问数据", notes = "")
+    @ApiOperation(value = "优知相关访问数据")
     public Object getAccessData(@RequestParam(value = "date") String date,
                                 @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
         if ("null".equals(endDate))
@@ -144,7 +159,7 @@ public class BisysController {
     }
 
     @GetMapping("/dailyReport/app/smsCity")
-    @ApiOperation(value = "城市短信注册明细", notes = "字段意思请看 /dailyReport/app/sms")
+    @ApiOperation(value = "城市短信注册明细", notes = smsNotes)
     public Object getSmsCity() {
         return bisysJdbcService.getSmsCity();
     }
@@ -157,6 +172,28 @@ public class BisysController {
         return "success!";
     }
 
+    @GetMapping("/dailyReport/swz/kindOrder")
+    @ApiOperation(value = "实物交易数据", notes = kindNotes)
+    public Object getKindOrder(@RequestParam(value = "date") String date,
+                               @RequestParam(value = "endDate", defaultValue = "null") String endDate) {
+        if ("null".equals(endDate))
+            endDate = date;
+        return bisysJdbcService.getKindOrder(date, endDate);
+    }
+
+    @GetMapping("/dailyReport/swz/kindGoods")
+    @ApiOperation(value = "当日商品交易明细")
+    public Object getKindGoods() {
+        return bisysJdbcService.getKindGoods();
+    }
+
+    @PostMapping("/dailyReport/swz/add/kindOrder")
+    @ApiOperation(value = "添加实物交易数据(微信)",
+            notes = "channelType 无需填" + kindNotes)
+    public Object addKindOrder(@RequestBody KindOrder kindOrder) {
+        bisysJdbcService.updateKindOrderWeChat(kindOrder);
+        return "success!";
+    }
 }
 
 

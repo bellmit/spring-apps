@@ -10,20 +10,44 @@ public class HealthCheck {
     private String src;
     //订单总数
     private int orderNum;
-    //成交笔数
-    private int payOrderNum;
-    //成交金额
-    private double payOrderAmount;
     //退款笔数
     private int refundWinNum;
     //退款金额
     private double refundWinAmount;
-    //用户数
-    private int payUseNum;
     //成交成本
     private double payProfitAmount;
     //退款成本
     private double refundSuccessAmount;
+    //成交笔数
+    private int payOrderNum;
+    //成交金额
+    private double payOrderAmount;
+    //用户数
+    private int payUseNum;
+
+    public int getPayOrderNum() {
+        return payOrderNum;
+    }
+
+    public void setPayOrderNum(int payOrderNum) {
+        this.payOrderNum = payOrderNum;
+    }
+
+    public double getPayOrderAmount() {
+        return payOrderAmount;
+    }
+
+    public void setPayOrderAmount(double payOrderAmount) {
+        this.payOrderAmount = payOrderAmount;
+    }
+
+    public int getPayUseNum() {
+        return payUseNum;
+    }
+
+    public void setPayUseNum(int payUseNum) {
+        this.payUseNum = payUseNum;
+    }
 
     public String getSrc() {
         return src;
@@ -49,22 +73,6 @@ public class HealthCheck {
         this.orderNum = orderNum;
     }
 
-    public int getPayOrderNum() {
-        return payOrderNum;
-    }
-
-    public void setPayOrderNum(int payOrderNum) {
-        this.payOrderNum = payOrderNum;
-    }
-
-    public double getPayOrderAmount() {
-        return payOrderAmount;
-    }
-
-    public void setPayOrderAmount(double payOrderAmount) {
-        this.payOrderAmount = payOrderAmount;
-    }
-
     public int getRefundWinNum() {
         return refundWinNum;
     }
@@ -79,14 +87,6 @@ public class HealthCheck {
 
     public void setRefundWinAmount(double refundWinAmount) {
         this.refundWinAmount = refundWinAmount;
-    }
-
-    public int getPayUseNum() {
-        return payUseNum;
-    }
-
-    public void setPayUseNum(int payUseNum) {
-        this.payUseNum = payUseNum;
     }
 
     public double getPayProfitAmount() {

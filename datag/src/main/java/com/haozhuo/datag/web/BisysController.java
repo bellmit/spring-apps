@@ -19,7 +19,8 @@ public class BisysController {
     @Autowired
     private BisysJdbcService bisysJdbcService;
 
-    private static final String healthCheckNotes =  "注释: date:日期, orderNum:订单总数, payOrderNum:成交笔数, " +
+
+    private static final String  healthCheckNotes =  "注释: date:日期, orderNum:订单总数, payOrderNum:成交笔数, " +
             "payOrderAmount:成交金额, refundWinNum:退款笔数, refundWinAmount:退款金额, payUseNum:用户数, payProfitAmount:成交成本, " +
             "refundSuccessAmount:退款成本, orderPrice:订单单价, perCustomerTransaction:客单价, 毛利润:grossProfit, " +
             "毛利润率:grossProfitRate, actualPayAmount:实收金额, actualProfit:实际利润, actualProfitRate:实际利润率";
@@ -231,7 +232,6 @@ public class BisysController {
                                 @RequestParam(value = "pageSize") int pageSize) {
         return bisysJdbcService.getYouAppPage(pageNo, pageSize);
     }
-
 }
 
 

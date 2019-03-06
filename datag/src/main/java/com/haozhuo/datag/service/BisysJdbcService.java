@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,15 +26,12 @@ public class BisysJdbcService {
     private JdbcTemplate bisysDB;
 
     private final static String dailyYouAppQuerySQL = "select `date`, os, download_users, total_download_users, active_users," +
-            "start_num from daily_app union select `date`, 0 as os, sum(download_users) as download_users, " +
+            "start_num from daily_app where date >=? and date <= ? " +
+            " union select `date`, 0 as os, sum(download_users) as download_users, " +
             "sum(total_download_users) as total_download_users, sum(active_users) as active_users, sum(start_num) as start_num " +
             "from daily_app where date >=? and date <= ? group by `date` ";
 
-    private final static String dailyRegisterQuerySQL = "select a.`date`, download_users, total_download_users, active_users, " +
-            "start_num, a.register_users, a.total_register_users, a.download_unregister from daily_register a inner join (" +
-            "select `date`, sum(download_users) as download_users, sum(total_download_users) as total_download_users, " +
-            "sum(active_users) as active_users, sum(start_num) as start_num from daily_app group by `date` ) b on " +
-            "a.`date` = b.`date` where a.`date`>= ? and a.`date` <= ?";
+    private final static String dailyRegisterQuerySQL = "select * from daily_register a  where a.`date`>= ? and a.`date` <= ? ";
 
     private final static String smsQuerySQL = "select `date`, factory_sms_num, one_sms_num, one_sms_register_num, old_user_num, " +
             "ifnull(one_sms_register_num/(one_sms_num - old_user_num), 0) as one_rate, ifnull(one_sms_cost/one_sms_register_num, 0) as one_sms_cost," +
@@ -54,17 +52,11 @@ public class BisysJdbcService {
     private final static String dailyMallOrderInputUpdateSQL =
             "INSERT INTO `daily_mall_order_input` (`date`, `genre`, `order_num`, `order_amount`, `pay_order_num`, `pay_order_amount`, " +
                     "`apply_refund_order_num`, `apply_refund_order_amount`, `refund_order_num`, `refund_order_amount`, `refund_gross_profit`, " +
-                    "`gross_profit`, `gross_profit_rate`, `refund_rate`, `pay_conversion_rate`, `update_time`) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY " +
+                    "`gross_profit`, `gross_profit_rate`, `refund_rate`, `pay_conversion_rate`, `update_time`, `upload_time`, `operate_account`) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY " +
                     "UPDATE `order_num` = ?, `order_amount` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, `apply_refund_order_num` = ?, " +
                     "`apply_refund_order_amount` = ?, `refund_order_num` = ?, `refund_order_amount` = ?, `refund_gross_profit` = ?, " +
-                    "`gross_profit` = ?, `gross_profit_rate` = ?, `refund_rate` = ?, `pay_conversion_rate` = ?, `update_time` = ?";
-
-    private static String serviceTransactionWeChatUpdateSQL = "INSERT INTO `daily_service_transaction_wechat` (`date`, `order_num`, `pay_order_num`, " +
-            "`pay_order_amount`, `refund_win_num`, `refund_win_amount`, `pay_use_num`, `pay_profit_amount`, `refund_success_amount`, `update_time`)" +
-            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `order_num` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, " +
-            "`refund_win_num` = ?, `refund_win_amount` = ?, `pay_use_num` = ?, `pay_profit_amount` = ?, `refund_success_amount` = ?, `update_time` = ?";
-
+                    "`gross_profit` = ?, `gross_profit_rate` = ?, `refund_rate` = ?, `pay_conversion_rate` = ?, `update_time` = ?, `upload_time`=?, `operate_account`=?";
 
     private final static String healthCheckQuerySql = "select 'App' as src, `date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
@@ -96,54 +88,66 @@ public class BisysJdbcService {
         return pv;
     }
 
-    public void updateMallOrderInput(OpsMallOrder mallOrder) {
+    public void updateMallOrderInput(OpsMallOrderInput mallOrder) {
         if (mallOrder.isInputMallOrder()) {
             String updateTime = JavaUtils.getCurrent();
             bisysDB.update(dailyMallOrderInputUpdateSQL, mallOrder.getDate(), mallOrder.getGenre(), mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
                     mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
                     mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
-                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime, mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
+                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime, mallOrder.getUploadTime(), mallOrder.getOperateAccount(),
+                    mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
                     mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
                     mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
-                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime);
+                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime, mallOrder.getUploadTime(), mallOrder.getOperateAccount());
         }
     }
+
+    private static String serviceTransactionWeChatUpdateSQL = "INSERT INTO `daily_service_transaction_wechat` (`date`, `order_num`, `pay_order_num`, " +
+            "`pay_order_amount`, `refund_win_num`, `refund_win_amount`, `pay_use_num`, `pay_profit_amount`, `refund_success_amount`, `update_time`, `upload_time`, `operate_account`)" +
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `order_num` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, " +
+            "`refund_win_num` = ?, `refund_win_amount` = ?, `pay_use_num` = ?, `pay_profit_amount` = ?, `refund_success_amount` = ?, `update_time` = ?,`upload_time`=?, `operate_account`=?";
 
     public void updateServiceTransactionWeChat(HealthCheck healthCheck) {
         String updateTime = JavaUtils.getCurrent();
         bisysDB.update(serviceTransactionWeChatUpdateSQL, healthCheck.getDate(), healthCheck.getOrderNum(),
                 healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
                 healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
-                healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getOrderNum(),
-                healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
+                healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getUploadTime(), healthCheck.getOperateAccount(),
+                healthCheck.getOrderNum(), healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
                 healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
-                healthCheck.getRefundSuccessAmount(), updateTime);
+                healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getUploadTime(), healthCheck.getOperateAccount());
     }
 
     private static final String youAppUpdateSQL = "INSERT INTO `daily_app` (`date`, `os`, `download_users`, `total_download_users`, `active_users`," +
-            " `start_num`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?, " +
-            "`total_download_users` = ?, `active_users` = ?, `start_num` = ?, `update_time` = ?";
+            " `start_num`, `update_time`, `upload_time`, `operate_account`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?, " +
+            "`total_download_users` = ?, `active_users` = ?, `start_num` = ?, `update_time` = ?, `upload_time`=?, `operate_account`=? ";
 
     public String updateYouApp(YouApp youApp) {
         String updateTime = JavaUtils.getCurrent();
         if (youApp.getOs() == 1 || youApp.getOs() == 2) {
             bisysDB.update(youAppUpdateSQL, youApp.getDate(), youApp.getOs(), youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
-                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime, youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
-                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime);
+                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime, youApp.getUploadTime(), youApp.getOperateAccount(),
+                    youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(), youApp.getActiveUsers(), youApp.getStartNum(),
+                    updateTime, youApp.getUploadTime(), youApp.getOperateAccount());
             return "success!";
         } else {
             return "os字段只能是 1：Android，2:iOS";
         }
     }
 
-    private static final String registerUpdateSQL = "INSERT INTO `daily_register` (`date`, `register_users`, `total_register_users`," +
-            " `download_unregister`, `update_time`) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `register_users` = ?, `total_register_users` = ?, `download_unregister` = ?, `update_time` = ?";
+    private static final String registerUpdateSQL = "INSERT INTO `daily_register` (`date`, `download_users`, `total_download_users`," +
+            " `register_users`, `total_register_users`, `download_unregister`, `active_users`, `start_num`, `upload_time`, " +
+            "`operate_account`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?," +
+            " `total_download_users` = ?, `register_users` = ?, `total_register_users` = ?, `download_unregister` = ?, " +
+            " `active_users` = ?, `start_num` = ?, `upload_time` = ?, `operate_account` = ?, `update_time` = ?";
 
     public void updateRegister(Register register) {
         String updateTime = JavaUtils.getCurrent();
-        bisysDB.update(registerUpdateSQL, register.getDate(), register.getRegisterUsers(), register.getTotalRegisterUsers(),
-                register.getDownloadUnregister(), updateTime, register.getRegisterUsers(), register.getTotalRegisterUsers(),
-                register.getDownloadUnregister(), updateTime);
+        bisysDB.update(registerUpdateSQL, register.getDate(), register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
+                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), register.getUploadTime(),
+                register.getOperateAccount(), updateTime, register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
+                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), register.getUploadTime(),
+                register.getOperateAccount(), updateTime);
     }
 
     public List<OpsMallOrder> getOpsMallOrder(int typeId, String date, String endDate) {
@@ -217,7 +221,7 @@ public class BisysJdbcService {
         List<YouApp> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate},
+            list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate, date, endDate},
                     (resultSet, i) -> {
                         YouApp youApp = new YouApp();
                         youApp.setActiveUsers(resultSet.getInt("active_users"));
@@ -250,6 +254,8 @@ public class BisysJdbcService {
                         register.setRegisterUsers(resultSet.getInt("register_users"));
                         register.setTotalRegisterUsers(resultSet.getInt("total_register_users"));
                         register.setDownloadUnregister(resultSet.getInt("download_unregister"));
+                        register.setOperateAccount(resultSet.getString("operate_account"));
+                        register.setUploadTime(resultSet.getString("upload_time"));
                         return register;
                     });
         } catch (Exception ex) {
@@ -280,6 +286,140 @@ public class BisysJdbcService {
         return list;
     }
 
+    private static final String kindOrderQuerySQL = "select * from manage_kind_order where `date` >= ? and `date` <= ?";
+    private static final String kindGoodsQuerySQL = "select * from manage_kind_goods where `date` = (select max(`date`) from manage_kind_goods)";
+
+    public List<KindOrder> getKindOrder(String date, String endDate) {
+        List<KindOrder> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(kindOrderQuerySQL, new Object[]{date, endDate},
+                    (resultSet, i) -> {
+                        KindOrder kindOrder = new KindOrder();
+                        kindOrder.setDate(resultSet.getString("date"));
+                        kindOrder.setChannelType(resultSet.getString("channel_type"));
+                        kindOrder.setPayNum(resultSet.getInt("pay_num"));
+                        kindOrder.setPayAmount(resultSet.getDouble("pay_amount"));
+                        kindOrder.setUserNum(resultSet.getInt("user_num"));
+                        kindOrder.setPrice(resultSet.getDouble("price"));
+                        kindOrder.setCost(resultSet.getDouble("cost"));
+                        kindOrder.setProfit(resultSet.getDouble("profit"));
+                        kindOrder.setProfitRate(resultSet.getDouble("profit_rate"));
+                        kindOrder.setRefundNum(resultSet.getInt("refund_num"));
+                        kindOrder.setRefundAmount(resultSet.getDouble("refund_amount"));
+                        kindOrder.setTotalFee(resultSet.getDouble("refund_amount"));
+                        return kindOrder;
+                    }
+            );
+        } catch (Exception ex) {
+            logger.error("getKindOrder", ex);
+        }
+        return list;
+    }
+
+    private List<PageRecord> getPageRecord(String sql, Object[] params, boolean hasNote) {
+        List<PageRecord> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(sql, params,
+                    (resultSet, i) -> {
+                        PageRecord pageRecord = new PageRecord();
+                        pageRecord.setDate(resultSet.getString("date"));
+                        pageRecord.setOperateAccount(resultSet.getString("operate_account"));
+                        pageRecord.setUploadTime(resultSet.getString("upload_time"));
+                        if (hasNote) {
+                            pageRecord.setNote(resultSet.getString("note"));
+                        }
+                        return pageRecord;
+                    }
+            );
+        } catch (Exception ex) {
+            logger.error("getPageRecord", ex);
+        }
+        return list;
+    }
+
+    public List<KindGoods> getKindGoods() {
+        List<KindGoods> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(kindGoodsQuerySQL, new Object[]{},
+                    (resultSet, i) ->
+                            new KindGoods(
+                                    resultSet.getString("date"),
+                                    resultSet.getString("goods_name"),
+                                    resultSet.getInt("goods_num"),
+                                    resultSet.getDouble("total_fee")
+                            )
+            );
+        } catch (Exception ex) {
+            logger.error("getHealthCheck error", ex);
+        }
+        return list;
+    }
+
+    private static final String kindOrderUpdateSQL = "INSERT INTO `manage_kind_order` (`date`, `channel_type`, `pay_num`," +
+            " `pay_amount`, `user_num`, `price`, `cost`, `profit`, `profit_rate`, `refund_num`, `refund_amount`, `total_fee`, " +
+            " `upload_time`, `operate_account`, `update_time`)" +
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `pay_num` = ?, `pay_amount` = ?, `user_num` = ?, `price` = ?," +
+            " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `upload_time` = ?, `operate_account` = ?, `update_time` = ?";
+
+    public void updateKindOrderWeChat(KindOrder kindOrder) {
+        String updateTime = JavaUtils.getCurrent();
+        bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",
+                kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
+                kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(),
+                kindOrder.getUploadTime(), kindOrder.getOperateAccount(), updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(),
+                kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(), kindOrder.getProfit(), kindOrder.getProfitRate(),
+                kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), kindOrder.getUploadTime(),
+                kindOrder.getOperateAccount(), updateTime);
+    }
+
+    public Page<PageRecord> getKindOrderPage(int pageNo, int pageSize, int flag) {
+        String channelType = "微信";
+        if (flag == 1) {
+            channelType = "APP";
+        }
+        String countSql = String.format("select count(*) as c from manage_kind_order x where x.channel_type = '%s'", channelType);
+        String contentSql = String.format("select date, upload_time, operate_account from manage_kind_order x " +
+                "where x.channel_type = '%s' order by `date` desc limit ?, ?", channelType);
+        return getPage(countSql, contentSql, pageNo, pageSize, false);
+    }
+
+    public Page<PageRecord> getHealthCheckPage(int pageNo, int pageSize) {
+        return getPage("daily_service_transaction_wechat",  pageNo, pageSize);
+    }
+
+    public Page<PageRecord> getRegisterPage(int pageNo, int pageSize) {
+        return getPage("daily_register",  pageNo, pageSize);
+    }
+    public Page<PageRecord> getYouAppPage(int pageNo, int pageSize) {
+        return getPage("daily_app",  pageNo,  pageSize);
+    }
+    public Page<PageRecord> getMallOrderInputPage(int pageNo, int pageSize) {
+        String countSql = "select count(*) as c from daily_mall_order_input x";
+        String contentSql = "select `date`, upload_time, operate_account, genre as note from daily_mall_order_input x order by `date` desc limit  ?, ?";
+        return getPage(countSql, contentSql, pageNo, pageSize, true);
+    }
+
+    private Page<PageRecord> getPage(String countSql, String contentSql, int pageNo, int pageSize, boolean hasNote) {
+        int from = (pageNo - 1) * pageSize;
+        int count = bisysDB.query(countSql, (resultSet, i) -> resultSet.getInt("c")).get(0);
+        List<PageRecord> recordList = getPageRecord(contentSql, new Object[]{from, pageSize}, hasNote);
+        Page<PageRecord> page = new Page<>();
+        page.setContent(recordList);
+        page.setPageNo(pageNo);
+        page.setPageSize(pageSize);
+        page.setTotalPageNum(count);
+        return page;
+    }
+    private Page<PageRecord> getPage(String table, int pageNo, int pageSize) {
+        String countSql = String.format("select count(*) as c from %s x", table);
+        String contentSql = String.format("select `date`, upload_time, operate_account from %s x order by `date` desc limit  ?, ?", table);
+        return getPage(countSql, contentSql, pageNo, pageSize, false);
+
+    }
+
     public List<HealthCheck> getHealthCheck(boolean isTotal, String date, String endDate) {
         List<HealthCheck> list = null;
         try {
@@ -306,13 +446,31 @@ public class BisysJdbcService {
         return list;
     }
 
-    private static final String uplusGoodsQuerySQL = "select goods_name, order_num, order_amount from manage_uplus_goods where date = ? ";
+    private static final String uplusStatQuerySQL = "select `date`, sum(order_num) as order_num, sum(order_amount) as order_amount from manage_uplus_goods where `date` >=? and `date` <= ? group by `date` ";
+
+    public List<UplusStat> getUplusStat(String date, String endDate) {
+        List<UplusStat> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(uplusStatQuerySQL, new Object[]{date, endDate},
+                    (resultSet, i) ->
+                            new UplusStat(
+                                    resultSet.getString("date"),
+                                    resultSet.getInt("order_num"),
+                                    resultSet.getDouble("order_amount")));
+        } catch (Exception ex) {
+            logger.error("getUplusStat error", ex);
+        }
+        return list;
+    }
+
+    private static final String uplusGoodsQuerySQL = "select goods_name, order_num, order_amount from manage_uplus_goods where `date` = (select max(`date`) from manage_uplus_goods)";
 
     public List<UplusGoods> getUplusGoods() {
         List<UplusGoods> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(uplusGoodsQuerySQL , new Object[]{JavaUtils.getSeveralDaysAgo(1)},
+            list = bisysDB.query(uplusGoodsQuerySQL, new Object[]{},
                     (resultSet, i) ->
                             new UplusGoods(
                                     resultSet.getString("goods_name"),
@@ -332,11 +490,11 @@ public class BisysJdbcService {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(userRetentionQuerySQL, new Object[]{date, endDate},
                     (resultSet, i) ->
-                  new UserRetention(
-                          resultSet.getString("date"),
-                          resultSet.getDouble("after_day_1"),
-                          resultSet.getDouble("after_day_3"),
-                          resultSet.getDouble("after_day_7"))
+                            new UserRetention(
+                                    resultSet.getString("date"),
+                                    resultSet.getDouble("after_day_1"),
+                                    resultSet.getDouble("after_day_3"),
+                                    resultSet.getDouble("after_day_7"))
             );
         } catch (Exception ex) {
             logger.error("getUserRetention error", ex);
@@ -356,7 +514,7 @@ public class BisysJdbcService {
         List<AccessData> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query( accessDataQuerySQL, new Object[]{date, endDate, date, endDate},
+            list = bisysDB.query(accessDataQuerySQL, new Object[]{date, endDate, date, endDate},
                     (resultSet, i) ->
                             new AccessData(
                                     resultSet.getString("date"),
@@ -379,7 +537,7 @@ public class BisysJdbcService {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(smsCityQuerySQL, new Object[]{},
-                    (resultSet, i) ->{
+                    (resultSet, i) -> {
                         SmsCity smsCity = new SmsCity();
                         smsCity.setCityName(resultSet.getString("city_name"));
                         smsCity.setOneSmsNum(resultSet.getInt("sms_one_num"));

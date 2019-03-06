@@ -23,4 +23,6 @@ public class Register {
     private int activeUsers;
     //启动次数
     private int startNum;
+    private String uploadTime;
+    private String OperateAccount;
 }

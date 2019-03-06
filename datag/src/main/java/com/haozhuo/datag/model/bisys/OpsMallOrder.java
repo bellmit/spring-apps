@@ -32,6 +32,7 @@ public class OpsMallOrder {
     //退款完成金额
     double refundOrderAmount;
 
+
     public OpsMallOrder(int id, String date, int orderNum, double orderAmount, int payOrderNum, double payOrderAmount, int applyRefundOrderNum, double applyRefundOrderAmount, int refundOrderNum, double refundOrderAmount) {
         this.id = id;
         this.date = date;

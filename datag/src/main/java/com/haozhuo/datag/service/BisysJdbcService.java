@@ -312,7 +312,6 @@ public class BisysJdbcService {
                     }
             );
         } catch (Exception ex) {
-<<<<<<< HEAD
             logger.error("getKindOrder", ex);
         }
         return list;
@@ -336,9 +335,6 @@ public class BisysJdbcService {
             );
         } catch (Exception ex) {
             logger.error("getPageRecord", ex);
-=======
-            logger.error("getHealthCheck error", ex);
->>>>>>> 6607d392ff0652b9de2cc7657fd09d2d96c2c25e
         }
         return list;
     }
@@ -363,23 +359,17 @@ public class BisysJdbcService {
     }
 
     private static final String kindOrderUpdateSQL = "INSERT INTO `manage_kind_order` (`date`, `channel_type`, `pay_num`," +
-<<<<<<< HEAD
             " `pay_amount`, `user_num`, `price`, `cost`, `profit`, `profit_rate`, `refund_num`, `refund_amount`, `total_fee`, " +
             " `upload_time`, `operate_account`, `update_time`)" +
             " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `pay_num` = ?, `pay_amount` = ?, `user_num` = ?, `price` = ?," +
             " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `upload_time` = ?, `operate_account` = ?, `update_time` = ?";
-=======
-            " `pay_amount`, `user_num`, `price`, `cost`, `profit`, `profit_rate`, `refund_num`, `refund_amount`, `total_fee`, `update_time`)" +
-            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `pay_num` = ?, `pay_amount` = ?, `user_num` = ?, `price` = ?," +
-            " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `update_time` = ?";
->>>>>>> 6607d392ff0652b9de2cc7657fd09d2d96c2c25e
+
 
     public void updateKindOrderWeChat(KindOrder kindOrder) {
         String updateTime = JavaUtils.getCurrent();
         bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",
                 kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
                 kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(),
-<<<<<<< HEAD
                 kindOrder.getUploadTime(), kindOrder.getOperateAccount(), updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(),
                 kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(), kindOrder.getProfit(), kindOrder.getProfitRate(),
                 kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), kindOrder.getUploadTime(),
@@ -428,11 +418,6 @@ public class BisysJdbcService {
         String countSql = String.format("select count(*) as c from %s x", table);
         String contentSql = String.format("select `date`, upload_time, operate_account from %s x order by `date` desc limit  ?, ?", table);
         return getPage(countSql, contentSql, pageNo, pageSize, false);
-
-=======
-                updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
-                kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), updateTime);
->>>>>>> 6607d392ff0652b9de2cc7657fd09d2d96c2c25e
     }
 
     public List<HealthCheck> getHealthCheck(boolean isTotal, String date, String endDate) {

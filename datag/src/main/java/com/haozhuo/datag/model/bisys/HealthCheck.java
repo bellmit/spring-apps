@@ -25,9 +25,6 @@ public class HealthCheck {
     //用户数
     private int payUseNum;
 
-    private String uploadTime;
-
-    private String operateAccount;
 
     public int getPayOrderNum() {
         return payOrderNum;
@@ -51,23 +48,6 @@ public class HealthCheck {
 
     public void setPayUseNum(int payUseNum) {
         this.payUseNum = payUseNum;
-    }
-
-
-    public String getUploadTime() {
-        return uploadTime;
-    }
-
-    public void setUploadTime(String uploadTime) {
-        this.uploadTime = uploadTime;
-    }
-
-    public String getOperateAccount() {
-        return operateAccount;
-    }
-
-    public void setOperateAccount(String operateAccount) {
-        this.operateAccount = operateAccount;
     }
 
     public String getSrc() {

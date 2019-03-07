@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -49,14 +48,6 @@ public class BisysJdbcService {
             " ifnull(gross_profit_rate, -1) as gross_profit_rate, ifnull(refund_rate, -1) as refund_rate, " +
             " ifnull(pay_conversion_rate, -1) as  pay_conversion_rate from daily_mall_order_input where date >= ? and date <=? and genre=?";
 
-    private final static String dailyMallOrderInputUpdateSQL =
-            "INSERT INTO `daily_mall_order_input` (`date`, `genre`, `order_num`, `order_amount`, `pay_order_num`, `pay_order_amount`, " +
-                    "`apply_refund_order_num`, `apply_refund_order_amount`, `refund_order_num`, `refund_order_amount`, `refund_gross_profit`, " +
-                    "`gross_profit`, `gross_profit_rate`, `refund_rate`, `pay_conversion_rate`, `update_time`, `upload_time`, `operate_account`) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY " +
-                    "UPDATE `order_num` = ?, `order_amount` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, `apply_refund_order_num` = ?, " +
-                    "`apply_refund_order_amount` = ?, `refund_order_num` = ?, `refund_order_amount` = ?, `refund_gross_profit` = ?, " +
-                    "`gross_profit` = ?, `gross_profit_rate` = ?, `refund_rate` = ?, `pay_conversion_rate` = ?, `update_time` = ?, `upload_time`=?, `operate_account`=?";
 
     private final static String healthCheckQuerySql = "select 'App' as src, `date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
@@ -88,47 +79,56 @@ public class BisysJdbcService {
         return pv;
     }
 
-    public void updateMallOrderInput(OpsMallOrderInput mallOrder) {
+    private final static String dailyMallOrderInputUpdateSQL =
+            "INSERT INTO `daily_mall_order_input` (`date`, `genre`, `order_num`, `order_amount`, `pay_order_num`, `pay_order_amount`, " +
+                    "`apply_refund_order_num`, `apply_refund_order_amount`, `refund_order_num`, `refund_order_amount`, `refund_gross_profit`, " +
+                    "`gross_profit`, `gross_profit_rate`, `refund_rate`, `pay_conversion_rate`, `update_time`) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY " +
+                    "UPDATE `order_num` = ?, `order_amount` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, `apply_refund_order_num` = ?, " +
+                    "`apply_refund_order_amount` = ?, `refund_order_num` = ?, `refund_order_amount` = ?, `refund_gross_profit` = ?, " +
+                    "`gross_profit` = ?, `gross_profit_rate` = ?, `refund_rate` = ?, `pay_conversion_rate` = ?, `update_time` = ?";
+
+    public void updateMallOrderInput(OpsMallOrder mallOrder) {
         if (mallOrder.isInputMallOrder()) {
             String updateTime = JavaUtils.getCurrent();
             bisysDB.update(dailyMallOrderInputUpdateSQL, mallOrder.getDate(), mallOrder.getGenre(), mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
                     mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
                     mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
-                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime, mallOrder.getUploadTime(), mallOrder.getOperateAccount(),
+                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime,
                     mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
                     mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
                     mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
-                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime, mallOrder.getUploadTime(), mallOrder.getOperateAccount());
+                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime);
         }
     }
 
     private static String serviceTransactionWeChatUpdateSQL = "INSERT INTO `daily_service_transaction_wechat` (`date`, `order_num`, `pay_order_num`, " +
-            "`pay_order_amount`, `refund_win_num`, `refund_win_amount`, `pay_use_num`, `pay_profit_amount`, `refund_success_amount`, `update_time`, `upload_time`, `operate_account`)" +
-            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `order_num` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, " +
-            "`refund_win_num` = ?, `refund_win_amount` = ?, `pay_use_num` = ?, `pay_profit_amount` = ?, `refund_success_amount` = ?, `update_time` = ?,`upload_time`=?, `operate_account`=?";
+            "`pay_order_amount`, `refund_win_num`, `refund_win_amount`, `pay_use_num`, `pay_profit_amount`, `refund_success_amount`, `update_time`)" +
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `order_num` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, " +
+            "`refund_win_num` = ?, `refund_win_amount` = ?, `pay_use_num` = ?, `pay_profit_amount` = ?, `refund_success_amount` = ?, `update_time` = ?";
 
     public void updateServiceTransactionWeChat(HealthCheck healthCheck) {
         String updateTime = JavaUtils.getCurrent();
         bisysDB.update(serviceTransactionWeChatUpdateSQL, healthCheck.getDate(), healthCheck.getOrderNum(),
                 healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
                 healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
-                healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getUploadTime(), healthCheck.getOperateAccount(),
+                healthCheck.getRefundSuccessAmount(), updateTime,
                 healthCheck.getOrderNum(), healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
                 healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
-                healthCheck.getRefundSuccessAmount(), updateTime, healthCheck.getUploadTime(), healthCheck.getOperateAccount());
+                healthCheck.getRefundSuccessAmount(), updateTime);
     }
 
     private static final String youAppUpdateSQL = "INSERT INTO `daily_app` (`date`, `os`, `download_users`, `total_download_users`, `active_users`," +
-            " `start_num`, `update_time`, `upload_time`, `operate_account`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?, " +
-            "`total_download_users` = ?, `active_users` = ?, `start_num` = ?, `update_time` = ?, `upload_time`=?, `operate_account`=? ";
+            " `start_num`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?, " +
+            "`total_download_users` = ?, `active_users` = ?, `start_num` = ?, `update_time` = ?";
 
     public String updateYouApp(YouApp youApp) {
         String updateTime = JavaUtils.getCurrent();
         if (youApp.getOs() == 1 || youApp.getOs() == 2) {
             bisysDB.update(youAppUpdateSQL, youApp.getDate(), youApp.getOs(), youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
-                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime, youApp.getUploadTime(), youApp.getOperateAccount(),
+                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime,
                     youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(), youApp.getActiveUsers(), youApp.getStartNum(),
-                    updateTime, youApp.getUploadTime(), youApp.getOperateAccount());
+                    updateTime);
             return "success!";
         } else {
             return "os字段只能是 1：Android，2:iOS";
@@ -136,18 +136,30 @@ public class BisysJdbcService {
     }
 
     private static final String registerUpdateSQL = "INSERT INTO `daily_register` (`date`, `download_users`, `total_download_users`," +
-            " `register_users`, `total_register_users`, `download_unregister`, `active_users`, `start_num`, `upload_time`, " +
-            "`operate_account`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?," +
+            " `register_users`, `total_register_users`, `download_unregister`, `active_users`, `start_num`, `update_time`) " +
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?," +
             " `total_download_users` = ?, `register_users` = ?, `total_register_users` = ?, `download_unregister` = ?, " +
-            " `active_users` = ?, `start_num` = ?, `upload_time` = ?, `operate_account` = ?, `update_time` = ?";
+            " `active_users` = ?, `start_num` = ?, `update_time` = ?";
 
     public void updateRegister(Register register) {
         String updateTime = JavaUtils.getCurrent();
         bisysDB.update(registerUpdateSQL, register.getDate(), register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
-                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), register.getUploadTime(),
-                register.getOperateAccount(), updateTime, register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
-                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), register.getUploadTime(),
-                register.getOperateAccount(), updateTime);
+                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(),
+                updateTime, register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
+                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), updateTime);
+    }
+
+    private static final String uploadInfoUpdateSQL = "INSERT INTO `daily_upload` (`table_id`, `upload_time`, `date`, `operate_account`, `update_time`) VALUES" +
+            "(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `date` = ?, `operate_account` = ?, `update_time` = ?";
+
+    public String updateUploadInfo(UploadInfo info) {
+        String updateTime = JavaUtils.getCurrent();
+        if(info.getTableId() < 1 || info.getTableId() > 8) {
+            return "tableId取值超出范围";
+        }
+        bisysDB.update(uploadInfoUpdateSQL, info.getTableId(), info.getUploadTime(), info.getDate(), info.getOperateAccount(), updateTime,
+                info.getDate(), info.getOperateAccount(), updateTime);
+        return "success!";
     }
 
     public List<OpsMallOrder> getOpsMallOrder(int typeId, String date, String endDate) {
@@ -254,8 +266,6 @@ public class BisysJdbcService {
                         register.setRegisterUsers(resultSet.getInt("register_users"));
                         register.setTotalRegisterUsers(resultSet.getInt("total_register_users"));
                         register.setDownloadUnregister(resultSet.getInt("download_unregister"));
-                        register.setOperateAccount(resultSet.getString("operate_account"));
-                        register.setUploadTime(resultSet.getString("upload_time"));
                         return register;
                     });
         } catch (Exception ex) {
@@ -317,28 +327,6 @@ public class BisysJdbcService {
         return list;
     }
 
-    private List<PageRecord> getPageRecord(String sql, Object[] params, boolean hasNote) {
-        List<PageRecord> list = null;
-        try {
-            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(sql, params,
-                    (resultSet, i) -> {
-                        PageRecord pageRecord = new PageRecord();
-                        pageRecord.setDate(resultSet.getString("date"));
-                        pageRecord.setOperateAccount(resultSet.getString("operate_account"));
-                        pageRecord.setUploadTime(resultSet.getString("upload_time"));
-                        if (hasNote) {
-                            pageRecord.setNote(resultSet.getString("note"));
-                        }
-                        return pageRecord;
-                    }
-            );
-        } catch (Exception ex) {
-            logger.error("getPageRecord", ex);
-        }
-        return list;
-    }
-
     public List<KindGoods> getKindGoods() {
         List<KindGoods> list = null;
         try {
@@ -359,10 +347,9 @@ public class BisysJdbcService {
     }
 
     private static final String kindOrderUpdateSQL = "INSERT INTO `manage_kind_order` (`date`, `channel_type`, `pay_num`," +
-            " `pay_amount`, `user_num`, `price`, `cost`, `profit`, `profit_rate`, `refund_num`, `refund_amount`, `total_fee`, " +
-            " `upload_time`, `operate_account`, `update_time`)" +
-            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `pay_num` = ?, `pay_amount` = ?, `user_num` = ?, `price` = ?," +
-            " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `upload_time` = ?, `operate_account` = ?, `update_time` = ?";
+            " `pay_amount`, `user_num`, `price`, `cost`, `profit`, `profit_rate`, `refund_num`, `refund_amount`, `total_fee`, `update_time`)" +
+            " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `pay_num` = ?, `pay_amount` = ?, `user_num` = ?, `price` = ?," +
+            " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `update_time` = ?";
 
 
     public void updateKindOrderWeChat(KindOrder kindOrder) {
@@ -370,56 +357,46 @@ public class BisysJdbcService {
         bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",
                 kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
                 kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(),
-                kindOrder.getUploadTime(), kindOrder.getOperateAccount(), updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(),
+                updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(),
                 kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(), kindOrder.getProfit(), kindOrder.getProfitRate(),
-                kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), kindOrder.getUploadTime(),
-                kindOrder.getOperateAccount(), updateTime);
+                kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), updateTime);
     }
 
-    public Page<PageRecord> getKindOrderPage(int pageNo, int pageSize, int flag) {
-        String channelType = "微信";
-        if (flag == 1) {
-            channelType = "APP";
-        }
-        String countSql = String.format("select count(*) as c from manage_kind_order x where x.channel_type = '%s'", channelType);
-        String contentSql = String.format("select date, upload_time, operate_account from manage_kind_order x " +
-                "where x.channel_type = '%s' order by `date` desc limit ?, ?", channelType);
-        return getPage(countSql, contentSql, pageNo, pageSize, false);
-    }
-
-    public Page<PageRecord> getHealthCheckPage(int pageNo, int pageSize) {
-        return getPage("daily_service_transaction_wechat",  pageNo, pageSize);
-    }
-
-    public Page<PageRecord> getRegisterPage(int pageNo, int pageSize) {
-        return getPage("daily_register",  pageNo, pageSize);
-    }
-    public Page<PageRecord> getYouAppPage(int pageNo, int pageSize) {
-        return getPage("daily_app",  pageNo,  pageSize);
-    }
-    public Page<PageRecord> getMallOrderInputPage(int pageNo, int pageSize) {
-        String countSql = "select count(*) as c from daily_mall_order_input x";
-        String contentSql = "select `date`, upload_time, operate_account, genre as note from daily_mall_order_input x order by `date` desc limit  ?, ?";
-        return getPage(countSql, contentSql, pageNo, pageSize, true);
-    }
-
-    private Page<PageRecord> getPage(String countSql, String contentSql, int pageNo, int pageSize, boolean hasNote) {
-        int from = (pageNo - 1) * pageSize;
-        int count = bisysDB.query(countSql, (resultSet, i) -> resultSet.getInt("c")).get(0);
-        List<PageRecord> recordList = getPageRecord(contentSql, new Object[]{from, pageSize}, hasNote);
-        Page<PageRecord> page = new Page<>();
-        page.setContent(recordList);
+    public Page getUploadInfoPage(int pageNo, int pageSize, String ids) {
+        Page page = new Page();
+        page.setUploadInfoList(getUploadInfoByPage(pageNo, pageSize, ids));
         page.setPageNo(pageNo);
         page.setPageSize(pageSize);
-        page.setTotalPageNum(count);
+        page.setTotalPageNum(getUploadInfoCount(ids));
         return page;
     }
-    private Page<PageRecord> getPage(String table, int pageNo, int pageSize) {
-        String countSql = String.format("select count(*) as c from %s x", table);
-        String contentSql = String.format("select `date`, upload_time, operate_account from %s x order by `date` desc limit  ?, ?", table);
-        return getPage(countSql, contentSql, pageNo, pageSize, false);
+
+    private int getUploadInfoCount(String ids) {
+        String countSql = String.format("select count(*) as c from daily_upload x where table_id in (%s)", ids);
+        return bisysDB.query(countSql, (resultSet, i) -> resultSet.getInt("c")).get(0);
     }
 
+    private List<UploadInfo> getUploadInfoByPage(int pageNo, int pageSize, String ids) {
+    List<UploadInfo> list = null;
+    String sql = String.format("select  table_id, `date`, upload_time, operate_account from  daily_upload x where x.table_id in (%s) order by `upload_time` desc limit  ?, ?", ids);
+    int from = (pageNo - 1) * pageSize;
+    try {
+        //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+        list = bisysDB.query(sql, new Object[]{from, pageSize},
+                (resultSet, i) -> {
+                    UploadInfo pageRecord = new UploadInfo();
+                    pageRecord.setDate(resultSet.getString("date"));
+                    pageRecord.setOperateAccount(resultSet.getString("operate_account"));
+                    pageRecord.setUploadTime(resultSet.getString("upload_time").substring(0, 19));
+                    pageRecord.setTableId(resultSet.getInt("table_id"));
+                    return pageRecord;
+                }
+        );
+    } catch (Exception ex) {
+        logger.error("getPageRecord", ex);
+    }
+    return list;
+}
     public List<HealthCheck> getHealthCheck(boolean isTotal, String date, String endDate) {
         List<HealthCheck> list = null;
         try {

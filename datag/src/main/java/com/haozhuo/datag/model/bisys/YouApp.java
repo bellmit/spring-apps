@@ -20,6 +20,4 @@ public class YouApp {
     private int activeUsers;
     //启动次数
     private int startNum;
-    private String uploadTime;
-    private String operateAccount;
 }

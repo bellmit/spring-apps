@@ -19,6 +19,7 @@ public class BisysController {
     @Autowired
     private BisysJdbcService bisysJdbcService;
 
+    private static final String uploadInfoNotes = "tableId -> 1:app-优健康App数据, 2:app-注册用户数据, 3:检后组-键管服务, 4:检后组-绿通, 5:检后组-美维口腔,6:体检组-体检渠道 8:实物组-实物交易";
 
     private static final String  healthCheckNotes =  "注释: date:日期, orderNum:订单总数, payOrderNum:成交笔数, " +
             "payOrderAmount:成交金额, refundWinNum:退款笔数, refundWinAmount:退款金额, payUseNum:用户数, payProfitAmount:成交成本, " +
@@ -84,7 +85,7 @@ public class BisysController {
 
     @PostMapping("/dailyReport/jhz/add/mallOrderInput")
     @ApiOperation(value = "手动填写的表单：id -> 10:键管服务; 11:绿通; 12:美维口腔")
-    public Object addMallOrderInput(@RequestBody OpsMallOrderInput mallOrder) {
+    public Object addMallOrderInput(@RequestBody OpsMallOrder mallOrder) {
         bisysJdbcService.updateMallOrderInput(mallOrder);
         return "success!";
     }
@@ -195,42 +196,58 @@ public class BisysController {
         return "success!";
     }
 
-    @GetMapping("/dailyReport/swz/page/kindOrder")
-    @ApiOperation(value = "实物交易数据数据分页", notes="flag = 微信 : 0, APP : 1")
-    public Object getWeChatKindOrderPage(
-            @RequestParam(value = "pageNo") int pageNo,
-            @RequestParam(value = "pageSize") int pageSize,
-            @RequestParam(value = "flag ", defaultValue = "0") int flag) {
-        return bisysJdbcService.getKindOrderPage(pageNo, pageSize, flag);
+//    @GetMapping("/dailyReport/swz/page/kindOrder")
+//    @ApiOperation(value = "实物交易数据数据分页", notes="flag = 微信 : 0, APP : 1")
+//    public Object getWeChatKindOrderPage(
+//            @RequestParam(value = "pageNo") int pageNo,
+//            @RequestParam(value = "pageSize") int pageSize,
+//            @RequestParam(value = "flag ", defaultValue = "0") int flag) {
+//        return bisysJdbcService.getKindOrderPage(pageNo, pageSize, flag);
+//    }
+//
+//    @GetMapping("/dailyReport/tjz/page/healthCheck")
+//    @ApiOperation(value = "体检渠道数据分页")
+//    public Object getHealthCheckPage(
+//            @RequestParam(value = "pageNo") int pageNo,
+//            @RequestParam(value = "pageSize") int pageSize) {
+//        return bisysJdbcService.getHealthCheckPage(pageNo, pageSize);
+//    }
+//
+//    @GetMapping("/dailyReport/jhz/page/mallOrderInput")
+//    @ApiOperation(value = "键管服务,绿通,美维口腔分页")
+//    public Object getMallOrderPage(@RequestParam(value = "pageNo") int pageNo,
+//                                   @RequestParam(value = "pageSize") int pageSize) {
+//        return bisysJdbcService.getMallOrderInputPage(pageNo, pageSize);
+//    }
+//
+//    @GetMapping("/dailyReport/app/page/register")
+//    @ApiOperation(value = "注册用户数据分页")
+//    public Object getRegisterPage(@RequestParam(value = "pageNo") int pageNo,
+//                                  @RequestParam(value = "pageSize") int pageSize) {
+//        return bisysJdbcService.getRegisterPage(pageNo, pageSize);
+//    }
+//
+//    @GetMapping("/dailyReport/app/page/YouApp")
+//    @ApiOperation(value = "优健康App数据统计分页")
+//    public Object getYouAppPage(@RequestParam(value = "pageNo") int pageNo,
+//                                @RequestParam(value = "pageSize") int pageSize) {
+//        return bisysJdbcService.getYouAppPage(pageNo, pageSize);
+//    }
+
+    @PostMapping("/dailyReport/add/uploadInfo")
+    @ApiOperation(value = "java后台数据录入记录", notes = uploadInfoNotes)
+    public Object setUploadInfo(@RequestBody UploadInfo uploadInfo) {
+        bisysJdbcService.updateUploadInfo(uploadInfo);
+        return "success!";
     }
 
-    @GetMapping("/dailyReport/tjz/page/healthCheck")
-    @ApiOperation(value = "体检渠道数据分页")
-    public Object getHealthCheckPage(
-            @RequestParam(value = "pageNo") int pageNo,
-            @RequestParam(value = "pageSize") int pageSize) {
-        return bisysJdbcService.getHealthCheckPage(pageNo, pageSize);
-    }
-
-    @GetMapping("/dailyReport/jhz/page/mallOrderInput")
-    @ApiOperation(value = "键管服务,绿通,美维口腔分页")
-    public Object getMallOrderPage(@RequestParam(value = "pageNo") int pageNo,
-                                   @RequestParam(value = "pageSize") int pageSize) {
-        return bisysJdbcService.getMallOrderInputPage(pageNo, pageSize);
-    }
-
-    @GetMapping("/dailyReport/app/page/register")
-    @ApiOperation(value = "注册用户数据分页")
-    public Object getRegisterPage(@RequestParam(value = "pageNo") int pageNo,
-                                  @RequestParam(value = "pageSize") int pageSize) {
-        return bisysJdbcService.getRegisterPage(pageNo, pageSize);
-    }
-
-    @GetMapping("/dailyReport/app/page/YouApp")
-    @ApiOperation(value = "优健康App数据统计分页")
-    public Object getYouAppPage(@RequestParam(value = "pageNo") int pageNo,
-                                @RequestParam(value = "pageSize") int pageSize) {
-        return bisysJdbcService.getYouAppPage(pageNo, pageSize);
+    @GetMapping("/dailyReport/page/uploadInfo")
+    @ApiOperation(value = "java后台数据录入记录分页", notes = uploadInfoNotes)
+    public Object getUploadInfoPage(@RequestParam(value = "pageNo") int pageNo,
+                                @RequestParam(value = "pageSize") int pageSize,
+                                @RequestParam(value = "ids") String ids
+                                ) {
+        return bisysJdbcService.getUploadInfoPage(pageNo, pageSize, ids);
     }
 }
 

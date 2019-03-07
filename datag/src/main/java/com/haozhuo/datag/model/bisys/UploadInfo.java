@@ -8,9 +8,9 @@ import lombok.Getter;
  */
 @Getter
 @Setter
-public class PageRecord {
+public class UploadInfo {
+    private int tableId;
     private String date;
     private String uploadTime;
     private String operateAccount;
-    private String note;
 }

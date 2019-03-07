@@ -10,9 +10,9 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class Page<T> {
+public class Page {
     private int pageNo;
     private int pageSize;
     private int totalPageNum;
-    private List<T> content;
+    private List<UploadInfo> uploadInfoList;
 }

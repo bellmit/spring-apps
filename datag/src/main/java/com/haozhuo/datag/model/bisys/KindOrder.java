@@ -32,9 +32,4 @@ public class KindOrder {
     //实际营收
     private double totalFee;
 
-    //上传时间
-    private String uploadTime;
-    //操作账号
-    private String operateAccount;
-
 }

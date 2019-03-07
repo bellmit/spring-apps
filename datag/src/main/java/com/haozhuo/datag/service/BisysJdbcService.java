@@ -166,6 +166,7 @@ public class BisysJdbcService {
                 }
             }
         }
+        return "success!";
     }
 
     private static final String registerUpdateSQL = "INSERT INTO `daily_register` (`date`, `download_users`, `total_download_users`," +

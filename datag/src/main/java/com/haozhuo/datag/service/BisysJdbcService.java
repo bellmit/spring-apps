@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
@@ -89,17 +90,26 @@ public class BisysJdbcService {
                     "`apply_refund_order_amount` = ?, `refund_order_num` = ?, `refund_order_amount` = ?, `refund_gross_profit` = ?, " +
                     "`gross_profit` = ?, `gross_profit_rate` = ?, `refund_rate` = ?, `pay_conversion_rate` = ?, `update_time` = ?";
 
-    public void updateMallOrderInput(OpsMallOrder mallOrder) {
-        if (mallOrder.isInputMallOrder()) {
-            String updateTime = JavaUtils.getCurrent();
-            bisysDB.update(dailyMallOrderInputUpdateSQL, mallOrder.getDate(), mallOrder.getGenre(), mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
-                    mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
-                    mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
-                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime,
-                    mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
-                    mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
-                    mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
-                    mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime);
+    @Transactional(rollbackFor = Throwable.class)
+    public void updateMallOrderInput(OpsMallOrderListParam mallOrders) throws Exception {
+
+        List<OpsMallOrder> dataList = mallOrders.getDataList();
+        if (!CollectionUtils.isEmpty(dataList)) {
+            for (OpsMallOrder mallOrder : dataList) {
+                if (mallOrder.isInputMallOrder()) {
+                    String updateTime = JavaUtils.getCurrent();
+                    bisysDB.update(dailyMallOrderInputUpdateSQL, mallOrder.getDate(), mallOrder.getGenre(), mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
+                            mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
+                            mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
+                            mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime,
+                            mallOrder.getOrderNum(), mallOrder.getOrderAmount(),
+                            mallOrder.getPayOrderNum(), mallOrder.getPayOrderAmount(), mallOrder.getApplyRefundOrderNum(), mallOrder.getApplyRefundOrderAmount(),
+                            mallOrder.getRefundOrderNum(), mallOrder.getRefundOrderAmount(), mallOrder.getRefundGrossProfit(), mallOrder.getGrossProfit(),
+                            mallOrder.getGrossProfitRate(), mallOrder.getRefundRate(), mallOrder.getPayConversionRate(), updateTime);
+                } else {
+                    throw new Exception("os字段只能是 1：Android，2:iOS");
+                }
+            }
         }
     }
 
@@ -108,31 +118,53 @@ public class BisysJdbcService {
             " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `order_num` = ?, `pay_order_num` = ?, `pay_order_amount` = ?, " +
             "`refund_win_num` = ?, `refund_win_amount` = ?, `pay_use_num` = ?, `pay_profit_amount` = ?, `refund_success_amount` = ?, `update_time` = ?";
 
-    public void updateServiceTransactionWeChat(HealthCheck healthCheck) {
-        String updateTime = JavaUtils.getCurrent();
-        bisysDB.update(serviceTransactionWeChatUpdateSQL, healthCheck.getDate(), healthCheck.getOrderNum(),
-                healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
-                healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
-                healthCheck.getRefundSuccessAmount(), updateTime,
-                healthCheck.getOrderNum(), healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
-                healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
-                healthCheck.getRefundSuccessAmount(), updateTime);
+    @Transactional(rollbackFor = Throwable.class)
+    public void updateServiceTransactionWeChat(HealthCheckListParam healthChecks) {
+
+        List<HealthCheck> dataList = healthChecks.getDataList();
+        if (!CollectionUtils.isEmpty(dataList)) {
+            for (HealthCheck healthCheck : dataList) {
+                String updateTime = JavaUtils.getCurrent();
+                bisysDB.update(serviceTransactionWeChatUpdateSQL, healthCheck.getDate(), healthCheck.getOrderNum(),
+                        healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
+                        healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
+                        healthCheck.getRefundSuccessAmount(), updateTime,
+                        healthCheck.getOrderNum(), healthCheck.getPayOrderNum(), healthCheck.getPayOrderAmount(), healthCheck.getRefundWinNum(),
+                        healthCheck.getRefundWinAmount(), healthCheck.getPayUseNum(), healthCheck.getPayProfitAmount(),
+                        healthCheck.getRefundSuccessAmount(), updateTime);
+            }
+        }
     }
 
     private static final String youAppUpdateSQL = "INSERT INTO `daily_app` (`date`, `os`, `download_users`, `total_download_users`, `active_users`," +
             " `start_num`, `update_time`) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `download_users` = ?, " +
             "`total_download_users` = ?, `active_users` = ?, `start_num` = ?, `update_time` = ?";
 
-    public String updateYouApp(YouApp youApp) {
-        String updateTime = JavaUtils.getCurrent();
-        if (youApp.getOs() == 1 || youApp.getOs() == 2) {
-            bisysDB.update(youAppUpdateSQL, youApp.getDate(), youApp.getOs(), youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
-                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime,
-                    youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(), youApp.getActiveUsers(), youApp.getStartNum(),
-                    updateTime);
-            return "success!";
-        } else {
-            return "os字段只能是 1：Android，2:iOS";
+    @Transactional(rollbackFor = Throwable.class)
+    public String updateYouApp(YouAppListParam youApps) throws Exception {
+//        String updateTime = JavaUtils.getCurrent();
+//        if (youApp.getOs() == 1 || youApp.getOs() == 2) {
+//            bisysDB.update(youAppUpdateSQL, youApp.getDate(), youApp.getOs(), youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
+//                    youApp.getActiveUsers(), youApp.getStartNum(), updateTime,
+//                    youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(), youApp.getActiveUsers(), youApp.getStartNum(),
+//                    updateTime);
+//            return "success!";
+//        } else {
+//            return "os字段只能是 1：Android，2:iOS";
+//        }
+        List<YouApp> dataList = youApps.getDataList();
+        if (!CollectionUtils.isEmpty(dataList)) {
+            for (YouApp youApp : dataList) {
+                String updateTime = JavaUtils.getCurrent();
+                if (youApp.getOs() == 1 || youApp.getOs() == 2) {
+                    bisysDB.update(youAppUpdateSQL, youApp.getDate(), youApp.getOs(), youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(),
+                            youApp.getActiveUsers(), youApp.getStartNum(), updateTime,
+                            youApp.getDownloadUsers(), youApp.getTotalDownloadUsers(), youApp.getActiveUsers(), youApp.getStartNum(),
+                            updateTime);
+                } else {
+                    throw new Exception("os字段只能是 1：Android，2:iOS");
+                }
+            }
         }
     }
 
@@ -142,12 +174,18 @@ public class BisysJdbcService {
             " `total_download_users` = ?, `register_users` = ?, `total_register_users` = ?, `download_unregister` = ?, " +
             " `active_users` = ?, `start_num` = ?, `update_time` = ?";
 
-    public void updateRegister(Register register) {
-        String updateTime = JavaUtils.getCurrent();
-        bisysDB.update(registerUpdateSQL, register.getDate(), register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
-                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(),
-                updateTime, register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
-                register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), updateTime);
+    @Transactional(rollbackFor = Throwable.class)
+    public void updateRegister(RegisterListParam registers) {
+        List<Register> dataList = registers.getDataList();
+        if (!CollectionUtils.isEmpty(dataList)) {
+            for (Register register : dataList) {
+                String updateTime = JavaUtils.getCurrent();
+                bisysDB.update(registerUpdateSQL, register.getDate(), register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
+                        register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(),
+                        updateTime, register.getDownloadUsers(), register.getTotalDownloadUsers(), register.getRegisterUsers(),
+                        register.getTotalRegisterUsers(), register.getDownloadUnregister(), register.getActiveUsers(), register.getStartNum(), updateTime);
+            }
+        }
     }
 
     private static final String uploadInfoUpdateSQL = "INSERT INTO `daily_upload` (`table_id`, `upload_time`, `date`, `operate_account`, `update_time`) VALUES" +
@@ -354,14 +392,20 @@ public class BisysJdbcService {
 
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateKindOrderWeChat(KindOrder kindOrder) {
-        String updateTime = JavaUtils.getCurrent();
-        bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",
-                kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
-                kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(),
-                updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(),
-                kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(), kindOrder.getProfit(), kindOrder.getProfitRate(),
-                kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), updateTime);
+    public void updateKindOrderWeChat(KindOrderListParam kindOrders) {
+        List<KindOrder> dataList = kindOrders.getDataList();
+        if (!CollectionUtils.isEmpty(dataList)) {
+            for (KindOrder kindOrder : dataList) {
+                String updateTime = JavaUtils.getCurrent();
+                bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",
+                        kindOrder.getPayNum(), kindOrder.getPayAmount(), kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(),
+                        kindOrder.getProfit(), kindOrder.getProfitRate(), kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(),
+                        updateTime, kindOrder.getPayNum(), kindOrder.getPayAmount(),
+                        kindOrder.getUserNum(), kindOrder.getPrice(), kindOrder.getCost(), kindOrder.getProfit(), kindOrder.getProfitRate(),
+                        kindOrder.getRefundNum(), kindOrder.getRefundAmount(), kindOrder.getTotalFee(), updateTime);
+
+            }
+        }
     }
 
     public Page getUploadInfoPage(int pageNo, int pageSize, String ids) {

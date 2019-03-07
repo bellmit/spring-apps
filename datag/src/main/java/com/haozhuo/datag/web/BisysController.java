@@ -85,8 +85,9 @@ public class BisysController {
 
     @PostMapping("/dailyReport/jhz/add/mallOrderInput")
     @ApiOperation(value = "手动填写的表单：id -> 10:键管服务; 11:绿通; 12:美维口腔")
-    public Object addMallOrderInput(@RequestBody OpsMallOrder mallOrder) {
-        bisysJdbcService.updateMallOrderInput(mallOrder);
+//    public Object addMallOrderInput(@RequestBody OpsMallOrder mallOrder) {
+    public Object addMallOrderInput(@RequestBody OpsMallOrderListParam mallOrders) throws Exception {
+        bisysJdbcService.updateMallOrderInput(mallOrders);
         return "success!";
     }
 
@@ -104,8 +105,9 @@ public class BisysController {
 
     @PostMapping("/dailyReport/tjz/add/HealthCheckFromWeChat")
     @ApiOperation(value = "添加体检渠道统计(微信)", notes = "{\"date\": \"2019-10-10\", \"orderNum\": 0, \"payOrderNum\": 10, \"payOrderAmount\": 0, \"refundWinNum\": 0, \"refundWinAmount\": 0, \"payUseNum\": 10, \"payProfitAmount\": 10,\"refundSuccessAmount\": 0,\"upload_time\":\"2019-01-01 11:11:11\", \"operate_account\":\"123\"}  ;  " + healthCheckNotes)
-    public Object addHealthCheckFromWeChat(@RequestBody HealthCheck healthCheck) {
-        bisysJdbcService.updateServiceTransactionWeChat(healthCheck);
+//    public Object addHealthCheckFromWeChat(@RequestBody HealthCheck healthCheck) {
+    public Object addHealthCheckFromWeChat(@RequestBody HealthCheckListParam healthChecks) {
+        bisysJdbcService.updateServiceTransactionWeChat(healthChecks);
         return "success!";
     }
 
@@ -129,8 +131,9 @@ public class BisysController {
 
     @PostMapping("/dailyReport/app/add/YouApp")
     @ApiOperation(value = "添加优健康App数据", notes = "os：平台. 合计:0, Android:1, iOS:2; downloadUsers：下载用户(打开);  totalDownloadUsers：累计下载用户; activeUsers：活跃用户; startNum：启动次数")
-    public Object addYouApp(@RequestBody YouApp youApp) {
-        return bisysJdbcService.updateYouApp(youApp);
+//    public Object addYouApp(@RequestBody YouApp youApp) {
+    public Object addYouApp(@RequestBody YouAppListParam youApps) throws Exception {
+        return bisysJdbcService.updateYouApp(youApps);
     }
 
     @GetMapping("/dailyReport/app/register")
@@ -168,8 +171,9 @@ public class BisysController {
 
     @PostMapping("/dailyReport/app/add/register")
     @ApiOperation(value = "添加注册用户数据", notes = " 下载用户合计:downloadUsers, 累计下载用户:totalDownloadUsers, 注册用户:registerUsers, 累计注册用户:totalRegisterUsers, 下载未注册:downloadUnregister, 活跃用户:activeUsers, 启动次数:startNum;")
-    public Object setRegister(@RequestBody Register register) {
-        bisysJdbcService.updateRegister(register);
+//    public Object setRegister(@RequestBody Register register) {
+    public Object setRegister(@RequestBody RegisterListParam registers) {
+        bisysJdbcService.updateRegister(registers);
         return "success!";
     }
 
@@ -191,8 +195,9 @@ public class BisysController {
     @PostMapping("/dailyReport/swz/add/kindOrder")
     @ApiOperation(value = "添加实物交易数据(微信)",
             notes = "channelType 无需填" + kindNotes)
-    public Object addKindOrder(@RequestBody KindOrder kindOrder) {
-        bisysJdbcService.updateKindOrderWeChat(kindOrder);
+//    public Object addKindOrder(@RequestBody KindOrder kindOrder) {
+    public Object addKindOrder(@RequestBody KindOrderListParam kindOrders) {
+        bisysJdbcService.updateKindOrderWeChat(kindOrders);
         return "success!";
     }
 

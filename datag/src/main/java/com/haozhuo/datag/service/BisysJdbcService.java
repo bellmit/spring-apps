@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -352,6 +353,7 @@ public class BisysJdbcService {
             " `cost` = ?, `profit` = ?, `profit_rate` = ?, `refund_num` = ?, `refund_amount` = ?, `total_fee` = ?, `update_time` = ?";
 
 
+    @Transactional(rollbackFor = Throwable.class)
     public void updateKindOrderWeChat(KindOrder kindOrder) {
         String updateTime = JavaUtils.getCurrent();
         bisysDB.update(kindOrderUpdateSQL, kindOrder.getDate(), "微信",

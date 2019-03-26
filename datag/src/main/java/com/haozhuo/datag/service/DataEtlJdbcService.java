@@ -30,6 +30,7 @@ public class DataEtlJdbcService {
     private final Map<String, String> labelNameIdMap = new HashMap<>();
     private List<DiseaseNorm> someDiseaseNormList;
     private List<DiseaseNorm> allDiseaseNormList;
+    private List<DiseaseNormCheckItem> diseaseNormCheckItemList;
     private final String regEx = "[\\s+`~!@#$%^&*()+=|{}':;'\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
     private final String goodsTable;
     private final String liveTable;
@@ -53,11 +54,9 @@ public class DataEtlJdbcService {
         updateChannelEsTypeMap();
         initLabelMap();
         initStopWords();
-        //logger.debug("labelIdNameMap:{}", labelIdNameMap);
         someDiseaseNormList = getSomeDiseaseNormList();
         allDiseaseNormList = getAllDiseaseNormList();
-        logger.debug("someDiseaseNormList:{}", someDiseaseNormList);
-        //logger.debug("labelNameIdMap:{}", labelNameIdMap);
+        diseaseNormCheckItemList = getDiseaseNormCheckItemList();
     }
 
     private void initLabelMap() {
@@ -78,6 +77,11 @@ public class DataEtlJdbcService {
                         " '前列腺炎','肝脏增大','肝硬化','CA50增高','前列腺占位性病变')",
                 (resultSet, i) -> new DiseaseNorm(resultSet.getString("unnorm"), resultSet.getString("norm")));
 
+    }
+
+    private List<DiseaseNormCheckItem> getDiseaseNormCheckItemList() {
+        return dataetlDB.query("select y.unnorm,y.norm,x.check_item from disease_check x left join disease_norm y on x.disease_norm = y.norm",
+                (resultSet, i) -> new DiseaseNormCheckItem(resultSet.getString("unnorm"), resultSet.getString("norm"), resultSet.getString("check_item")));
     }
 
     private List<DiseaseNorm> getAllDiseaseNormList() {
@@ -196,15 +200,33 @@ public class DataEtlJdbcService {
         return result;
     }
 
-    public Set<String> getNormTags(String abnormals) {
-        String[] abnormalArray = abnormals.replaceAll(regEx, "")
+    private String[] parseAbnormal(String abnormals) {
+        return abnormals.replaceAll(regEx, "")
                 .replaceAll("Ⅰ", "1")
                 .replaceAll("Ⅱ", "2")
                 .toLowerCase()
                 .split(",");
-        return stream(abnormalArray)
+    }
+
+    public Set<String> getNormTags(String abnormals) {
+        return stream(parseAbnormal(abnormals))
                 .map(abnormal -> getNormTag(abnormal, someDiseaseNormList)).filter(x -> x != null)
                 .collect(toSet());
+    }
+
+    public Tuple<Set<String>,Set<String>> getNormTagCheckItems(String abnormals) {
+        String[] unnormArray = parseAbnormal(abnormals);
+        Set<String> normList = new HashSet<>();
+        Set<String> checkItemList = new HashSet<>();
+        for (String unnorm: unnormArray) {
+            for(DiseaseNormCheckItem nc:diseaseNormCheckItemList) {
+                if(unnorm.contains(nc.getUnNorm())) {
+                    normList.add(nc.getNorm());
+                    checkItemList.add(nc.getCheckItem());
+                }
+            }
+        }
+        return new Tuple<>(normList, checkItemList);
     }
 
     private String getNormTag(String abnormal, List<DiseaseNorm> normList) {

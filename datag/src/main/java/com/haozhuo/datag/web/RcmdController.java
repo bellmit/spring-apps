@@ -577,6 +577,14 @@ public class RcmdController {
         return dataetlJdbcService.getNormTags(abnormals);
     }
 
+    @ApiOperation(value = "根据非标准化的异常项返回筛查项目以及标准异常项", notes="t1表示标准化的异常,t2表示建议筛查项 ")
+    @GetMapping(value = "/getNormTagCheckItems")
+    public Object getNormTagCheckItems(
+            @RequestParam (value = "abnormals") String abnormals) {
+        return dataetlJdbcService.getNormTagCheckItems(abnormals);
+    }
+
+
     @ApiOperation(value = "异常疾病标准化2", notes="注意：现接口的不需要传userId。   \n" +
             "现接口:   \n" +
             "curl -X GET --header 'Accept: application/json' 'http://192.168.20.227:8766/datag/rcmd/getSingleNormTag?abnormals=幽门螺旋杆菌抗体增高'   \n    " +

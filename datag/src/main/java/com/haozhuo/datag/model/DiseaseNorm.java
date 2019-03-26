@@ -1,8 +1,6 @@
 package com.haozhuo.datag.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * Created by Lucius on 1/3/19.
@@ -13,12 +11,4 @@ import lombok.Setter;
 public class DiseaseNorm {
     private String unNorm;
     private String norm;
-
-    @Override
-    public String toString() {
-        return "DiseaseNorm{" +
-                "unNorm='" + unNorm + '\'' +
-                ", norm='" + norm + '\'' +
-                '}';
-    }
 }

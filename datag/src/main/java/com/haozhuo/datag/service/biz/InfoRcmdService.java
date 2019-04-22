@@ -58,6 +58,9 @@ public class InfoRcmdService {
     }
 
     private InfoALV getVideoOrLiveIdFromMysql(InfoALV pushedALV, PushedInfoKeys pushedInfoKeys, String channelId) {
+        if(allCategoryId.equals(channelId)) {
+            channelId=null;
+        }
         InfoALV result = new InfoALV();
         long time = System.currentTimeMillis();
         if (System.currentTimeMillis() % 2 == 0) {

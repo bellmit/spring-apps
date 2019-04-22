@@ -195,14 +195,16 @@ public class DataEtlJdbcService {
         if (JavaUtils.isNotEmpty(channelId)) {
             sql.append(String.format(" and channel_id = %s ", channelId));
         }
-        sql.append("limit 1");
+        sql.append(" order by id desc limit 1");
         return sql.toString();
     }
 
     public String getUnPushedVideoOrLiveId(String[] pushedIds, boolean isVideo, String channelId) {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            return dataetlDB.queryForObject(getUnPushedVideoOrLiveIdSQL(pushedIds, isVideo, channelId),
+            String sql = getUnPushedVideoOrLiveIdSQL(pushedIds, isVideo, channelId);
+            logger.debug(sql);
+            return dataetlDB.queryForObject(sql,
                     (resultSet, i) -> resultSet.getString("id"));
         } catch (Exception ex) {
             return null;

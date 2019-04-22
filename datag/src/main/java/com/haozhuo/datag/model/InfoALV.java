@@ -43,8 +43,10 @@ public class InfoALV {
         switch (index) {
             case articleIndex:
                 addArticle(ids);
+                break;
             case liveIndex:
                 addLive(ids);
+                break;
             case videoIndex:
                 addVideo(ids);
         }
@@ -54,8 +56,10 @@ public class InfoALV {
         switch (index) {
             case articleIndex:
                 setArticle(ids);
+                break;
             case liveIndex:
                 setLive(ids);
+                break;
             case videoIndex:
                 setVideo(ids);
         }

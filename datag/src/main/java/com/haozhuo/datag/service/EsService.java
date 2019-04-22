@@ -86,7 +86,7 @@ public class EsService {
     private final ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
 
     public EsService(Environment env) {
-        goodsSearchFields = env.getProperty("app.es.goods-search-fields","name,goodsTags").split(",");
+        goodsSearchFields = env.getProperty("app.es.goods-search-fields", "name,goodsTags").split(",");
         logger.info("goodsSearchFields:{}", Arrays.asList(goodsSearchFields));
     }
 
@@ -99,6 +99,18 @@ public class EsService {
             srb.setTypes(types);
         }
         return EsUtils.getDocIdsAsArray(srb);
+    }
+
+    private String[] simpleRecommend(String index, QueryBuilder query, int size, String... types) {
+        SearchRequestBuilder srb = client.prepareSearch(index)
+                .setSize(size).setQuery(query);
+        if (types != null && types.length > 0) {
+            srb.setTypes(types);
+        }
+        long time = System.currentTimeMillis();
+        String[] result = EsUtils.getDocIdsAsArray(srb);
+        logger.info("simpleRecommend-getDocIdsAsArray cost {} ms", System.currentTimeMillis() - time);
+        return result;
     }
 
     /**
@@ -133,19 +145,12 @@ public class EsService {
         }
     }
 
-
-//    public String[] commonRecommend(String index, String[] pushedIds, int size, String... types) {
-//        QueryBuilder query = QueryBuilders.boolQuery()
-//                //.mustNot(matchQuery("tags", Utils.removeStopWords(hateTags)))
-//                .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
-//        return recommend(index, query, size, types);
-//    }
-
     public String[] commonRecommend(String index, String[] pushedIds, int size, String... types) {
         QueryBuilder query = QueryBuilders.boolQuery()
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds));
         return recommend(index, query, size, types);
     }
+
 
     /**
      * curl -XGET 'es1:9200/reportlabel/_search?pretty' -d '{"size":1,"query": {"match": {"healthReportId": "4049171"}}}'

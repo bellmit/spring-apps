@@ -186,6 +186,28 @@ public class DataEtlJdbcService {
         return labels;
     }
 
+    private String getUnPushedVideoOrLiveIdSQL(String[] pushedIds, boolean isVideo, String channelId) {
+        StringBuffer sql = new StringBuffer(String.format("select id from %s where 1=1 ", isVideo ? videoTable : liveTable));
+
+        if (pushedIds != null && pushedIds.length >= 1) {
+            sql.append(String.format(" and id not in(%s) ", String.join(",", pushedIds)));
+        }
+        if (JavaUtils.isNotEmpty(channelId)) {
+            sql.append(String.format(" and channel_id = %s ", channelId));
+        }
+        sql.append("limit 1");
+        return sql.toString();
+    }
+
+    public String getUnPushedVideoOrLiveId(String[] pushedIds, boolean isVideo, String channelId) {
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            return dataetlDB.queryForObject(getUnPushedVideoOrLiveIdSQL(pushedIds, isVideo, channelId),
+                    (resultSet, i) -> resultSet.getString("id"));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
 
     public String getSingleNormTag(String abnormal) {
         String regexNormTag = abnormal.replaceAll(regEx, "")
@@ -214,13 +236,13 @@ public class DataEtlJdbcService {
                 .collect(toSet());
     }
 
-    public Tuple<Set<String>,Set<String>> getNormTagCheckItems(String abnormals) {
+    public Tuple<Set<String>, Set<String>> getNormTagCheckItems(String abnormals) {
         String[] unnormArray = parseAbnormal(abnormals);
         Set<String> normList = new HashSet<>();
         Set<String> checkItemList = new HashSet<>();
-        for (String unnorm: unnormArray) {
-            for(DiseaseNormCheckItem nc:diseaseNormCheckItemList) {
-                if(unnorm.contains(nc.getUnNorm())) {
+        for (String unnorm : unnormArray) {
+            for (DiseaseNormCheckItem nc : diseaseNormCheckItemList) {
+                if (unnorm.contains(nc.getUnNorm())) {
                     normList.add(nc.getNorm());
                     checkItemList.add(nc.getCheckItem());
                 }

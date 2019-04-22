@@ -39,6 +39,7 @@ public class InfoRcmdService {
     private final KafkaService kafkaService;
 
     private Boolean sendRcmdMsg;
+
     public InfoRcmdService(Boolean sendRcmdMsg, EsService esService, RedisService redisService, DataEtlJdbcService dataetlJdbcService, KafkaService kafkaService) {
         this.esService = esService;
         this.redisService = redisService;
@@ -52,22 +53,28 @@ public class InfoRcmdService {
         return String.join(",", redisService.getPositiveBasePref(userId, 15));
     }
 
-    private InfoALV getRandomVideoOrLiveId(InfoALV pushedALV, PushedInfoKeys pushedInfoKeys, String... esType) {
+    private InfoALV getVideoOrLiveIdFromMysql(InfoALV pushedALV, PushedInfoKeys pushedInfoKeys) {
+        return getVideoOrLiveIdFromMysql(pushedALV, pushedInfoKeys, null);
+    }
+
+    private InfoALV getVideoOrLiveIdFromMysql(InfoALV pushedALV, PushedInfoKeys pushedInfoKeys, String channelId) {
         InfoALV result = new InfoALV();
+        long time = System.currentTimeMillis();
         if (System.currentTimeMillis() % 2 == 0) {
-            String[] videoIds = esService.commonRecommend(esService.getVideoIndex(), pushedALV.getVideo(), randomLiveOrVideoSize, esType);
-            if (videoIds.length == 0) {
+            String videoId = dataetlJdbcService.getUnPushedVideoOrLiveId(pushedALV.getVideo(), true, channelId);
+            if (videoId == null) {
                 redisService.deletePushedInfoKey(pushedInfoKeys.getKey(), pushedInfoKeys.getVideoHashKey());
+            } else {
+                result.setVideo(new String[]{videoId});
             }
-            result.setLive(new String[]{});
-            result.setVideo(videoIds);
+
         } else {
-            String[] liveIds = esService.commonRecommend(esService.getLiveIndex(), pushedALV.getLive(), randomLiveOrVideoSize, esType);
-            if (liveIds.length == 0) {
+            String liveId = dataetlJdbcService.getUnPushedVideoOrLiveId(pushedALV.getLive(), false, channelId);
+            if (liveId == null) {
                 redisService.deletePushedInfoKey(pushedInfoKeys.getKey(), pushedInfoKeys.getLiveHashKey());
+            } else {
+                result.setLive(new String[]{liveId});
             }
-            result.setLive(liveIds);
-            result.setVideo(new String[]{});
         }
         return result;
     }
@@ -104,6 +111,7 @@ public class InfoRcmdService {
         RcmdNewsInfo rcmdNewsInfo;
         String[] esTypes = null;
         int compSize = size - randomLiveOrVideoSize;
+
         if (channelId == null) {
             rcmdNewsInfo = redisService.getRcmdNews(userId, compSize);
             channelName = "推荐频道";
@@ -112,8 +120,8 @@ public class InfoRcmdService {
             channelName = "channelId:" + channelId;
             esTypes = dataetlJdbcService.channelEsTypeMap.get(channelId);
         }
-
         checkIfRequestRcmd(rcmdNewsInfo, userId);
+
         String[] articleIds = rcmdNewsInfo.getNews().toArray(new String[0]);
 
         if (articleIds.length < compSize) {
@@ -123,8 +131,9 @@ public class InfoRcmdService {
             logger.info("从Redis的{}中为用户{} 取出{}条数据", channelName, userId, articleIds.length);
         }
 
-        InfoALV infoALV = getRandomVideoOrLiveId(pushedALV, pushedInfoKeys, esTypes);
+        InfoALV infoALV = getVideoOrLiveIdFromMysql(pushedALV, pushedInfoKeys, channelId);
         infoALV.setArticle(articleIds);
+
         return infoALV;
     }
 
@@ -151,9 +160,9 @@ public class InfoRcmdService {
             //获取用户感兴趣的标签
             result = getInfoALV(pushedALV, pushedInfoKeys, userId, channelId, size);
         } else { //文章某个频道下所有某个类别
+
+            result = getVideoOrLiveIdFromMysql(pushedALV, pushedInfoKeys);
             String esType = channelId + "_" + categoryId;
-            logger.debug("文章某个频道esTypes:{}", esType);
-            result = getRandomVideoOrLiveId(pushedALV, pushedInfoKeys, esType);
             result.setArticle(esService.commonRecommend(esService.getArticleIndex(), pushedALV.getArticle(), size - randomLiveOrVideoSize, esType));
         }
 
@@ -169,7 +178,7 @@ public class InfoRcmdService {
     }
 
     private void checkIfRequestRcmd(RcmdNewsInfo rcmdNewsInfo, String userId) {
-        if(sendRcmdMsg) {
+        if (sendRcmdMsg) {
             boolean canUpdateBasePref = true;
             //只有第一个才可以更新
             for (String channelId : rcmdNewsInfo.getChannelIdList()) {

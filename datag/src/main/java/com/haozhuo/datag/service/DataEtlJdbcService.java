@@ -195,7 +195,7 @@ public class DataEtlJdbcService {
         if (JavaUtils.isNotEmpty(channelId)) {
             sql.append(String.format(" and channel_id = %s ", channelId));
         }
-        sql.append(" order by id desc limit 1");
+        sql.append(" limit 1");
         return sql.toString();
     }
 

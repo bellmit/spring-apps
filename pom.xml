@@ -12,11 +12,8 @@
         <module>zuul-router</module>
         <module>datag</module>
     </modules>
-
-
     <name>spring-apps</name>
     <description>Demo project for Spring Boot</description>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -25,7 +22,6 @@
         <maven-war.version>2.1.1</maven-war.version>
         <maven-jar.version>2.6</maven-jar.version>
     </properties>
-
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -34,7 +30,6 @@
         <!-- lookup parent from repository -->
     </parent>
     <dependencies>
-
         <!-- swagger support -->
         <dependency>
             <groupId>io.springfox</groupId>
@@ -42,7 +37,6 @@
             <version>2.4.0</version>
             <scope>compile</scope>
         </dependency>
-
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
@@ -56,6 +50,7 @@
             <version>1.16.16</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -86,12 +81,10 @@
     </dependencyManagement>
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
-
 </project>

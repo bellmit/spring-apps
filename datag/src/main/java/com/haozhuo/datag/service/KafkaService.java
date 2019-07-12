@@ -1,9 +1,12 @@
 package com.haozhuo.datag.service;
 
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.RcmdMsg;
 import com.haozhuo.datag.model.PrefUpdateMsg;
+import com.haozhuo.datag.model.bisys.UserBehavior;
+import org.mortbay.util.ajax.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,9 @@ public class KafkaService {
     @Value("${app.kafka.topic.prefs-update: prefs-update}")
     private String prefUpdateTopic;
 
+    @Value("${app.kafka.topic.userBehaviorTopicTest: test-syn-table-userBehavior1}")
+    private String devSynRableUserBehavior;
+
     public void sendRcmdRequestMsg(RcmdMsg msg) {
         try {
             logger.debug("send msg:{}", msg);
@@ -52,4 +58,14 @@ public class KafkaService {
             logger.error("发送Kafka消息{}失败:{}", msg, e);
         }
     }
+    public void sendUserBehaviorMessage(UserBehavior msg) {
+        try {
+            System.out.println("topic："+devSynRableUserBehavior);
+            kafkaTemplate.send(devSynRableUserBehavior, objectMapper.writeValueAsString(msg));
+        } catch (JsonProcessingException e) {
+            logger.error("发送Kafka消息{}失败:{}", msg, e);
+        }
+    }
+
+
 }

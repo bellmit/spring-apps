@@ -18,6 +18,8 @@ app:
     topic:
       news-rcmd-request: news-rcmd-request
       prefs-update: prefs-update
+      userBehaviorTopic: dev-syn-table-userBehavior
+      userBehaviorTopicTest: test-syn-table-userBehavior1 
   biz:
     send-rcmd-msg: false
     goods-sales-days: 90
@@ -39,10 +41,11 @@ spring:
     sentinel:
       master: mymaster
       nodes: 192.168.1.150:26379,192.168.1.152:26379,192.168.1.153:26379
-    pool:
-      max-idle: 8
-      max-active: 8
-      min-idle: 0
+    jedis:
+      pool:
+        max-idle: 8
+        max-active: 8
+        min-idle: 0
   datasource:
     dataetl:
       url: jdbc:mysql://192.168.1.162:3306/yjk_data_etl?characterEncoding=utf-8
@@ -66,4 +69,13 @@ spring:
       cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300
       cluster-name: hz-es-cluster1
 
-
+hbase:
+  zookeeper:
+    quorum: namenode
+    port:  2181
+  rpc:
+    timeout: 1800000
+  client:
+    scanner:
+      timeout:
+        period: 1800000

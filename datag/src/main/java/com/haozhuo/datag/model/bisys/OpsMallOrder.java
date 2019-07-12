@@ -92,7 +92,7 @@ public class OpsMallOrder {
     }
 
     public static boolean  isInputMallOrder(int id ) {
-        return id >= 10 && id <= 12;
+        return id >= 10 && id <= 13;
     }
 
     //毛利润
@@ -201,6 +201,8 @@ public class OpsMallOrder {
                 return "绿通";
             case 12:
                 return "美维口腔";
+            case 13:
+                return "基因检测";
             default:
                 return "";
         }
@@ -281,4 +283,5 @@ public class OpsMallOrder {
     public int getId() {
         return id;
     }
+    public OpsMallOrder(){}
 }

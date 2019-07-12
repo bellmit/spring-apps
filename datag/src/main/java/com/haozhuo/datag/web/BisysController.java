@@ -1,12 +1,20 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.common.ResultCodeBase;
+import com.haozhuo.datag.common.TipConstBase;
+import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.service.BisysJdbcService;
+import com.haozhuo.datag.service.UserBehaviorService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 /**
  * Created by Lucius on 9/3/18.
@@ -18,8 +26,9 @@ public class BisysController {
 
     @Autowired
     private BisysJdbcService bisysJdbcService;
-
-    private static final String uploadInfoNotes = "tableId -> 1:app-优健康App数据, 2:app-注册用户数据, 3:检后组-键管服务, 4:检后组-绿通, 5:检后组-美维口腔,6:体检组-体检渠道 8:实物组-实物交易";
+    @Autowired
+    private UserBehaviorService userBehaviorService;
+    private static final String uploadInfoNotes = "tableId -> 1:app-优健康App数据, 2:app-注册用户数据, 3:检后组-键管服务, 4:检后组-绿通, 5:检后组-美维口腔,6:体检组-体检渠道 8:实物组-实物交易 9:检后组-基因检测";
 
     private static final String  healthCheckNotes =  "注释: date:日期, orderNum:订单总数, payOrderNum:成交笔数, " +
             "payOrderAmount:成交金额, refundWinNum:退款笔数, refundWinAmount:退款金额, payUseNum:用户数, payProfitAmount:成交成本, " +
@@ -43,7 +52,7 @@ public class BisysController {
 
     @GetMapping("/dailyReport/jhz/opsMallOrder")
     @ApiOperation(value = "各个报表", notes = "id = 1:电话解读; 2:解读复购; 3:电话问诊; 4:深度解读; 5:专项解读; 6:一元听听;" +
-            " 7:uplus会员; 8:高血糖风险评估; 9:冠心病风险评估; 10:键管服务; 11:绿通; 12:美维口腔     \n" +
+            " 7:uplus会员; 8:高血糖风险评估; 9:冠心病风险评估; 10:键管服务; 11:绿通; 12:美维口腔; 13:基因检测; 14:健康问答      \n" +
             " 返回结果的字段注释: date: 日期; orderNum:下单笔数; orderAmount:下单金额; payOrderNum: 支付笔数; payOrderAmount: 支付金额;" +
             " applyRefundOrderNum: 申请退款笔数; applyRefundOrderAmount: 申请退款金额; refundOrderNum: 提款成功笔数; " +
             "refundOrderAmount: 退款成功金额; grossProfit: 毛利润; grossProfitRate: 毛利率; refundRate: 退款率; refundGrossProfit: 退款毛利" +
@@ -54,7 +63,11 @@ public class BisysController {
     ) {
         if ("null".equals(endDate))
             endDate = date;
-        return bisysJdbcService.getOpsMallOrder(id, date, endDate);
+        if(id==14){
+            return bisysJdbcService.getQuestion(id,date,endDate);
+        }else{
+            return bisysJdbcService.getOpsMallOrder(id, date, endDate);
+        }
     }
 
     @GetMapping("/dailyReport/jhz/buBuBao")
@@ -84,7 +97,7 @@ public class BisysController {
     }
 
     @PostMapping("/dailyReport/jhz/add/mallOrderInput")
-    @ApiOperation(value = "手动填写的表单：id -> 10:键管服务; 11:绿通; 12:美维口腔")
+    @ApiOperation(value = "手动填写的表单：id -> 10:键管服务; 11:绿通; 12:美维口腔 13:基因检测")
 //    public Object addMallOrderInput(@RequestBody OpsMallOrder mallOrder) {
     public Object addMallOrderInput(@RequestBody OpsMallOrderListParam mallOrders) throws Exception {
         bisysJdbcService.updateMallOrderInput(mallOrders);
@@ -254,6 +267,13 @@ public class BisysController {
                                 ) {
         return bisysJdbcService.getUploadInfoPage(pageNo, pageSize, ids);
     }
+   @PostMapping(value = "/bi/userBehavior/upload")
+   @ApiOperation(value = "bi埋点上传接口")
+    public ResponseEntity<Void> uploadUserBehavior(@Valid @RequestBody UserBehaviorDTO body) {
+        userBehaviorService.save(body);
+        return new ResponseEntity<>(ResultCodeBase.CODE_SUCCESS, TipConstBase.OPERATION_SAVE_SUCCESS);
+    }
+
 }
 
 

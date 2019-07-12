@@ -122,7 +122,6 @@ public class EsService {
                 //.mustNot(matchQuery(tagField, Utils.removeStopWords(hateTags)))
                 .mustNot(QueryBuilders.idsQuery().addIds(pushedIds))
                 .should(matchQuery(tagField, Utils.removeStopWords(tags)).boost(3));
-
         return recommend(index, query, size, types);
     }
 
@@ -164,6 +163,13 @@ public class EsService {
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         return stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString();
 
+    }
+    public String getSexByReportId(String reportId) {
+        SearchRequestBuilder srb = client.prepareSearch(reportLabelIndex).setSize(1)
+                .setQuery(matchQuery("healthReportId", reportId.trim()));
+        logger.debug(srb.toString());
+        SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+        return stream(searchHits).map(x -> x.getSource().get("sex")).findFirst().orElse("").toString();
     }
 
     private QueryBuilder getLiveOrVideoBasicBuilder(AbnormalParam param) {
@@ -317,7 +323,6 @@ public class EsService {
         }
         return boolQueryBuilder;
     }
-
 
     private void checkIfUpdateGoodsTypeCount() {
         if (goodsTypeProportion.needUpdate()) {

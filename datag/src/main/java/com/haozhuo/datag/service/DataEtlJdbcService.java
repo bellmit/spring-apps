@@ -3,15 +3,20 @@ package com.haozhuo.datag.service;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.*;
+import com.haozhuo.datag.model.report.Body;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
+import com.haozhuo.datag.util.SqlSplit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Component;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 import static com.haozhuo.datag.model.Goods.listToStr;
@@ -371,4 +376,45 @@ public class DataEtlJdbcService {
         String date = JavaUtils.getCurrent();
         dataetlDB.update("INSERT INTO `permit_users` (`date`,`health_report_id`,`flag`) VALUES (?, ?, ?) on duplicate key update date=?", date, healthReportId, flag, date);
     }
+
+    public List getBylabel(String label) {
+        //System.out.println(label);
+        final List forumList = new ArrayList();
+        if (label.trim().length() < 1) {
+           // System.out.println(label+"无报告时");
+            return forumList;
+        } else {
+            String la = SqlSplit.getSql(label);
+            System.out.println("sqlSplit"+la);
+            String sql = "select DISTINCT b.body_checkname from label_body a,body b where a.body_id = b.body_id and a.name in " + "(" + la + ")";
+            System.out.println(sql);
+            // String[] strings = label.split(",");
+            // for (int i = 0; i < strings.length; i++) {
+            dataetlDB.query(sql, new RowCallbackHandler() {//将结果集中的数据映射到List中
+                public void processRow(ResultSet rs) throws SQLException {
+                    forumList.add(rs.getString(1));
+                }
+            });
+            return forumList;
+        }
+    }
+  /*  public Set getByitem(String label) {
+        //System.out.println(label);
+        //String la =SqlSplit.getSql(label);
+        String sql = "select  b.body_checkname from body_check a,body b where a.body_id = b.body_id and a.name in " + "(" + label + ")";
+        HashSet set = new HashSet();
+
+        // String[] strings = label.split(",");
+        // for (int i = 0; i < strings.length; i++) {
+        dataetlDB.query(sql,new RowCallbackHandler() {//将结果集中的数据映射到List中
+            public void processRow(ResultSet rs) throws SQLException {
+             set.add(rs.getString(1)) ;
+            }
+        });
+        //set.add("其他");
+        return set;
+    }*/
+
+
+
 }

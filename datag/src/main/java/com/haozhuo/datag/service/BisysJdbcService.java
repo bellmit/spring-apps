@@ -49,15 +49,24 @@ public class BisysJdbcService {
             " ifnull(refund_gross_profit, -1) as  refund_gross_profit, ifnull(gross_profit, -1) as gross_profit, " +
             " ifnull(gross_profit_rate, -1) as gross_profit_rate, ifnull(refund_rate, -1) as refund_rate, " +
             " ifnull(pay_conversion_rate, -1) as  pay_conversion_rate from daily_mall_order_input where date >= ? and date <=? and genre=?";
+    private final static String managerQuestion = "select date, question_num, pay_amount, share_num, collect_num,thank_num ,circusee_num,circusee_amount, "+
+            "time_out_num, question_closely_num from manage_question_all where date >= ? and date <=?";
 
-
-    private final static String healthCheckQuerySql = "select 'App' as src, `date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
+    private final static String healthCheckQuerySql = "select 'App' as src ,`date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
-            "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
-            "from ops_service_transaction x where x.facilitator like '%美年%'  and `date` >= ? and `date` <= ? group by `date` " +
+            "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
+            "from (  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount," +
+            "refund_success_amount from ops_service_transaction x where x.facilitator like '%美年%'  and `date` >=  ? and `date` <= ? " +
+            "union select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
+            "from ops_service_transaction x where x.facilitator like '%美兆%'  and `date` >= ? and `date` <= ?) total group by `date`" +
             "union " +
             "select '微信' as src, `date`,order_num,pay_order_num, pay_order_amount, refund_win_num, refund_win_amount, pay_use_num,pay_profit_amount, " +
-            "refund_success_amount from daily_service_transaction_wechat where `date` >= ? and `date` <= ?";
+            "refund_success_amount from daily_service_transaction_wechat where `date` >= ? and `date` <= ?"+
+            "union " +
+            "select '58到家' as src, `date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
+            "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
+            "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
+            "from ops_service_transaction x where x.facilitator ='58到家项目'  and `date` >= ? and `date` <= ? group by `date` ";
 
     private final static String healthCheckQueryTotalSql = "select '总计' as src ,`date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
@@ -65,9 +74,11 @@ public class BisysJdbcService {
             "from (  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount," +
             "refund_success_amount from ops_service_transaction x where x.facilitator like '%美年%'  and `date` >=  ? and `date` <= ? " +
             "union select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount," +
-            "refund_success_amount from daily_service_transaction_wechat where `date` >= ? and `date` <= ?) total group by `date`";
-
-
+            "refund_success_amount from daily_service_transaction_wechat where `date` >= ? and `date` <= ?" +
+            "union select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,"+
+            "refund_success_amount from ops_service_transaction x where x.facilitator ='58到家项目'  and `date` >=  ? and `date` <= ? "+"" +
+            "union select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
+            "from ops_service_transaction x where x.facilitator like '%美兆%'  and `date` >= ? and `date` <= ?) total group by `date`";
     public long getProdRiskEvaluation() {
         long pv = 0;
         try {
@@ -80,7 +91,6 @@ public class BisysJdbcService {
         }
         return pv;
     }
-
     private final static String dailyMallOrderInputUpdateSQL =
             "INSERT INTO `daily_mall_order_input` (`date`, `genre`, `order_num`, `order_amount`, `pay_order_num`, `pay_order_amount`, " +
                     "`apply_refund_order_num`, `apply_refund_order_amount`, `refund_order_num`, `refund_order_amount`, `refund_gross_profit`, " +
@@ -191,15 +201,45 @@ public class BisysJdbcService {
 
     private static final String uploadInfoUpdateSQL = "INSERT INTO `daily_upload` (`table_id`, `upload_time`, `date`, `operate_account`, `update_time`) VALUES" +
             "(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE `date` = ?, `operate_account` = ?, `update_time` = ?";
-
     public String updateUploadInfo(UploadInfo info) {
         String updateTime = JavaUtils.getCurrent();
-        if(info.getTableId() < 1 || info.getTableId() > 8) {
+        if(info.getTableId() < 1 || info.getTableId() > 9) {
             return "tableId取值超出范围";
         }
         bisysDB.update(uploadInfoUpdateSQL, info.getTableId(), info.getUploadTime(), info.getDate(), info.getOperateAccount(), updateTime,
                 info.getDate(), info.getOperateAccount(), updateTime);
         return "success!";
+    }
+    public List<ManageQuestion> getQuestion(int typeId, String date, String endDate){
+        List<ManageQuestion> list = null;
+       try {
+        String sql =  managerQuestion;
+        // String sql1 =  managerQuestion;
+        Object[] params = new Object[]{date, endDate};
+        //  Object[] params = new Object[]{date, endDate, OpsMallOrder.getGenre(typeId)};
+        //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+        list = bisysDB.query(sql, params,
+                (resultSet, i) -> {
+                    ManageQuestion manageQuestion = new ManageQuestion(
+                            resultSet.getString("date"),
+                            resultSet.getInt("question_num"),
+                            resultSet.getDouble("pay_amount"),
+                            resultSet.getInt("share_num"),
+                            resultSet.getInt("collect_num"),
+                            resultSet.getInt("thank_num"),
+                            resultSet.getInt("circusee_num"),
+                            resultSet.getDouble("circusee_amount"),
+                            resultSet.getInt("time_out_num"),
+                            resultSet.getInt("question_closely_num")
+                    );
+
+                    return manageQuestion;
+                }
+        );
+       }catch (Exception ex) {
+            logger.error("getQuestion error", ex);
+        }
+        return list;
     }
 
     public List<OpsMallOrder> getOpsMallOrder(int typeId, String date, String endDate) {
@@ -208,7 +248,6 @@ public class BisysJdbcService {
         try {
             String sql = isInputMallOrder ? dailyMallOrderInputQuerySQL : opsMallOrderQuerySQL;
             Object[] params = new Object[]{date, endDate, OpsMallOrder.getGenre(typeId)};
-
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(sql, params,
                     (resultSet, i) -> {
@@ -448,7 +487,7 @@ public class BisysJdbcService {
         List<HealthCheck> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(isTotal ? healthCheckQueryTotalSql : healthCheckQuerySql, new Object[]{date, endDate, date, endDate},
+            list = bisysDB.query(isTotal ? healthCheckQueryTotalSql : healthCheckQuerySql, new Object[]{date, endDate, date, endDate,date,endDate,date,endDate},
                     (resultSet, i) -> {
                         HealthCheck healthCheck = new HealthCheck();
                         healthCheck.setSrc(resultSet.getString("src"));
@@ -578,7 +617,6 @@ public class BisysJdbcService {
                         smsCity.setTotalRate(resultSet.getDouble("sms_rate"));
                         return smsCity;
                     }
-
             );
         } catch (Exception ex) {
             logger.error("getSmsCity error", ex);

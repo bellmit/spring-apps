@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * Created by Lucius on 8/22/18.
  */
+
 @SuppressWarnings({"SameReturnValue", "WeakerAccess"})
 @RequestMapping(value = "/table-syn")
 @RestController
@@ -40,9 +41,11 @@ public class TableSynController {
     @Value("${app.biz.admin-password:321}")
     private String adminPassword;
 
-    /**
+
+/**
      * 对应原来developer-api项目中的InsertEntityController中的
      */
+
     @PostMapping("/video")
     @ApiOperation(value = "视频更新接口【/insertAll】",
             notes = "http://192.168.1.152:8085/swagger-ui.html#!/insert-entity-controller/insertAllUsingPOST")
@@ -258,3 +261,4 @@ public class TableSynController {
         }
     }
 }
+

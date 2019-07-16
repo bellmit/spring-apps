@@ -38,6 +38,22 @@ public HbaseTemplate hbaseTemplate(@Value("${hbase.zookeeper.quorum}") String qu
     hbaseTemplate.setConfiguration(conf);
     hbaseTemplate.setAutoFlush(true);
     return hbaseTemplate;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 }

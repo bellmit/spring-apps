@@ -8,6 +8,7 @@ spring:
 server:
   port: 5555
 
+
 eureka:
   client:
     serviceUrl:
@@ -34,11 +35,50 @@ zuul:
     maxTotalConnections: 200 # The configuration property zuul.max.host.connections has been replaced by two new properties, zuul.host.maxTotalConnections and zuul.host.maxPerRouteConnections, which default to 200 and 20 respectively.
     maxPerRouteConnections: 20
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   routes:
     myapps:  # HTTP calls to /myapps get forwarded to the test-apps service, (for example /myapps/101 is forwarded to /101).
       path: /myapps/**  # /myapps/* only matches one level, but /myapps/** matches hierarchically.
       serviceId: test-apps
-      loadBalanced: true
+      loadBalanced:
+
+
+
+
+
+
+
+
+
+
+
+
+
+      true
 
 
 

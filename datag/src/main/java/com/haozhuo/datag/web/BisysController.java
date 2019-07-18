@@ -6,6 +6,7 @@ import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.service.BisysJdbcService;
 import com.haozhuo.datag.service.UserBehaviorService;
+import com.haozhuo.datag.service.WeChat.WeChatService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,8 @@ import javax.validation.Valid;
 @RestController
 public class BisysController {
     private static final Logger logger = LoggerFactory.getLogger(BisysController.class);
-
+    @Autowired
+    private WeChatService weChatService;
     @Autowired
     private BisysJdbcService bisysJdbcService;
     @Autowired
@@ -52,7 +54,7 @@ public class BisysController {
 
     @GetMapping("/dailyReport/jhz/opsMallOrder")
     @ApiOperation(value = "各个报表", notes = "id = 1:电话解读; 2:解读复购; 3:电话问诊; 4:深度解读; 5:专项解读; 6:一元听听;" +
-            " 7:uplus会员; 8:高血糖风险评估; 9:冠心病风险评估; 10:键管服务; 11:绿通; 12:美维口腔; 13:基因检测; 14:健康问答      \n" +
+            " 7:uplus会员; 8:高血糖风险评估; 9:冠心病风险评估; 10:键管服务; 11:绿通; 12:美维口腔; 13:基因检测; 14:健康问答    15.公众号数据  \n" +
             " 返回结果的字段注释: date: 日期; orderNum:下单笔数; orderAmount:下单金额; payOrderNum: 支付笔数; payOrderAmount: 支付金额;" +
             " applyRefundOrderNum: 申请退款笔数; applyRefundOrderAmount: 申请退款金额; refundOrderNum: 提款成功笔数; " +
             "refundOrderAmount: 退款成功金额; grossProfit: 毛利润; grossProfitRate: 毛利率; refundRate: 退款率; refundGrossProfit: 退款毛利" +
@@ -65,7 +67,9 @@ public class BisysController {
             endDate = date;
         if(id==14){
             return bisysJdbcService.getQuestion(id,date,endDate);
-        }else{
+        }else if(id==15){
+            return weChatService.getWechatDate(id,date,endDate);
+        }else {
             return bisysJdbcService.getOpsMallOrder(id, date, endDate);
         }
     }

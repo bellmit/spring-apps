@@ -1,6 +1,6 @@
 package com.haozhuo.datag.model.wechat;
 
-import com.google.gson.annotations.SerializedName;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,7 +21,7 @@ public class AccessToken implements Serializable {
     private static final long serialVersionUID = 5806078615354556552L;
 
     // 获取到的凭证
-    @SerializedName("access_token")
+
     private String accessToken;
 
     // 凭证有效时间，单位：秒

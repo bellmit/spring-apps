@@ -17,7 +17,9 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class AccessToken implements Serializable {
-
+    /**
+     *
+     */
     private static final long serialVersionUID = 5806078615354556552L;
 
     // 获取到的凭证

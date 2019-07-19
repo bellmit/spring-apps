@@ -1,7 +1,10 @@
 package com.haozhuo.datag.service;
 
+import com.alibaba.ocean.rawsdk.ApiExecutor;
+import com.alibaba.ocean.rawsdk.client.exception.OceanException;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.bisys.*;
+import com.haozhuo.datag.util.YMUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +24,8 @@ import java.util.List;
 @Component
 public class BisysJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(BisysJdbcService.class);
-
+    private static final String APIKEY = "2767273";
+    private static final String SECKEY = "SdrFmOuLmqIY";
     @Autowired
     @Qualifier("bisysJdbc") //选择jdbc连接池
     private JdbcTemplate bisysDB;
@@ -307,8 +311,10 @@ public class BisysJdbcService {
         }
         return list;
     }
-
-    public List<YouApp> getYouApp(String date, String endDate) {
+    /**
+    * 数据来源换成友盟+
+    * */
+    /*public List<YouApp> getYouApp(String date, String endDate) {
         List<YouApp> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
@@ -326,6 +332,19 @@ public class BisysJdbcService {
         } catch (Exception ex) {
             logger.error("getYouApp error", ex);
         }
+        return list;
+    }*/
+    public List<YouApp> getYouApp(String date, String endDate) {
+        List<YouApp> list = null;
+        ApiExecutor apiExecutor = new ApiExecutor(APIKEY,SECKEY);
+        apiExecutor.setServerHost("gateway.open.umeng.com");
+
+        try {
+            list =  YMUtil.getData(apiExecutor,date,endDate);
+        } catch (OceanException e) {
+            logger.error("getYouApp error", e);
+        }
+
         return list;
     }
 

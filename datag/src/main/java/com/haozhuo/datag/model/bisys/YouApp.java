@@ -20,4 +20,16 @@ public class YouApp {
     private int activeUsers;
     //启动次数
     private int startNum;
+
+    @Override
+    public String toString() {
+        return "YouApp{" +
+                "date='" + date + '\'' +
+                ", os=" + os +
+                ", downloadUsers=" + downloadUsers +
+                ", totalDownloadUsers=" + totalDownloadUsers +
+                ", activeUsers=" + activeUsers +
+                ", startNum=" + startNum +
+                '}';
+    }
 }

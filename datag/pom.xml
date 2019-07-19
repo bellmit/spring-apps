@@ -165,7 +165,7 @@
         </dependency>
         <dependency>
             <groupId>youmneg</groupId>
-            <artifactId>youmeng</artifactId>
+            <artifactId>youeng</artifactId>
             <version>1.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/umeng.api.client.java.biz-sources.jar</systemPath>
@@ -188,7 +188,19 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.51</version>
         </dependency>
-
+        <dependency>
+            <groupId>net.sf.json-lib</groupId>
+            <artifactId>json-lib</artifactId>
+            <version>2.4</version>
+            <!-- 必须加jdk的版本号 -->
+            <classifier>jdk15</classifier>
+        </dependency>
+        <dependency>
+            <groupId>net.minidev</groupId>
+            <artifactId>json-smart</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
     <build>

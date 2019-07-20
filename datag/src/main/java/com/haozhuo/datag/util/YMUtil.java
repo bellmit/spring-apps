@@ -3,6 +3,7 @@ package com.haozhuo.datag.util;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.ocean.rawsdk.ApiExecutor;
 import com.alibaba.ocean.rawsdk.client.exception.OceanException;
+import com.haozhuo.datag.model.bisys.RegisterUM;
 import com.haozhuo.datag.model.bisys.YouApp;
 import com.umeng.uapp.param.*;
 
@@ -20,7 +21,7 @@ public class YMUtil {
     private   static final  String IosAPPKEY = "5668dce167e58ebde100003e";
     private   static final  String totalAPPKEY = "total";
 
-    public static List<YouApp> getData(ApiExecutor apiExecutor,String strartDate,String enddate) throws OceanException {
+    public static List<YouApp> getAPPData(ApiExecutor apiExecutor,String strartDate,String enddate) throws OceanException {
         List<YouApp> list = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar dd =Calendar.getInstance();
@@ -30,10 +31,10 @@ public class YMUtil {
             Date d2 = sdf.parse(enddate);
             dd.setTime(sdf.parse(strartDate));
             Date tmp=d1;
-            while(tmp.getTime()<d2.getTime()) {
+            while(tmp.getTime()<=d2.getTime()) {
                 tmp=dd.getTime();
                 String date =sdf.format(tmp);
-                System.out.println(date);
+                //System.out.println(date);
                 //数据统计
                 UmengUappGetDailyDataParam dailyDataParam = new UmengUappGetDailyDataParam();
                 // param.getOceanRequestPolicy().setUseHttps(false);
@@ -43,6 +44,8 @@ public class YMUtil {
                 UmengUappGetDailyDataParam iosdailyDataParam = new UmengUappGetDailyDataParam();
                 iosdailyDataParam.setAppkey(IosAPPKEY);
                 iosdailyDataParam.setDate(date);
+
+
                 YouApp adyouApp = new YouApp();
                 adyouApp.setDate(date);
                 adyouApp.setOs(1);
@@ -86,6 +89,7 @@ public class YMUtil {
 
                 //天数加上1
                 dd.add(Calendar.DAY_OF_MONTH, 1);
+                tmp=dd.getTime();
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -94,6 +98,58 @@ public class YMUtil {
 
         return list;
     }
+
+
+    public static List<RegisterUM> getRegisterData(ApiExecutor apiExecutor, String strartDate, String enddate) throws OceanException {
+        List<RegisterUM> list = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar dd =Calendar.getInstance();
+        try {
+            Date d1 = sdf.parse(strartDate);
+            //结束日期
+            Date d2 = sdf.parse(enddate);
+            dd.setTime(sdf.parse(strartDate));
+            Date tmp=d1;
+            while(tmp.getTime()<=d2.getTime()) {
+                tmp=dd.getTime();
+                String date =sdf.format(tmp);
+                //System.out.println(date);
+                //数据统计
+                UmengUappGetDailyDataParam dailyDataParam = new UmengUappGetDailyDataParam();
+                // param.getOceanRequestPolicy().setUseHttps(false);
+                dailyDataParam.setAppkey(AdAPPKEY);
+                dailyDataParam.setDate(date);
+                //ios
+                UmengUappGetDailyDataParam iosdailyDataParam = new UmengUappGetDailyDataParam();
+                iosdailyDataParam.setAppkey(IosAPPKEY);
+                iosdailyDataParam.setDate(date);
+
+                UmengUappGetDailyDataResult  dailyDataResult = apiExecutor.execute(dailyDataParam);
+                UmengUappGetDailyDataResult  iosdailyDataResult = apiExecutor.execute(iosdailyDataParam);
+
+                RegisterUM totalregisterUM = new RegisterUM();
+                totalregisterUM.setDate(date);
+                //新增用户数
+                totalregisterUM.setDownloadUsers(dailyDataResult.getDailyData().getNewUsers()+iosdailyDataResult.getDailyData().getNewUsers());
+                //启动次数
+                totalregisterUM.setStartNum(dailyDataResult.getDailyData().getLaunches()+iosdailyDataResult.getDailyData().getLaunches());
+                // 累计下载用户
+                totalregisterUM.setTotalDownloadUsers(dailyDataResult.getDailyData().getTotalUsers()+iosdailyDataResult.getDailyData().getTotalUsers());
+                list.add(totalregisterUM);
+
+                //天数加上1
+                dd.add(Calendar.DAY_OF_MONTH, 1);
+                tmp=dd.getTime();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+
+        return list;
+    }
+
+
 
     public static void main(String[] args) {
         // 请替换apiKey和apiSecurity

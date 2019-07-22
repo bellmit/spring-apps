@@ -1,12 +1,11 @@
 package com.haozhuo.datag.util;
 
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.ocean.rawsdk.ApiExecutor;
 import com.alibaba.ocean.rawsdk.client.exception.OceanException;
 import com.haozhuo.datag.model.bisys.RegisterUM;
 import com.haozhuo.datag.model.bisys.YouApp;
-import com.umeng.uapp.param.*;
-
+import com.umeng.uapp.param.UmengUappGetDailyDataParam;
+import com.umeng.uapp.param.UmengUappGetDailyDataResult;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -100,9 +99,9 @@ public class YMUtil {
     }
 
 
-    public static List<RegisterUM> getRegisterData(ApiExecutor apiExecutor, String strartDate, String enddate) throws OceanException {
+    public static List<RegisterUM> getRegisterData(ApiExecutor apiExecutor, String date, String enddate) throws OceanException {
         List<RegisterUM> list = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    /*    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar dd =Calendar.getInstance();
         try {
             Date d1 = sdf.parse(strartDate);
@@ -112,7 +111,7 @@ public class YMUtil {
             Date tmp=d1;
             while(tmp.getTime()<=d2.getTime()) {
                 tmp=dd.getTime();
-                String date =sdf.format(tmp);
+                String date =sdf.format(tmp);*/
                 //System.out.println(date);
                 //数据统计
                 UmengUappGetDailyDataParam dailyDataParam = new UmengUappGetDailyDataParam();
@@ -138,12 +137,9 @@ public class YMUtil {
                 list.add(totalregisterUM);
 
                 //天数加上1
-                dd.add(Calendar.DAY_OF_MONTH, 1);
-                tmp=dd.getTime();
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+                //dd.add(Calendar.DAY_OF_MONTH, 1);
+                //tmp=dd.getTime();
+           // }
 
 
         return list;
@@ -156,10 +152,13 @@ public class YMUtil {
         ApiExecutor apiExecutor = new ApiExecutor("2767273", "SdrFmOuLmqIY");
         apiExecutor.setServerHost("gateway.open.umeng.com");
 
-         /*   for (YouApp youApp:YMUtil.getData(apiExecutor,"2019-07-18","2019-07-19")) {
-                System.out.println(youApp);
-            }
-*/
+        try {
+            for (RegisterUM registerUM:YMUtil.getRegisterData(apiExecutor,"2019-07-22","2019-07-22")) {
+                 System.out.println(registerUM);
+             }
+        } catch (OceanException e) {
+            e.printStackTrace();
+        }
 
 
     }

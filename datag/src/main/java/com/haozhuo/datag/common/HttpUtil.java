@@ -48,7 +48,7 @@ public class HttpUtil {
             System.out.println("请求地址: " + httpGet.getURI());
             System.out.println("响应状态: " + response.getStatusLine());
             System.out.println("响应长度: " + responseLength);
-            System.out.println("响应内容: " + responseContent);
+            //System.out.println("响应内容: " + responseContent);
         }catch(ClientProtocolException e){
             //logger.debug("该异常通常是协议错误导致,比如构造HttpGet对象时传入的协议不对(将'http'写成'htp')或者服务器端返回的内容不符合HTTP协议要求等,堆栈信息如下", e);
         }catch(ParseException e){

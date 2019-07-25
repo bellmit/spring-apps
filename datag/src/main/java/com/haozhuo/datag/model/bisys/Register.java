@@ -18,7 +18,7 @@ public class Register {
     //累计注册用户
     private int totalRegisterUsers;
     //下载未注册
-    private int downloadUnregister;
+    private double downloadUnregister;
     //活跃用户
     private int activeUsers;
     //启动次数

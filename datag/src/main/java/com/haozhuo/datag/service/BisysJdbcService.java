@@ -14,6 +14,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 
@@ -340,16 +346,96 @@ public class BisysJdbcService {
         apiExecutor.setServerHost("gateway.open.umeng.com");
 
         try {
-            list =  YMUtil.getData(apiExecutor,date,endDate);
+            list =  YMUtil.getAPPData(apiExecutor,date,endDate);
         } catch (OceanException e) {
             logger.error("getYouApp error", e);
         }
 
         return list;
     }
+    public List<RegisterUM> getRegisterUM(String date, String endDate) {
+        List<RegisterUM> list = null;
+        this.getRegisterPo(date,endDate);
+        ApiExecutor apiExecutor = new ApiExecutor(APIKEY,SECKEY);
+        apiExecutor.setServerHost("gateway.open.umeng.com");
+        try {
+            list = YMUtil.getRegisterData(apiExecutor,date,endDate);
+
+        } catch (OceanException e) {
+            logger.error("getRegisterUM error", e);
+            e.printStackTrace();
+        }
+        return  list;
+    }
+    public  List<RegisterPo> getRegisterPo(String date, String endDate) {
+        List<RegisterPo> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(dailyRegisterQuerySQL, new Object[]{date, endDate},
+                    (resultSet, i) -> {
+                        RegisterPo registerPo = new RegisterPo();
+                        registerPo.setDate(resultSet.getString("date"));
+                        registerPo.setActiveUsers(resultSet.getInt("active_users"));
+                        registerPo.setRegisterUsers(resultSet.getInt("register_users"));
+                        registerPo.setTotalRegisterUsers(resultSet.getInt("total_register_users"));
+                        return registerPo;
+                    });
+        } catch (Exception ex) {
+            logger.error("getRegisterPo error", ex);
+            RegisterPo registerPo = new RegisterPo();
+            registerPo.setActiveUsers(0);
+            registerPo.setRegisterUsers(0);
+            registerPo.setTotalRegisterUsers(0);
+            list.add(registerPo);
+        }
+        return list;
+    }
+
+    public List<Register> getRegister(String date, String endDate){
+        List<Register> list = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar cd = Calendar.getInstance();
+        try {
+            Date date1 = sdf.parse(date);
+            Date date2 = null;
+            date2 = sdf.parse(endDate);
+            cd.setTime(sdf.parse(date));
+            Date tmp = date1;
+            while(tmp.getTime()<=date2.getTime()){
+                tmp=cd.getTime();
+                String sdate =sdf.format(tmp);
+                Register register = new Register();
+                List<RegisterPo>  listpo  = this.getRegisterPo(sdate,sdate);
+                List<RegisterUM>  listum =this .getRegisterUM(sdate,sdate);
+                for(RegisterUM registerUM:listum){
+                    register.setDownloadUsers(registerUM.getDownloadUsers());
+                    register.setTotalDownloadUsers(registerUM.getTotalDownloadUsers());
+                    register.setStartNum(registerUM.getStartNum());
+                    for(RegisterPo registerPo:listpo){
+                        register.setDate(registerPo.getDate());
+                        register.setActiveUsers(registerPo.getActiveUsers());
+                        register.setRegisterUsers(registerPo.getRegisterUsers());
+                        register.setTotalRegisterUsers(registerPo.getTotalRegisterUsers());
+                        //register.setDownloadUnregister((registerUM.getDownloadUsers()-registerPo.getRegisterUsers())/registerUM.getDownloadUsers());
+                        register.setDownloadUnregister( new BigDecimal((float)(registerUM.getDownloadUsers()-registerPo.getRegisterUsers())/registerUM.getDownloadUsers()).setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue());
+                    }
+                }
+                cd.add(Calendar.DAY_OF_MONTH, 1);
+                tmp=cd.getTime();
+                list.add(register);
+            }
+        } catch (ParseException e) {
+            logger.error("getRegister error", e);
+            e.printStackTrace();
+        }
+        return  list;
+    }
 
 
-    public List<Register> getRegister(String date, String endDate) {
+
+
+
+/*    public List<Register> getRegister(String date, String endDate) {
         List<Register> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
@@ -370,7 +456,7 @@ public class BisysJdbcService {
             logger.error("getRegister error", ex);
         }
         return list;
-    }
+    }*/
 
     private static final String buBuBaoQuerySQL = "select date, banner_num, click_num, policy_num, policy_rate " +
             "from manage_policy_stat where date >= ? and date <=? ";

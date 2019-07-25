@@ -60,7 +60,7 @@ public class KafkaService {
     }
     public void sendUserBehaviorMessage(UserBehavior msg) {
         try {
-            System.out.println("topic："+devSynRableUserBehavior);
+            //System.out.println("topic："+devSynRableUserBehavior);
             kafkaTemplate.send(devSynRableUserBehavior, objectMapper.writeValueAsString(msg));
         } catch (JsonProcessingException e) {
             logger.error("发送Kafka消息{}失败:{}", msg, e);

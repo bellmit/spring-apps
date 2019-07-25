@@ -48,7 +48,6 @@ public class HbaseService {
             }
             return set;
         });
-        logger.info("");
         return set;
     }
 

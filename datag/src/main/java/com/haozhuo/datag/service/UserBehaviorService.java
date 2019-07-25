@@ -17,11 +17,7 @@ public class UserBehaviorService {
    // @ Autowired
    // private RedisSpringHelper redisSpringHelper;
     public void save(UserBehaviorDTO dto) {
-       /* String upload = redisSpringHelper.get("baisc:bi:uploaddisable");
-        if(StringUtils.isNotBlank(upload)&&upload.equals("1"))
-        {
-            return;
-        }*/
+
         if (dto.getTest() == null || dto.getTest() == false) {
             UserBehavior userBehavior = new UserBehavior();
             BeanUtils.copyProperties(dto, userBehavior);

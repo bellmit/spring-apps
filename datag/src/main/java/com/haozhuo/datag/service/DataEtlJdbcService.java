@@ -385,12 +385,9 @@ public class DataEtlJdbcService {
             return forumList;
         } else {
             String la = SqlSplit.getSql(label);
-            System.out.println("sqlSplit"+la);
             String sql = "select DISTINCT b.body_checkname from label_body a,body b where a.body_id = b.body_id and a.name in " + "(" + la + ")";
-            System.out.println(sql);
-            // String[] strings = label.split(",");
-            // for (int i = 0; i < strings.length; i++) {
-            dataetlDB.query(sql, new RowCallbackHandler() {//将结果集中的数据映射到List中
+            dataetlDB.query(sql, new RowCallbackHandler() {
+                //将结果集中的数据映射到List中
                 public void processRow(ResultSet rs) throws SQLException {
                     forumList.add(rs.getString(1));
                 }
@@ -398,23 +395,5 @@ public class DataEtlJdbcService {
             return forumList;
         }
     }
-  /*  public Set getByitem(String label) {
-        //System.out.println(label);
-        //String la =SqlSplit.getSql(label);
-        String sql = "select  b.body_checkname from body_check a,body b where a.body_id = b.body_id and a.name in " + "(" + label + ")";
-        HashSet set = new HashSet();
-
-        // String[] strings = label.split(",");
-        // for (int i = 0; i < strings.length; i++) {
-        dataetlDB.query(sql,new RowCallbackHandler() {//将结果集中的数据映射到List中
-            public void processRow(ResultSet rs) throws SQLException {
-             set.add(rs.getString(1)) ;
-            }
-        });
-        //set.add("其他");
-        return set;
-    }*/
-
-
 
 }

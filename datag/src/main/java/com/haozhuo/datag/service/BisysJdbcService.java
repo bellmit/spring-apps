@@ -42,7 +42,7 @@ public class BisysJdbcService {
             "sum(total_download_users) as total_download_users, sum(active_users) as active_users, sum(start_num) as start_num " +
             "from daily_app where date >=? and date <= ? group by `date` ";
 
-    private final static String dailyRegisterQuerySQL = "select * from daily_register a  where a.`date`>= ? and a.`date` <= ? ";
+    private final static String dailyRegisterQuerySQL = "select date,cum_user,day_add_user,day_active_user from jf_user_stats a  where a.`date`>= ? and a.`date` <= ? ";
 
     private final static String smsQuerySQL = "select `date`, factory_sms_num, one_sms_num, one_sms_register_num, old_user_num, " +
             "ifnull(one_sms_register_num/(one_sms_num - old_user_num), 0) as one_rate, ifnull(one_sms_cost/one_sms_register_num, 0) as one_sms_cost," +
@@ -375,9 +375,9 @@ public class BisysJdbcService {
                     (resultSet, i) -> {
                         RegisterPo registerPo = new RegisterPo();
                         registerPo.setDate(resultSet.getString("date"));
-                        registerPo.setActiveUsers(resultSet.getInt("active_users"));
-                        registerPo.setRegisterUsers(resultSet.getInt("register_users"));
-                        registerPo.setTotalRegisterUsers(resultSet.getInt("total_register_users"));
+                        registerPo.setActiveUsers(resultSet.getInt("day_active_user"));
+                        registerPo.setRegisterUsers(resultSet.getInt("day_add_user"));
+                        registerPo.setTotalRegisterUsers(resultSet.getInt("cum_user"));
                         return registerPo;
                     });
         } catch (Exception ex) {

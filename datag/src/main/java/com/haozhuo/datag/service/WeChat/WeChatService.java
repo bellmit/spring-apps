@@ -44,7 +44,7 @@ public class WeChatService {
 
     private static String GETUSERCUMULATE_URL = "https://api.weixin.qq.com/datacube/getusercumulate?access_token=ACCESS_TOKEN";
 
-    private static String GETUESRSAOMA_URL = "https://bloodtrack.ihaozhuo.com/admin/qrcount?startTime=DATE&timestamp=2019-01-22&sign=ebc1a086ee9a0b11467121f710af0071";
+    private static String GETUESRSAOMA_URL = "http://bloodtrack.ihaozhuo.com/admin/yjkqrcount?user=yjk&pwd=xzb&startTime=DATE";
 
     private final static String getDownlodeNumSQL = "select * from content_weixin_app a  where a.`date`>= ? and a.`date` <= ? ";
     private final static String dailyMallOrderInputUpdateSQL =
@@ -83,7 +83,6 @@ public class WeChatService {
                     String t = df.format((float) c / d * 100);
                     weChatDate.setGuanzhurate(s + "%");
                     weChatDate.setDownloadrate(t + "%");
-
                     return weChatDate;
                 }
         );
@@ -99,17 +98,15 @@ public class WeChatService {
         List<GetUserSummary> userSummaries = getuserSummary(date, enddate);
         List<GetUserCumulate> userCumulates = getUserCumulateList(date, enddate);
         List<DownloadNum> getDownlodeNum = getDownlodeNum(date, enddate);
-        List<SaoMa> saoMas = getSaomaNum(date);
+        
         String updateTime = StringUtil.isEmpty(date) ? JavaUtils.getToday() : date;
-
+        int saoma = getSaomaNum(date);
         int newuser = 0;
         int cancel = 0;
         int num = 0;
-        int saoma = 0;
+        
         userCumulates.get(0).getCumulate_user();
-        for (int i = 0; i < saoMas.size(); i++) {
-            saoma += saoMas.get(i).getOneday();
-        }
+ 
         for (int i = 0; i < userSummaries.size(); i++) {
             newuser += Integer.parseInt(userSummaries.get(i).getNew_user());
             cancel += Integer.parseInt(userSummaries.get(i).getCancel_user());
@@ -128,29 +125,40 @@ public class WeChatService {
     /**
      * 获取扫码数量
      */
-    public List<SaoMa> getSaomaNum(String date) {
+    public int getSaomaNum(String date) {
         List<SaoMa> saoMas = new ArrayList<>();
 
         String URL = GETUESRSAOMA_URL.replace("DATE", date);
         String s = httpUtil.sendGetRequest(URL, null);
-        //  System.out.print("json" + s);// {""}
-        JSONArray jsonObject1 = JSONObject.parseArray(s);
-        for (int i = 0; i < jsonObject1.size(); i++) {
+
+        JSONObject jsonObject = JSONObject.parseObject(s);
+        if (jsonObject.containsKey("a_totalOneday")){
+            String s1 = jsonObject.get("a_totalOneday").toString();
+            int s2 = Integer.parseInt(s1);
+
+            return s2;
+        }else{
+            return 0;
+        }
+
+
+      //  JSONArray jsonObject1 = JSONObject.parseArray(s);
+/*        for (int i = 0; i < jsonObject1.size(); i++) {
             Object o = jsonObject1.get(i);
             SaoMa saoMa = new SaoMa();
             JSONObject jsonObject = JSONObject.parseObject(o.toString());
             addSaomaNum(jsonObject, saoMa);
             saoMas.add(saoMa);
-        }
-        return saoMas;
+        }*/
+
     }
 
-    private void addSaomaNum(JSONObject o, SaoMa saoMa) {
+/*    private void addSaomaNum(JSONObject o, SaoMa saoMa) {
         saoMa.setIn_factory(o.containsKey("in_factory") ? o.get("in_factory").toString() : "");
         saoMa.setPoint_name(o.containsKey("point_name") ? o.get("point_name").toString() : "");
         saoMa.setOneday(o.containsKey("oneday") ? Integer.parseInt(o.get("oneday").toString()) : 0);
         saoMa.setTotal(o.containsKey("total") ? Integer.parseInt(o.get("total").toString()) : 0);
-    }
+    }*/
 
     /**
      * 获取下载次数

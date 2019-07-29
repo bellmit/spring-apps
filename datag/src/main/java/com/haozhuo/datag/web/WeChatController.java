@@ -26,7 +26,7 @@ public class WeChatController {
 
     @GetMapping("/wechat/saoma")
     @ApiOperation("扫码数")
-    public List<SaoMa> getNum(@RequestParam(value="date") String date){
+    public int getNum(@RequestParam(value="date") String date){
 
         return weChatService.getSaomaNum(date);
     }

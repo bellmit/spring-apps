@@ -32,6 +32,7 @@ public class HbaseService {
     private final static String HBASENAME = "DATAETL:RPT_IND";
     @Autowired
     private DataEtlJdbcService dataEtlJdbcService;
+
     public Set getItemByReportId(String reportId) {
         SubstringComparator substringComparator = new SubstringComparator(reportId);
         RowFilter rowFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, substringComparator);
@@ -43,8 +44,21 @@ public class HbaseService {
             for (Cell cell : cells) {
                 String key = new String(CellUtil.cloneQualifier(cell));
                 String value = new String(CellUtil.cloneValue(cell));
-                if (key.equals("chk_item"))
-                    set.add(value);
+                String rowName = new String(CellUtil.cloneRow(cell));
+                String[] rownmaes = rowName.split("_");
+                System.out.println("rowkey:"+rowName);
+                if((rownmaes[2].contains("血压")|| rownmaes[2].contains("一般检查"))&&rownmaes[3].equals("收缩压")){
+                    if(key.equals("rs_val")){
+                        set.add(value);
+                    }
+                }
+                if(rownmaes[2].contains("血压")&&rownmaes[3].equals("")){
+                    if(key.equals("rs_val")){
+                        set.add(value);
+                    }
+                }
+              // if (key.equals("chk_item") );
+
             }
             return set;
         });

@@ -1,5 +1,6 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.model.report.RepAbnormal;
 import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.HbaseService;
@@ -27,4 +28,16 @@ public class ReportController {
     public Object getBodyByReportId(@PathVariable(value = "reportId") String reportId){
         return hbaseService.getBodyById(reportId);
     }
+
+    @GetMapping(value = "/{reportId}")
+    @ApiOperation(value = "根据报告Id返回人体图数据",notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
+    public RepAbnormal getTest(@PathVariable(value = "reportId") String reportId){
+        return hbaseService.insurance(reportId);
+    }
+
+/*    @GetMapping(value = "/test/{reportId}")
+    @ApiOperation(value = "根据报告Id返回人体图数据",notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
+    public Set getTest1(@PathVariable(value = "reportId") String reportId){
+        return hbaseService.getItemByReportId1(reportId);
+    }*/
 }

@@ -1,9 +1,12 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.model.report.RepAbnormal;
 import com.haozhuo.datag.model.wechat.DownloadNum;
 import com.haozhuo.datag.model.wechat.GetUserCumulate;
 import com.haozhuo.datag.model.wechat.GetUserSummary;
 import com.haozhuo.datag.model.wechat.SaoMa;
+import com.haozhuo.datag.service.EsService;
+import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.WeChat.WeChatService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @RequestMapping(value = "/wx")
 @RestController
@@ -22,7 +27,10 @@ public class WeChatController {
     private String secret;
     @Autowired
     private WeChatService weChatService;
-
+@Autowired
+  private HbaseService hbaseService;
+@Autowired
+    EsService esService;
 
     @GetMapping("/wechat/saoma")
     @ApiOperation("扫码数")
@@ -65,6 +73,22 @@ public class WeChatController {
 
 
         return weChatService.getUserCumulateList(begindate, enddate);
+    }
+
+    @GetMapping("/hbase")
+    public RepAbnormal getrpt(@RequestParam(value="rptid") String rptid){
+
+        return hbaseService.getAbnormalValue(rptid);
+    }
+
+    @GetMapping("/es")
+    public int test(@RequestParam(value="rpt_id")String rpt_id){
+
+        if(esService.getLabelsByReportId(rpt_id).length()==0)
+        return 0;
+        else {
+            return 1;
+        }
     }
 
 }

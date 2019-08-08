@@ -1,10 +1,9 @@
 package com.haozhuo.datag.service;
 
-import com.alibaba.ocean.rawsdk.ApiExecutor;
-import com.alibaba.ocean.rawsdk.client.exception.OceanException;
+
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.bisys.*;
-import com.haozhuo.datag.util.YMUtil;
+import com.haozhuo.datag.util.SqlDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.sql.SQLData;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -32,17 +29,20 @@ public class BisysJdbcService {
     private static final Logger logger = LoggerFactory.getLogger(BisysJdbcService.class);
     private static final String APIKEY = "2767273";
     private static final String SECKEY = "SdrFmOuLmqIY";
+    private static   int count = 0;
     @Autowired
     @Qualifier("bisysJdbc") //选择jdbc连接池
     private JdbcTemplate bisysDB;
 
     private final static String dailyYouAppQuerySQL = "select `date`, os, download_users, total_download_users, active_users," +
-            "start_num from daily_app where date >=? and date <= ? " +
-            " union select `date`, 0 as os, sum(download_users) as download_users, " +
+            "start_num from daily_app where date >=? and date <= ? "+
+             " union select `date`, 0 as os, sum(download_users) as download_users, " +
             "sum(total_download_users) as total_download_users, sum(active_users) as active_users, sum(start_num) as start_num " +
             "from daily_app where date >=? and date <= ? group by `date` ";
 
-    private final static String dailyRegisterQuerySQL = "select date,cum_user,day_add_user,day_active_user from jf_user_stats a  where a.`date`>= ? and a.`date` <= ? ";
+    private final static String dailyRegisterQuerySQL = "select * from daily_register a  where a.`date`>= ? and a.`date` <= ? ";
+
+    //private final static String dailyRegisterQuerySQL = "select date,cum_user,day_add_user,day_active_user from jf_user_stats a  where a.`date`>= ? and a.`date` <= ? ";
 
     private final static String smsQuerySQL = "select `date`, factory_sms_num, one_sms_num, one_sms_register_num, old_user_num, " +
             "ifnull(one_sms_register_num/(one_sms_num - old_user_num), 0) as one_rate, ifnull(one_sms_cost/one_sms_register_num, 0) as one_sms_cost," +
@@ -317,14 +317,12 @@ public class BisysJdbcService {
         }
         return list;
     }
-    /**
-    * 数据来源换成友盟+
-    * */
-    /*public List<YouApp> getYouApp(String date, String endDate) {
+
+    public List<YouApp> getYouApp(String date, String endDate) {
         List<YouApp> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate, date, endDate},
+            list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate,date,endDate},
                     (resultSet, i) -> {
                         YouApp youApp = new YouApp();
                         youApp.setActiveUsers(resultSet.getInt("active_users"));
@@ -333,14 +331,16 @@ public class BisysJdbcService {
                         youApp.setOs(resultSet.getInt("os"));
                         youApp.setStartNum(resultSet.getInt("start_num"));
                         youApp.setTotalDownloadUsers(resultSet.getInt("total_download_users"));
+                       System.out.println(youApp);
                         return youApp;
                     });
         } catch (Exception ex) {
             logger.error("getYouApp error", ex);
         }
+
         return list;
-    }*/
-    public List<YouApp> getYouApp(String date, String endDate) {
+    }
+/*    public List<YouApp> getYouApp(String date, String endDate) {
         List<YouApp> list = null;
         ApiExecutor apiExecutor = new ApiExecutor(APIKEY,SECKEY);
         apiExecutor.setServerHost("gateway.open.umeng.com");
@@ -352,8 +352,8 @@ public class BisysJdbcService {
         }
 
         return list;
-    }
-    public List<RegisterUM> getRegisterUM(String date, String endDate) {
+    }*/
+/*    public List<RegisterUM> getRegisterUM(String date, String endDate) {
         List<RegisterUM> list = null;
         this.getRegisterPo(date,endDate);
         ApiExecutor apiExecutor = new ApiExecutor(APIKEY,SECKEY);
@@ -389,9 +389,9 @@ public class BisysJdbcService {
             list.add(registerPo);
         }
         return list;
-    }
+    }*/
 
-    public List<Register> getRegister(String date, String endDate){
+/**   public List<Register> getRegister(String date, String endDate){
         List<Register> list = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar cd = Calendar.getInstance();
@@ -429,13 +429,13 @@ public class BisysJdbcService {
             e.printStackTrace();
         }
         return  list;
-    }
+    }*/
 
 
 
 
 
-/*    public List<Register> getRegister(String date, String endDate) {
+  public List<Register> getRegister(String date, String endDate) {
         List<Register> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
@@ -456,7 +456,7 @@ public class BisysJdbcService {
             logger.error("getRegister error", ex);
         }
         return list;
-    }*/
+    }
 
     private static final String buBuBaoQuerySQL = "select date, banner_num, click_num, policy_num, policy_rate " +
             "from manage_policy_stat where date >= ? and date <=? ";
@@ -728,5 +728,23 @@ public class BisysJdbcService {
         }
         return list;
     }
+    private static final String ClickUpdateSQL = "INSERT INTO `daily_blood` (`date`, `num`, `update_time`)" +
+       " VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE `date` = ?,`num`= ?, `update_time` = ? ";
+
+    public void saveClick(int click){
+        String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+        String date1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
+        System.out.println();
+        if(click==1){
+            count=count+1;
+            bisysDB.update(ClickUpdateSQL, SqlDate.strToDate(date),count,SqlDate.strToDateTime(date1),SqlDate.strToDate(date),count,SqlDate.strToDateTime(date1));
+
+            logger.info("click=1: "+count);
+
+            }
+        System.out.println(count);
+    }
+
+
 
 }

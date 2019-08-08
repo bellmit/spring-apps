@@ -112,27 +112,27 @@
             </exclusions>
         </dependency>
 
-        <dependency>
+    <!--    <dependency>
             <groupId>youmneg</groupId>
-            <artifactId>youmeng</artifactId>
+            <artifactId>um-common</artifactId>
             <version>1.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/commons-logging-1.1.1.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>youmneg</groupId>
-            <artifactId>youmeng</artifactId>
+            <artifactId>um-client</artifactId>
             <version>1.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/umeng.api.client.java.biz.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>youmneg</groupId>
-            <artifactId>youeng</artifactId>
+            <artifactId>um-biz</artifactId>
             <version>1.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/umeng.api.client.java.biz-sources.jar</systemPath>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.data</groupId>
@@ -146,11 +146,11 @@
          </exclusions>
 
      </dependency>
-       <dependency>
+    <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.51</version>
-        </dependency>
+    </dependency>
 
 
     </dependencies>
@@ -159,6 +159,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <includeSystemScope>true</includeSystemScope>
+                </configuration>
             </plugin>
         </plugins>
     </build>

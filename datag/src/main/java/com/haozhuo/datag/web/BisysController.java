@@ -272,11 +272,25 @@ public class BisysController {
         return bisysJdbcService.getUploadInfoPage(pageNo, pageSize, ids);
     }
    @PostMapping(value = "/bi/userBehavior/upload")
-   @ApiOperation(value = "bi埋点上传接口")
+   @ApiOperation(value = "码上检bi埋点上传接口")
     public ResponseEntity<Void> uploadUserBehavior(@Valid @RequestBody UserBehaviorDTO body) {
         userBehaviorService.save(body);
         return new ResponseEntity<>(ResultCodeBase.CODE_SUCCESS, TipConstBase.OPERATION_SAVE_SUCCESS);
     }
+    @PostMapping(value = "/bi/blood/click")
+    @ApiOperation(value = "血液按钮埋点次数统计")
+    public ResponseEntity<Void> saveClick(@RequestParam(value = "click") int click) {
+        //if()
+        bisysJdbcService.saveClick(click);
+        return new ResponseEntity<>(ResultCodeBase.CODE_SUCCESS, TipConstBase.OPERATION_SAVE_SUCCESS);
+    }
+
+
+/*    @GetMapping(value = "/bi/blood/getclick")
+    @ApiOperation(value = "血液按钮埋点次数统计")
+    public Object getClick(@RequestParam(value = "click") int click) {
+        return bisysJdbcService.getClick(click);
+    }*/
 
 }
 

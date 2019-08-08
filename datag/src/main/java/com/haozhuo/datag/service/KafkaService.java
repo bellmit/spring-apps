@@ -38,7 +38,7 @@ public class KafkaService {
     @Value("${app.kafka.topic.prefs-update: prefs-update}")
     private String prefUpdateTopic;
 
-    @Value("${app.kafka.topic.userBehaviorTopicTest: test-syn-table-userBehavior1}")
+    @Value("${app.kafka.topic.userBehaviorTopic: dev-syn-table-userBehavior}")
     private String devSynRableUserBehavior;
 
     public void sendRcmdRequestMsg(RcmdMsg msg) {

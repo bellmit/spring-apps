@@ -6,7 +6,7 @@ import java.security.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class sqlDate {
+public class SqlDate {
     public static java.sql.Date strToDate(String strDate) {
         String str = strDate;
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");

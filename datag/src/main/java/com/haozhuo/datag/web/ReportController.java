@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RequestMapping(value = "/report")
@@ -35,6 +36,11 @@ public class ReportController {
         return hbaseService.insurance(reportId);
     }
 
+  /*  @GetMapping(value = "/getrep/{reportId}")
+    @ApiOperation(value = "根据报告Id返回人体图数据",notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
+    public List getrep(@PathVariable(value = "reportId") String reportId){
+        return hbaseService.getRep(reportId);
+    }*/
 /*    @GetMapping(value = "/test/{reportId}")
     @ApiOperation(value = "根据报告Id返回人体图数据",notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
     public Set getTest1(@PathVariable(value = "reportId") String reportId){

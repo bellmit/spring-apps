@@ -77,8 +77,10 @@ public class EsService {
     private final GoodsTypeProportion goodsTypeProportion = new GoodsTypeProportion();
 
     private final String[] goodsSearchFields;
+
     @Autowired
     private TransportClient client;
+
     private final GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8);
     private final GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
     private final GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, 0.9);
@@ -535,6 +537,16 @@ public class EsService {
 
     //---------------------- article end -----------------------------------
 
+//-----------------------rep
+public String getchkday(String rptid){
+
+    SearchRequestBuilder srb = client.prepareSearch("reportlabel").setSize(1)
+            .setQuery(matchQuery("healthReportId", rptid.trim()));
+    SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+    return stream(searchHits).map(x -> x.getSourceAsMap().get("lastUpdateTime")).findFirst().orElse("").toString();
+}
+
+//--------------------------------
 
     //---------------------- live start -----------------------------------
 

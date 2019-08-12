@@ -17,7 +17,7 @@ public class RepAbnormal {
     private String feijiejie;
     private String ganzangjiejie;
     private String weixirou;
-    private String changdaoxirou;
+//    private String changdaoxirou;
     private String luanchaolangzhong;
     private String gongjingtct;
     private String gongjinghpv;
@@ -28,7 +28,7 @@ public class RepAbnormal {
     private String yiganekangyuan;
     private String yiganekangti;
     private String yiganhexinkangti;
-    private String yigandna;
+   // private String yigandna;
     private String yiganqians1kangyuan;
     private String bingganbingdukangti;
     private String bingganbingdurna;

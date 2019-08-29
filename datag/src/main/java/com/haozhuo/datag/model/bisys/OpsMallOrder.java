@@ -139,7 +139,7 @@ public class OpsMallOrder {
         if (payOrderNum == 0) {
             return 0D;
         } else {
-            return JavaUtils.retainDecimal(getGrossProfit() / payOrderAmount,4);
+            return payOrderAmount==0? 0 : JavaUtils.retainDecimal(getGrossProfit() / payOrderAmount,4);
         }
     }
 

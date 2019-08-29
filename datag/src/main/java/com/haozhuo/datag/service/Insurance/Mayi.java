@@ -1,128 +1,31 @@
-package com.haozhuo.datag.service;
+package com.haozhuo.datag.service.Insurance;
 
-
-import com.haozhuo.datag.model.report.Body;
-import com.haozhuo.datag.model.report.HongKang;
 import com.haozhuo.datag.model.report.RepAbnormal;
+import com.haozhuo.datag.service.EsService;
+import com.haozhuo.datag.service.HbaseService;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.RowFilter;
-import org.apache.hadoop.hbase.filter.SubstringComparator;
-
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static java.util.Arrays.stream;
-
 
 @Component
-public class HbaseService {
+public class Mayi {
     private static final Logger logger = LoggerFactory.getLogger(HbaseService.class);
     @Autowired
     private HbaseTemplate hbaseTemplate;
     @Autowired
     private EsService esService;
     private final static String HBASENAME = "DATAETL:RPT_IND";
-    private final static String HBASENAME1 = "DATAETL:RPT_LABELS";
 
-
-    @Autowired
-    private DataEtlJdbcService dataEtlJdbcService;
-
-
-
-    public Set getItemByReportId(String reportId) {
-        SubstringComparator substringComparator = new SubstringComparator(reportId);
-        RowFilter rowFilter = new RowFilter(CompareFilter.CompareOp.EQUAL, substringComparator);
-        Scan scan = new Scan();
-        scan.setFilter(rowFilter);
-        HashSet set = new HashSet();
-        hbaseTemplate.find(HBASENAME, scan, (Result result, int i) -> {
-            Cell[] cells = result.rawCells();
-            for (Cell cell : cells) {
-                String key = new String(CellUtil.cloneQualifier(cell));
-                String value = new String(CellUtil.cloneValue(cell));
-                String rowName = new String(CellUtil.cloneRow(cell));
-                String[] rownmaes = rowName.split("_");
-                System.out.println("rowkey:" + rowName);
-                if ((rownmaes[2].contains("血压") || rownmaes[2].contains("一般检查")) && rownmaes[3].equals("收缩压")) {
-                    if (key.equals("rs_val")) {
-                        set.add(value);
-                    }
-                }
-                if (rownmaes[2].contains("血压") && rownmaes[3].equals("")) {
-                    if (key.equals("rs_val")) {
-                        set.add(value);
-                    }
-                }
-                // if (key.equals("chk_item") );
-
-            }
-            return set;
-        });
-        return set;
-    }
-
-    public List<Body> getBody(List list1, String sex) {
-        List<Body> list = new ArrayList<>();
-        if (sex.equals("男"))
-            list1.remove("内科");
-        if (list1.size() > 0)
-            for (int i = 0; i < list1.size(); i++) {
-                Body body = new Body();
-                body.setFlag(1);
-                body.setItem((String) list1.get(i));
-                list.add(body);
-            }
-        //人体图18项数组
-        String[] bodys = {"肺部", "妇科", "肝脏", "化验", "甲状腺", "口腔", "内科", "尿液", "泌尿生殖系统", "肾脏", "外科", "胃肠", "心脏", "眼耳鼻喉", "一般检查", "影像", "肿瘤标志物", "其他"};
-        List<String> list2 = Arrays.stream(bodys).collect(Collectors.toList());
-        list2.removeAll(list1);
-        if (sex.equals("男"))
-            list2.remove("妇科");
-        // System.out.println("移除异常"+list2.toString());
-        for (int i = 0; i < list2.size(); i++) {
-            Body body = new Body();
-            body.setFlag(0);
-            body.setItem((String) list2.get(i));
-            list.add(body);
-        }
-
-        return list;
-    }
-
-    public List getBodyById(String reportId) {
-        List list = new ArrayList();
-        String sex = esService.getSexByReportId(reportId);
-        if (sex.trim().length() < 1) {
-            return list;
-        } else {
-            return this.getBody(dataEtlJdbcService.getBylabel(esService.getLabelsByReportId(reportId)), sex);
-        }
-    }
-
-    /**
-     * lljj 2019年7月29日16:19:03
-     *
-     * @param
-     * @return
-     */
     public RepAbnormal getAbnormalValue(String idcard) {
         String reportId = esService.getrptid(idcard);
         String day = esService.getchkday(idcard);
@@ -606,76 +509,4 @@ public class HbaseService {
         }
         return abnormalValue;
     }
-
-
-
-    public void test() throws IOException {
-        String idcard = null;
-        String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\result3.txt";
-        // String finalXlsxPath = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\测试数据.xls";
-        FileReader reader = null;
-        FileOutputStream out = null;
-        // FileOutputStream fos = null;
-        int i = 1;
-        XSSFRow header = null;
-        try {
-            reader = new FileReader(pathname);
-            BufferedReader br = new BufferedReader(reader);
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                idcard = line;
-                System.out.println(idcard);
-                RepAbnormal abnormal = insurance(idcard);
-                FileInputStream fs = new FileInputStream("d:/workbook1.xls");
-                POIFSFileSystem ps = new POIFSFileSystem(fs);
-                HSSFWorkbook wb = new HSSFWorkbook(ps);
-                HSSFSheet sheet = wb.getSheetAt(0);
-                HSSFRow row = sheet.getRow(0);
-                out = new FileOutputStream("d:/workbook1.xls");
-                row = sheet.createRow((sheet.getLastRowNum() + 1));
-                row.createCell(0).setCellValue(idcard);
-                row.createCell(1).setCellValue(abnormal.getBmi());
-                row.createCell(2).setCellValue(abnormal.getDiya());
-                row.createCell(3).setCellValue(abnormal.getGaoya());
-                row.createCell(4).setCellValue(abnormal.getXuetang());
-                row.createCell(5).setCellValue(abnormal.getTanghuaxuehongdanbai());
-                row.createCell(6).setCellValue(abnormal.getJiazhuangxianjiejie());
-                row.createCell(7).setCellValue(abnormal.getRuxianjiejie());
-                row.createCell(8).setCellValue(abnormal.getFeijiejie());
-                row.createCell(9).setCellValue(abnormal.getGanzangjiejie());
-                row.createCell(10).setCellValue(abnormal.getWeixirou());
-                row.createCell(11).setCellValue(abnormal.getLuanchaolangzhong());
-                row.createCell(12).setCellValue(abnormal.getGongjingtct());
-                row.createCell(13).setCellValue(abnormal.getGongjinghpv());
-                row.createCell(14).setCellValue(abnormal.getGangongnengalt());
-                row.createCell(15).setCellValue(abnormal.getGangongnengast());
-                row.createCell(16).setCellValue(abnormal.getYiganbiaomiankangyuan());
-                row.createCell(17).setCellValue(abnormal.getYiganbiaomiankangti());
-                row.createCell(18).setCellValue(abnormal.getYiganekangyuan());
-                row.createCell(19).setCellValue(abnormal.getYiganekangti());
-                row.createCell(20).setCellValue(abnormal.getYiganhexinkangti());
-                row.createCell(21).setCellValue(abnormal.getYiganqians1kangyuan());
-                row.createCell(22).setCellValue(abnormal.getBingganbingdukangti());
-                row.createCell(23).setCellValue(abnormal.getBingganbingdurna());
-                row.createCell(24).setCellValue(abnormal.getGanyinghuachaosheng());
-                row.createCell(25).setCellValue(abnormal.getXinzangchaoshengyichang());
-                row.createCell(26).setCellValue(abnormal.getXindiantu());
-                out.flush();
-                wb.write(out);
-                System.out.println(row.getLastCellNum() + "测试一下---------------------------" + i);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        out.close();
-
-
-    }
-
-
 }
-
-

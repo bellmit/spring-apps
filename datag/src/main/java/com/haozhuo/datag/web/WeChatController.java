@@ -4,7 +4,6 @@ import com.haozhuo.datag.model.report.RepAbnormal;
 import com.haozhuo.datag.model.wechat.DownloadNum;
 import com.haozhuo.datag.model.wechat.GetUserCumulate;
 import com.haozhuo.datag.model.wechat.GetUserSummary;
-import com.haozhuo.datag.model.wechat.SaoMa;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.WeChat.WeChatService;
@@ -13,9 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @RequestMapping(value = "/wx")
 @RestController
@@ -76,9 +74,10 @@ public class WeChatController {
     }
 
     @GetMapping("/hbase")
-    public RepAbnormal getrpt(@RequestParam(value="rptid") String rptid){
+    @ApiOperation(value = "保险报告")
+    public RepAbnormal getrpt(@RequestParam(value="idcard") String idcard){
 
-        return hbaseService.getAbnormalValue(rptid);
+        return hbaseService.getAbnormalValue(idcard);
     }
 
     @GetMapping("/es")
@@ -90,5 +89,22 @@ public class WeChatController {
             return 1;
         }
     }
+
+    @GetMapping("/test")
+    @ApiOperation(value = "测试excel")
+    public void test1() throws IOException {
+
+       hbaseService.test();
+    }
+
+    @GetMapping("/test1")
+    @ApiOperation(value = "测试es")
+    public String test2(@RequestParam(value="idcard")String idcard) throws IOException {
+
+        String getrptid = esService.getrptid(idcard);
+        System.out.println(getrptid);
+        return esService.getrptid(idcard);
+    }
+
 
 }

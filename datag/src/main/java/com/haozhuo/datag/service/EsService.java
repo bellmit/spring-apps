@@ -167,6 +167,7 @@ public class EsService {
         return stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString();
 
     }
+
     public String getSexByReportId(String reportId) {
         SearchRequestBuilder srb = client.prepareSearch(reportLabelIndex).setSize(1)
                 .setQuery(matchQuery("healthReportId", reportId.trim()));
@@ -538,13 +539,28 @@ public class EsService {
     //---------------------- article end -----------------------------------
 
 //-----------------------rep
-public String getchkday(String rptid){
+public String getchkday(String idcard){
 
-    SearchRequestBuilder srb = client.prepareSearch("reportlabel").setSize(1)
-            .setQuery(matchQuery("healthReportId", rptid.trim()));
+    SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
+            .setQuery(matchQuery("id_card", idcard.trim()));
     SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
-    return stream(searchHits).map(x -> x.getSourceAsMap().get("lastUpdateTime")).findFirst().orElse("").toString();
+    return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_create_date")).findFirst().orElse("").toString();
 }
+
+    public String getrptid(String idcard){
+
+        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
+                .setQuery(matchQuery("id_card", idcard.trim()));
+        SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+        return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
+    }
+
+    public String getrptid1(String idcard){
+        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(10)
+                .setQuery(matchQuery("id_card", idcard.trim()));
+        SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+        return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
+    }
 
 //--------------------------------
 

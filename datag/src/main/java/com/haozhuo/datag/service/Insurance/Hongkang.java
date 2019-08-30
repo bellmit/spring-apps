@@ -1392,11 +1392,11 @@ public class Hongkang {
         if (equals(hongKang.getXuebiqiu(), "3") || equals(hongKang.getGt(), "3") || equals(hongKang.getAlt(), "3") || equals(hongKang.getAst(), "3") || equals(hongKang.getTba(), "3")
                 || equals(hongKang.getTbil(), "3") || equals(hongKang.getTp(), "3") || equals(hongKang.getQiudanbai(), "3")) {
             hongKang.setGangong("3");
-        } else if (equals(hongKang.getXuebiqiu(), "0") || equals(hongKang.getGt(), "0") || equals(hongKang.getAlt(), "0") || equals(hongKang.getAst(), "0") || equals(hongKang.getTba(), "0")
-                || equals(hongKang.getTbil(), "0") || equals(hongKang.getTp(), "0") || equals(hongKang.getQiudanbai(), "0")) {
-            hongKang.setGangong("0");
-        } else {
+        } else if (equals(hongKang.getXuebiqiu(), "1") || equals(hongKang.getGt(), "1") || equals(hongKang.getAlt(), "1") || equals(hongKang.getAst(), "1") || equals(hongKang.getTba(), "1")
+                || equals(hongKang.getTbil(), "1") || equals(hongKang.getTp(), "1") || equals(hongKang.getQiudanbai(), "1")) {
             hongKang.setGangong("1");
+        } else {
+            hongKang.setGangong("0");
         }
 
         if (equals(hongKang.getTc(), "3") || equals(hongKang.getTg(), "3")) {

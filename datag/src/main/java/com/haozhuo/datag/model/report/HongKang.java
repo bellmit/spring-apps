@@ -19,6 +19,14 @@ public class HongKang {
     private String kouqiang;
     private String jingdongmai;
     private String xinzangcaichao;
+    //肝胆脾胰肾
+    private String gan;
+    private String dan;
+    private String pi;
+    private String yi;
+    private String zuoshen;
+    private String youshen;
+    private String shen;
     private String fubucaichao;
     private String shuniaoguan;
     private String pangguang;
@@ -84,6 +92,7 @@ public class HongKang {
     //血糖
     private String tanghuaxuehongdanbai;
     private String kongfuxuetang;
+    private String kongfuxuetangid;
 
     private String zhongliu;
     private String gongjingtct;

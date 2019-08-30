@@ -8,20 +8,16 @@ object GetDataGJ_test {
   val str2:String="HPV-DNA检测：HPV-DNA-58型为阳性HPV-DNA检测：HPV-DNA-51型为阳性HPV-DNA检测：HPV-DNA-53型为弱阳性HPV-DNA检测：HPV-DNA-55型为弱阳"
   val str3:String="鳞状上皮内高度病变（HSIL）（CIN 3），不排除浸润癌  "
   val str4:String=" （宫颈刮片）HSIL（高级别鳞状上皮内病变，符合CIN II-III）；建议宫颈活检。"
+  val str5:String="阴道残端刮片巴氏I级白带检查清洁度II级，正常范围。"
+  val str6:String="阴道残端刮片巴氏II级白带检查清洁度II级，正常范围。"
 
-//GJ,HPV没有查到高
-  def main(args: Array[String]): Unit = {
-
-
-
-     val str: String = getStatus(str3)
-   println(str)
-  }
   def gongjing(yourString: String) ={
     val regex = new Regex(
       """
         |HSIL|
         |CIN.{0,9}III|CIN.{0,6}3|
+        |CIN.{0,9}II|CIN.{0,6}2|
+        |刮片.{0,9}级|
       """)
 
     val reg = regex.findAllIn(yourString)
@@ -33,6 +29,7 @@ object GetDataGJ_test {
     }
     strings
   }
+
   //方法结束
 
   def result(yourString2:ArrayBuffer[String])={
@@ -44,13 +41,23 @@ object GetDataGJ_test {
       """)
     //创建结果集
     val result_arr=new ArrayBuffer[String]
+    val result_rg=new ArrayBuffer[String]
     var status_leave="good"
     //第一遍判断疾病等级
     yourString2.foreach(x=>{
       if(x.contains("HSIL")){
         result_arr.append("高度鳞状上皮内病变")
-      }else if(x.contains("CIN")){
+      }else if((x.contains("CIN"))&&(x.contains("III"))){
         result_arr.append("CIN癌变")
+      }
+      else if((x.contains("IV"))&&(x.contains("V"))){
+        result_arr.append("刮片等级》III拒保")
+      }else if((x.contains("II"))&&(x.contains("CIN"))){
+        result_rg.append("转人工：CIN2级")
+      }else if((x.contains("CIN"))&&(x.contains("2"))){
+        result_rg.append("转人工：CIN2级")
+      }else if((x.contains("刮片"))&&(x.contains("3"))){
+        result_rg.append("转人工:刮片3级")
       }
     })
 
@@ -62,17 +69,20 @@ object GetDataGJ_test {
     //返回结果集合
 
     var status_result=" "
-    if(result_arr.isEmpty){
-      status_result="1"
-    }else{
+    if(!result_arr.isEmpty){
+      //有病
       status_result="0"
+    }else if(!result_rg.isEmpty){
+      //转人工
+      status_result="2"
+    }else{
+      status_result="1"
     }
     status_result
 
   }
 
 
-  //封装方法
   def getStatus(yourString:String)={
     val strings: ArrayBuffer[String] = gongjing(yourString)
 
@@ -81,4 +91,16 @@ object GetDataGJ_test {
 
 
   }
+//GJ,HPV没有查到高
+  def main(args: Array[String]): Unit = {
+
+
+
+
+
+
+
+  }
+  //封装方法
+
 }

@@ -12,6 +12,13 @@ object GetDataXDT_test {
     val str5:String="窦性心律左心室肥大伴劳损频发房性早搏大部分呈二联律  "
 
 
+
+
+    println(getStatus(str5))
+
+  }
+
+
   def xindiantu(yourString:String)= {
 
 
@@ -54,7 +61,7 @@ object GetDataXDT_test {
   //返回结果方法
   def result(yourString2:ArrayBuffer[String])={
 
-  //拉取数字正则表达式
+    //拉取数字正则表达式
     val regexGetNum = new Regex(
       """
         |[0-9]+\.[0-9]+|
@@ -84,7 +91,7 @@ object GetDataXDT_test {
       //判断所有包含在内的
       val regex=regexText.findAllIn(x)
       while (regex.hasNext){
-//        println(x)
+        //        println(x)
         result_arr.append(regex.next().toString)
       }
 
@@ -98,15 +105,15 @@ object GetDataXDT_test {
       //判断心率
       if(x.contains("心率")){
 
-      val reg=regexGetNum.findAllIn(x)
-      while (reg.hasNext){
-        val x=reg.next()
-        if((x.toDouble>=120)||x.toDouble<=45){
-          status = "拒保:心率过缓或过快"
-          result_arr.append(status)
-        }
+        val reg=regexGetNum.findAllIn(x)
+        while (reg.hasNext){
+          val x=reg.next()
+          if((x.toDouble>=120)||x.toDouble<=45){
+            status = "拒保:心率过缓或过快"
+            result_arr.append(status)
+          }
 
-      }
+        }
       }
 
 
@@ -129,19 +136,12 @@ object GetDataXDT_test {
 
 
 
-    def getStatus(yourString:String)= {
-      val arr: ArrayBuffer[String] = xindiantu(yourString)
-      //          arr.foreach(x=>println(x))
-      val result_status: String = result(arr)
-      result_status
-    }
-
-    println(getStatus(str5))
-
+  def getStatus(yourString:String)= {
+    val arr: ArrayBuffer[String] = xindiantu(yourString)
+    //          arr.foreach(x=>println(x))
+    val result_status: String = result(arr)
+    result_status
   }
-
-
-
 
 
 }

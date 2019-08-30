@@ -1,6 +1,7 @@
 package com.haozhuo.datag.service.Insurance
 
 
+import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
 object GetDataJZX_test {
@@ -17,222 +18,222 @@ object GetDataJZX_test {
 
     //返回一个过滤了数据的集合
     import scala.collection.mutable._
-    def jiazhuangxian(yourString:String) ={
-  val strings: ArrayBuffer[String] = {
 
-    //正则表达式
-    val regex = new Regex(
-      """[0-9]+mmx[0-9]+mm|
-        |[0-9]+mm\*[0-9]+mm|
-        |[0-9]+cmx[0-9]+cm|
-        |[0-9]+cm\*[0-9]+cm|
-        |[0-9]+x[0-9]+mm|
-        |[0-9]+x[0-9]+cm|
-        |[0-9]+\*[0-9]+mm|[0-9]+\*[0-9]+cm|
-        |[0-9]+×[0-9]+mm|[0-9]+×[0-9]+cm|[0-9]+mm×[0-9]+mm|[0-9]+cm×[0-9]+cm|
-        |[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+\*[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+×[0-9]+\.[0-9]+cm|
-        |[0-9]+\.[0-9]+x[0-9]+\.[0-9]+mm|
-        |[0-9]+\.+[0-9]+cm|[0-9]+\.[0-9]+mm|
-        |[0-9].{3,10}mm|
-        |甲状腺结节TADS：[0-9]+|TADS[\s][0-9]+|
-        |结节.{0,40}边界不清|
-        |结节.{0,40}纵横比.{0,5}1|
+
+
+
+
+  }
+  def jiazhuangxian(yourString:String) ={
+    val strings: ArrayBuffer[String] = {
+
+      //正则表达式
+      val regex = new Regex(
+        """[0-9]+mmx[0-9]+mm|
+          |[0-9]+mm\*[0-9]+mm|
+          |[0-9]+cmx[0-9]+cm|
+          |[0-9]+cm\*[0-9]+cm|
+          |[0-9]+x[0-9]+mm|
+          |[0-9]+x[0-9]+cm|
+          |[0-9]+\*[0-9]+mm|[0-9]+\*[0-9]+cm|
+          |[0-9]+×[0-9]+mm|[0-9]+×[0-9]+cm|[0-9]+mm×[0-9]+mm|[0-9]+cm×[0-9]+cm|
+          |[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+\*[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+×[0-9]+\.[0-9]+cm|
+          |[0-9]+\.[0-9]+x[0-9]+\.[0-9]+mm|
+          |[0-9]+\.+[0-9]+cm|[0-9]+\.[0-9]+mm|
+          |[0-9].{3,10}mm|
+          |甲状腺结节TADS：[0-9]+|TADS[\s][0-9]+|
+          |结节.{0,40}边界不清|
+          |结节.{0,40}纵横比.{0,5}1|
         """)
 
-    val strings = new ArrayBuffer[String]
+      val strings = new ArrayBuffer[String]
 
-    val res = regex.findAllIn(yourString)
-    while (res.hasNext) {
-      val s = res.next()
-      if(s.contains("边界不清")){
-       strings.append("结节:边界不清")
-      }else if (s.contains("纵横比>1")|
-      s.contains("纵横比＞1")|s.contains("纵横比大于1")) {
-        strings.append("结节:纵横比大于1")
-      }else{
-        strings.append(s)
+      val res = regex.findAllIn(yourString)
+      while (res.hasNext) {
+        val s = res.next()
+        if(s.contains("边界不清")){
+          strings.append("结节:边界不清")
+        }else if (s.contains("纵横比>1")|
+          s.contains("纵横比＞1")|s.contains("纵横比大于1")) {
+          strings.append("结节:纵横比大于1")
+        }else{
+          strings.append(s)
+        }
       }
+      strings
     }
     strings
   }
-  strings
-}
 
 
-    //对数据进行提取并转换单位
-    def panduanRXUntil(yourArray:ArrayBuffer[String])= {
+  //对数据进行提取并转换单位
+  def panduanRXUntil(yourArray:ArrayBuffer[String])= {
 
+    val regexGetNum = new Regex(
+      """
+        |[0-9]+\.[0-9]+|
+        |[0-9]+|
+      """)
+
+
+
+
+    val result_arr: ArrayBuffer[String] = yourArray.map(x => {
+
+      //初始化
+      var row: String = " "
+
+
+
+
+
+      //如果x包含mm
+      if (x.contains("mm")) {
+
+        var mmNum =regexGetNum.findAllIn(x)
+
+        //row_ints.append(5)
+        //mm如果是整数就不会进入循环
+        val row_ints = new ArrayBuffer[Double]
+
+        //获取每一行的数据
+        while (mmNum.hasNext){
+          var mm=" "
+          //每一行的数据装入一个数组
+          mm = mmNum.next()
+
+
+          row_ints.append(mm.toDouble)
+
+
+        }
+        //Int形式
+
+        val row_ints1: Double = row_ints.max
+
+
+        val result_Max_Num: String = row_ints1.toString
+        //返回原始单位是毫秒的结果
+        row = result_Max_Num
+
+
+
+      } else if (x.contains("cm")) {
+
+        //过滤出数值,单位mm
+        val mmNum = regexGetNum.findAllIn(x)
+        var mm=" "
+
+        val row_ints = new ArrayBuffer[Double]
+
+        //获取每一行的数据
+        while (mmNum.hasNext){
+          //每一行的数据装入一个数组
+          mm = mmNum.next()
+
+          row_ints.append(mm.toDouble*10)
+
+        }
+        //Int形式
+        val max: Double = row_ints.max
+        val result_Max_Num: String = max.toString
+        //返回原始单位是毫秒的结果
+
+        row = result_Max_Num
+
+
+
+
+
+      } else {
+        row = x
+      }
+
+
+      //返回值
+      row
+    })
+    //返回排序好的数值单位mm
+
+    result_arr
+  }
+
+
+  //获取最大规整话数据 方法结束
+
+
+  //结果方法
+  //结果数据的打印
+  def result(yourString2:ArrayBuffer[String])={
+    //创建结果集
+    val result_arr=new ArrayBuffer[String]
+    var status_leave="good"
+    //第一遍判断疾病等级
+    yourString2.foreach(x=>{
+      if(x.contains("TADS")) {
+
+        status_leave="分析结果：TADS>3级"
+        result_arr.append(status_leave)
+      }
+      if(x.contains("边界不清")){
+        status_leave="分析结果：乳腺结节，模糊、边界不清"
+        result_arr.append(status_leave)
+      }
+      if(x.contains("纵横比")){
+        status_leave="分析结果：乳腺结节：纵横比大于1"
+        result_arr.append(status_leave)
+      }
+    })
+
+
+    var status:String = "good"
+    //第二遍正则表达式数值过滤
+    yourString2.foreach(x=>{
       val regexGetNum = new Regex(
         """
           |[0-9]+\.[0-9]+|
           |[0-9]+|
         """)
-
-
-
-
-      val result_arr: ArrayBuffer[String] = yourArray.map(x => {
-
-        //初始化
-        var row: String = " "
-
-
-
-
-
-        //如果x包含mm
-        if (x.contains("mm")) {
-
-          var mmNum =regexGetNum.findAllIn(x)
-
-          //row_ints.append(5)
-          //mm如果是整数就不会进入循环
-          val row_ints = new ArrayBuffer[Double]
-
-          //获取每一行的数据
-          while (mmNum.hasNext){
-            var mm=" "
-            //每一行的数据装入一个数组
-            mm = mmNum.next()
-
-
-            row_ints.append(mm.toDouble)
-
-
-          }
-          //Int形式
-
-                    val row_ints1: Double = row_ints.max
-
-
-          val result_Max_Num: String = row_ints1.toString
-          //返回原始单位是毫秒的结果
-          row = result_Max_Num
-
-
-
-        } else if (x.contains("cm")) {
-
-          //过滤出数值,单位mm
-          val mmNum = regexGetNum.findAllIn(x)
-          var mm=" "
-
-          val row_ints = new ArrayBuffer[Double]
-
-          //获取每一行的数据
-          while (mmNum.hasNext){
-            //每一行的数据装入一个数组
-            mm = mmNum.next()
-
-            row_ints.append(mm.toDouble*10)
-
-          }
-          //Int形式
-          val max: Double = row_ints.max
-          val result_Max_Num: String = max.toString
-          //返回原始单位是毫秒的结果
-
-          row = result_Max_Num
-
-
-
-
-
-        } else {
-          row = x
-        }
-
-
-        //返回值
-        row
-      })
-      //返回排序好的数值单位mm
-
-      result_arr
-    }
-
-
-    //获取最大规整话数据 方法结束
-
-
-    //结果方法
-    //结果数据的打印
-    def result(yourString2:ArrayBuffer[String])={
-      //创建结果集
-      val result_arr=new ArrayBuffer[String]
-      var status_leave="good"
-      //第一遍判断疾病等级
-      yourString2.foreach(x=>{
-        if(x.contains("TADS")) {
-
-          status_leave="分析结果：TADS>3级"
+      val reg=regexGetNum.findAllIn(x)
+      while (reg.hasNext){
+        if(reg.next().toDouble>=30){
+          status = "overGG"
           result_arr.append(status_leave)
         }
-        if(x.contains("边界不清")){
-          status_leave="分析结果：乳腺结节，模糊、边界不清"
-          result_arr.append(status_leave)
-        }
-        if(x.contains("纵横比")){
-          status_leave="分析结果：乳腺结节：纵横比大于1"
-          result_arr.append(status_leave)
-        }
-      })
-
-
-      var status:String = "good"
-      //第二遍正则表达式数值过滤
-      yourString2.foreach(x=>{
-        val regexGetNum = new Regex(
-          """
-            |[0-9]+\.[0-9]+|
-            |[0-9]+|
-          """)
-        val reg=regexGetNum.findAllIn(x)
-        while (reg.hasNext){
-          if(reg.next().toDouble>=30){
-            status = "overGG"
-            result_arr.append(status_leave)
-          }
-        }
-
-
-
-      })
-      //返回结果集合
-
-      var status_result=" "
-      if(result_arr.isEmpty){
-        status_result="1"
-      }else{
-        status_result="0"
       }
-      status_result
 
 
+
+    })
+    //返回结果集合
+
+    var status_result=" "
+    if(result_arr.isEmpty){
+      status_result="1"
+    }else{
+      status_result="0"
     }
-    //最后判断结束
+    status_result
 
-
-
-
-
-    //封装3个方法.
-    def getStatus(yourString:String)= {
-
-      val arr: ArrayBuffer[String] = jiazhuangxian(yourString)
-
-      //          arr.foreach(x=>println(x))
-      val strings: ArrayBuffer[String] = panduanRXUntil(arr)
-
-      //          strings.foreach(x=>println(x))
-      val result_status: String = result(strings)
-      result_status
-    }
-
-
-  println(getStatus(str2))
 
   }
+  //最后判断结束
 
+
+
+
+
+  //封装3个方法.
+  def getStatus(yourString:String)= {
+
+    val arr: ArrayBuffer[String] = jiazhuangxian(yourString)
+
+    //          arr.foreach(x=>println(x))
+    val strings: ArrayBuffer[String] = panduanRXUntil(arr)
+
+    //          strings.foreach(x=>println(x))
+    val result_status: String = result(strings)
+    result_status
+  }
 
 }

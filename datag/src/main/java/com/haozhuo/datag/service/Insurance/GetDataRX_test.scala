@@ -2,6 +2,7 @@ package com.haozhuo.datag.service.Insurance
 
 import java.lang.Exception
 
+import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
 object GetDataRX_test {
@@ -29,6 +30,10 @@ object GetDataRX_test {
   import scala.collection.mutable._
 
 
+
+  }
+
+
   //初步拉取数据
   def ruxian(yourString:String) = {
 
@@ -51,12 +56,12 @@ object GetDataRX_test {
         |乳腺结节.{0,20}RADS：[4-9]+|乳腺结节.{0,20}RADS[\s][4-9]+|乳腺结节.{0,20}RADS:[4-9]+|乳腺结节.{0,20}RADS[4-9]+|
         |乳腺结节.{0,20}RADS：IV|乳腺结节.{0,20}RADS：V|乳腺结节.{0,20}RADS：VI|乳腺结节.{0,20}RADS:IV|乳腺结节.{0,20}RADS:V|乳腺结节.{0,20}RADS:VI|乳腺结节.{0,20}RADS[\s]IV|乳腺结节.{0,20}RADS[\s]V|乳腺结节.{0,20}RADS[\s]VI|乳腺结节.{0,20}RADSIV|乳腺结节.{0,20}RADSV|乳腺结节.{0,20}RADSVI|
         |结节.{0,20}边界不清|结节.{0,20}模糊|
-        """)
+      """)
 
 
 
 
-   // RADS分为I,II,III这里只写3级以上的
+    // RADS分为I,II,III这里只写3级以上的
 
     val res = regex.findAllIn(yourString)
     while (res.hasNext) {
@@ -69,167 +74,164 @@ object GetDataRX_test {
   }//方法结束
 
 
-    //单位化为统一(mm的形式）
-    def panduanRXUntil(yourArray:ArrayBuffer[String])= {
+  //单位化为统一(mm的形式）
+  def panduanRXUntil(yourArray:ArrayBuffer[String])= {
 
+    val regexGetNum = new Regex(
+      """
+        |[0-9]+\.[0-9]+|
+        |[0-9]+|
+      """)
+
+    val result_arr: ArrayBuffer[String] = yourArray.map(x => {
+
+      //初始化
+      var row: String = " "
+
+
+
+      //如果x包含mm
+      if (x.contains("mm")) {
+        //过滤出数值,单位mm
+        val mmNum = regexGetNum.findAllIn(x)
+
+
+        var mm=" "
+        //row_ints.append(5)
+        //mm如果是整数就不会进入循环
+        val row_ints = new ArrayBuffer[Double]
+
+        //获取每一行的数据
+        while (mmNum.hasNext){
+
+          //每一行的数据装入一个数组
+          mm = mmNum.next()
+
+
+          row_ints.append(mm.toDouble)
+
+
+        }
+        //Int形式
+
+        val row_ints1: Double = row_ints.max
+
+
+        val result_Max_Num: String = row_ints1.toString
+        //返回原始单位是毫秒的结果
+        row = result_Max_Num
+
+        if(x.contains("边界不清")){
+          row="边界不清"
+        }
+
+      } else if (x.contains("cm")) {
+
+        //过滤出数值,单位mm
+        val mmNum = regexGetNum.findAllIn(x)
+        var mm=" "
+
+        val row_ints = new ArrayBuffer[Double]
+
+        //获取每一行的数据
+        while (mmNum.hasNext){
+          //每一行的数据装入一个数组
+          mm = mmNum.next()
+
+          row_ints.append(mm.toDouble*10)
+
+        }
+        //Int形式
+        val max: Double = row_ints.max
+        val result_Max_Num: String = max.toString
+        //返回原始单位是毫秒的结果
+
+        row = result_Max_Num
+
+        if(x.contains("边界不清")){
+          row="边界不清"
+        }
+
+
+
+      } else {
+        row = x
+      }
+
+
+      //返回值
+      row
+    })
+    //返回排序好的数值单位mm
+
+    result_arr
+  }
+
+
+  //获取最大规整话数据 方法结束
+
+
+  //结果数据的打印
+  def result(yourString2:ArrayBuffer[String])={
+    //创建结果集
+    val result_arr=new ArrayBuffer[String]
+    var status_leave="good"
+    //第一遍判断疾病等级
+    yourString2.foreach(x=>{
+      if(x.contains("乳腺结节")) {
+
+        status_leave="分析结果：乳腺结节>3级"
+        result_arr.append(status_leave)
+      }
+      if(x.contains("边界不清")|x.contains("模糊")){
+        status_leave="分析结果：乳腺结节，模糊、边界不清"
+        result_arr.append(status_leave)
+      }
+    })
+
+
+    var status:String = "ok"
+    //第二遍正则表达式数值过滤
+    yourString2.foreach(x=>{
       val regexGetNum = new Regex(
         """
           |[0-9]+\.[0-9]+|
           |[0-9]+|
         """)
-
-      val result_arr: ArrayBuffer[String] = yourArray.map(x => {
-
-        //初始化
-        var row: String = " "
-
-
-
-        //如果x包含mm
-        if (x.contains("mm")) {
-          //过滤出数值,单位mm
-          val mmNum = regexGetNum.findAllIn(x)
-
-
-          var mm=" "
-          //row_ints.append(5)
-          //mm如果是整数就不会进入循环
-          val row_ints = new ArrayBuffer[Double]
-
-          //获取每一行的数据
-          while (mmNum.hasNext){
-
-            //每一行的数据装入一个数组
-             mm = mmNum.next()
-
-
-              row_ints.append(mm.toDouble)
-
-
-          }
-          //Int形式
-
-          val row_ints1: Double = row_ints.max
-
-
-          val result_Max_Num: String = row_ints1.toString
-          //返回原始单位是毫秒的结果
-            row = result_Max_Num
-
-          if(x.contains("边界不清")){
-            row="边界不清"
-          }
-
-        } else if (x.contains("cm")) {
-
-          //过滤出数值,单位mm
-          val mmNum = regexGetNum.findAllIn(x)
-          var mm=" "
-
-          val row_ints = new ArrayBuffer[Double]
-
-          //获取每一行的数据
-          while (mmNum.hasNext){
-            //每一行的数据装入一个数组
-            mm = mmNum.next()
-
-            row_ints.append(mm.toDouble*10)
-
-          }
-          //Int形式
-          val max: Double = row_ints.max
-          val result_Max_Num: String = max.toString
-          //返回原始单位是毫秒的结果
-
-          row = result_Max_Num
-
-          if(x.contains("边界不清")){
-            row="边界不清"
-          }
-
-
-
-        } else {
-          row = x
-        }
-
-
-        //返回值
-        row
-      })
-      //返回排序好的数值单位mm
-
-      result_arr
-    }
-
-
-    //获取最大规整话数据 方法结束
-
-
-    //结果数据的打印
-    def result(yourString2:ArrayBuffer[String])={
-      //创建结果集
-      val result_arr=new ArrayBuffer[String]
-      var status_leave="good"
-      //第一遍判断疾病等级
-      yourString2.foreach(x=>{
-        if(x.contains("乳腺结节")) {
-
-          status_leave="分析结果：乳腺结节>3级"
+      val reg=regexGetNum.findAllIn(x)
+      while (reg.hasNext){
+        if(reg.next().toDouble>=20){
+          status = "overGG"
           result_arr.append(status_leave)
         }
-        if(x.contains("边界不清")|x.contains("模糊")){
-          status_leave="分析结果：乳腺结节，模糊、边界不清"
-          result_arr.append(status_leave)
-        }
-      })
 
-
-      var status:String = "ok"
-      //第二遍正则表达式数值过滤
-      yourString2.foreach(x=>{
-        val regexGetNum = new Regex(
-          """
-            |[0-9]+\.[0-9]+|
-            |[0-9]+|
-          """)
-        val reg=regexGetNum.findAllIn(x)
-        while (reg.hasNext){
-          if(reg.next().toDouble>=20){
-            status = "overGG"
-            result_arr.append(status_leave)
-          }
-
-        }
-
-
-
-
-      })
-      //返回结果集合
-      var status_result=" "
-      if(result_arr.isEmpty){
-        status_result="1"
-      }else{
-        status_result="0"
       }
-      status_result
 
+
+
+
+    })
+    //返回结果集合
+    var status_result=" "
+    if(result_arr.isEmpty){
+      status_result="1"
+    }else{
+      status_result="0"
     }
-    //最后判断结束
-    //调用测试
+    status_result
 
-    //封装3个方法.
-    def getStatus(yourString:String)= {
-      val arr: ArrayBuffer[String] = ruxian(yourString)
-//          arr.foreach(x=>println(x))
-      val strings: ArrayBuffer[String] = panduanRXUntil(arr)
+  }
+  //最后判断结束
+  //调用测试
 
-//          strings.foreach(x=>println(x))
-      val result_status: String = result(strings)
-      result_status
-    }
+  //封装3个方法.
+  def getStatus(yourString:String)= {
+    val arr: ArrayBuffer[String] = ruxian(yourString)
+    //          arr.foreach(x=>println(x))
+    val strings: ArrayBuffer[String] = panduanRXUntil(arr)
 
-
+    //          strings.foreach(x=>println(x))
+    val result_status: String = result(strings)
+    result_status
   }
 }

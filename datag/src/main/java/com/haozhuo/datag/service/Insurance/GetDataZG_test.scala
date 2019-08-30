@@ -17,220 +17,9 @@ object GetDataZG_test {
   val str10:String="子宫后位，形态大小正常，轮廓光整，实质回声均匀，内膜不厚，未见明显异常回声。右侧附件可见一无回声暗区，大小约17mm×29mm，形态规则，边界清。左侧附件60mm显示不清"
   def main(args: Array[String]): Unit = {
 
-  def zigong(yourString:String)= {
-
-
-      val regex = new Regex(
-        """
-          |[0-9]+mm×[0-9]+mm×[0-9]+mm|[0-9]+cm×[0-9]+cm×[0-9]+cm|
-          |[0-9]+mmx[0-9]+mmx[0-9]+mm|[0-9]+cmx[0-9]+cmx[0-9]+cm|
-          |[0-9]+mmX[0-9]+mmX[0-9]+mm|[0-9]+cmX[0-9]+cmX[0-9]+cm|
-          |[0-9]+mmx[0-9]+mm|[0-9]+mmX[0-9]+mm|
-          |[0-9]+mm\*[0-9]+mm|
-          |[0-9]+cmx[0-9]+cm|[0-9]+cmX[0-9]+cm|
-          |[0-9]+cm\*[0-9]+cm|
-          |[0-9]+x[0-9]+mm|[0-9]+X[0-9]+mm|
-          |[0-9]+x[0-9]+cm|[0-9]+X[0-9]+cm|
-          |[0-9]+\*[0-9]+mm|[0-9]+\*[0-9]+cm|
-          |[0-9]+×[0-9]+mm|[0-9]+×[0-9]+cm|[0-9]+mm×[0-9]+mm|[0-9]+cm×[0-9]+cm|
-          |[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+\*[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+×[0-9]+\.+[0-9]+cm|
-          |[0-9]+\.+[0-9]mm+×[0-9]+\.+[0-9]mm|
-          |[0-9]+\.+[0-9]+cm|[0-9]+\.[0-9]+mm|
-          |[0-9]+cm|[0-9]+mm|
-          |内膜.{0,10}厚.{0,10}cm|内膜.{0,10}厚.{0,10}mm|
-          |子宫肌瘤.{0,15}mm|
-          |卵巢.{0,15}囊肿|
-          |附件.{0,30}mm|
-          """)
-      val reg = regex.findAllIn(yourString)
-
-
-      val strings = new ArrayBuffer[String]
-
-      while (reg.hasNext) {
-        strings.append(reg.next())
-
-      }
-      strings
-    }//方法结束
-
-    //判断单位，并且少量转换
-    def panduanRXUntil(yourArray:ArrayBuffer[String])= {
-
-      val regexGetNum = new Regex(
-        """
-          |[0-9]+\.[0-9]+|
-          |[0-9]+|
-        """)
 
 
 
-
-      val result_arr: ArrayBuffer[String] = yourArray.map(x => {
-
-        //初始化
-        var row: String = " "
-
-
-
-
-
-        //如果x包含mm
-        if (x.contains("mm")) {
-
-          var mmNum =regexGetNum.findAllIn(x)
-
-          //row_ints.append(5)
-          //mm如果是整数就不会进入循环
-          val row_ints = new ArrayBuffer[Double]
-
-          //获取每一行的数据
-          while (mmNum.hasNext){
-            var mm=" "
-            //每一行的数据装入一个数组
-            mm = mmNum.next()
-
-
-            row_ints.append(mm.toDouble)
-
-
-          }
-          //Int形式
-          //取出最大值
-          val row_ints1: Double = row_ints.max
-
-
-
-          val result_Max_Num: String = row_ints1.toString
-          //返回原始单位是毫秒的结果
-
-          //获取，内膜，卵巢，子宫肌瘤
-          if(x.contains("内膜")){
-           row= "内膜:"+result_Max_Num
-          }else if(x.contains("卵巢")){
-            row="卵巢:"+result_Max_Num
-          }else if(x.contains("子宫肌瘤")){
-            row="子宫肌瘤:"+result_Max_Num
-          }else if(x.contains("附件")) {
-            row="附件:"+result_Max_Num
-          }
-           else {
-              row = result_Max_Num
-          }
-
-
-
-        } else if (x.contains("cm")) {
-
-          //过滤出数值,单位mm
-          val mmNum = regexGetNum.findAllIn(x)
-          var mm=" "
-
-          val row_ints = new ArrayBuffer[Double]
-
-          //获取每一行的数据
-          while (mmNum.hasNext){
-            //每一行的数据装入一个数组
-            mm = mmNum.next()
-
-            row_ints.append(mm.toDouble*10)
-
-          }
-          //Int形式
-          val max: Double = row_ints.max
-          val result_Max_Num: String = max.toString
-          //返回原始单位是毫秒的结果
-
-          //获取，内膜，卵巢，子宫肌瘤
-          if(x.contains("内膜")){
-            row= "内膜:"+result_Max_Num
-          }else if(x.contains("卵巢")){
-            row="卵巢囊肿:"+result_Max_Num
-          }else if(x.contains("子宫肌瘤")){
-            row="子宫肌瘤"+result_Max_Num
-          }else {
-            row = result_Max_Num
-          }
-
-
-
-        } else {
-          row = x
-        }
-
-
-        //返回值
-        row
-      })
-      //返回排序好的数值单位mm
-
-      result_arr
-    }
-
-    //判断方法结束
-
-    //结果方法
-    //结果数据的打印
-    def result(yourString2:ArrayBuffer[String])={
-
-      val regexGetNum = new Regex(
-        """
-          |[0-9]+\.[0-9]+|
-          |[0-9]+|
-        """)
-      //创建结果集
-      val result_arr=new ArrayBuffer[String]
-      var status_leave="good"
-      //第一遍判断疾病等级
-
-      var status:String = "good"
-      //第二遍正则表达式数值过滤
-      yourString2.foreach(x=>{
-
-        //判断内膜是否大于12，否则判断囊肿是否大于50
-        if(x.contains("内膜")) {
-          val reg = regexGetNum.findAllIn(x)
-          while (reg.hasNext) {
-            if (reg.next().toDouble >= 12) {
-              status = "overGG"
-              result_arr.append(status_leave)
-            }
-          }
-        }else if(x.contains("囊肿")|x.contains("子宫肌瘤")|x.contains("附件")){
-          val reg = regexGetNum.findAllIn(x)
-          while (reg.hasNext) {
-            if (reg.next().toDouble >= 50) {
-              status = "overGG"
-              result_arr.append(status_leave)
-            }
-          }
-        }
-
-
-
-      })
-      //返回结果集合
-      var status_result=" "
-      if(result_arr.isEmpty){
-        status_result="1"
-      }else{
-        status_result="0"
-      }
-      status_result
-
-
-    }
-    //最后判断结束
-    //封装3个方法.
-    def getStatus(yourString:String)= {
-      val arr: ArrayBuffer[String] = zigong(yourString)
-      //          arr.foreach(x=>println(x))
-      val strings: ArrayBuffer[String] = panduanRXUntil(arr)
-
-      //          strings.foreach(x=>println(x))
-      val result_status: String = result(strings)
-      result_status
-    }
 
 //    strings.foreach(x=>println(x))
 //    panduan.foreach(x=>println(x))
@@ -238,7 +27,219 @@ object GetDataZG_test {
 
     println(getStatus(str6))
   }
+  def zigong(yourString:String)= {
 
+
+    val regex = new Regex(
+      """
+        |[0-9]+mm×[0-9]+mm×[0-9]+mm|[0-9]+cm×[0-9]+cm×[0-9]+cm|
+        |[0-9]+mmx[0-9]+mmx[0-9]+mm|[0-9]+cmx[0-9]+cmx[0-9]+cm|
+        |[0-9]+mmX[0-9]+mmX[0-9]+mm|[0-9]+cmX[0-9]+cmX[0-9]+cm|
+        |[0-9]+mmx[0-9]+mm|[0-9]+mmX[0-9]+mm|
+        |[0-9]+mm\*[0-9]+mm|
+        |[0-9]+cmx[0-9]+cm|[0-9]+cmX[0-9]+cm|
+        |[0-9]+cm\*[0-9]+cm|
+        |[0-9]+x[0-9]+mm|[0-9]+X[0-9]+mm|
+        |[0-9]+x[0-9]+cm|[0-9]+X[0-9]+cm|
+        |[0-9]+\*[0-9]+mm|[0-9]+\*[0-9]+cm|
+        |[0-9]+×[0-9]+mm|[0-9]+×[0-9]+cm|[0-9]+mm×[0-9]+mm|[0-9]+cm×[0-9]+cm|
+        |[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+x[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+\*[0-9]+\.[0-9]+cm|[0-9]+\.+[0-9]+×[0-9]+\.+[0-9]+cm|
+        |[0-9]+\.+[0-9]mm+×[0-9]+\.+[0-9]mm|
+        |[0-9]+\.+[0-9]+cm|[0-9]+\.[0-9]+mm|
+        |[0-9]+cm|[0-9]+mm|
+        |内膜.{0,10}厚.{0,10}cm|内膜.{0,10}厚.{0,10}mm|
+        |子宫肌瘤.{0,15}mm|
+        |卵巢.{0,15}囊肿|
+        |附件.{0,30}mm|
+      """)
+    val reg = regex.findAllIn(yourString)
+
+
+    val strings = new ArrayBuffer[String]
+
+    while (reg.hasNext) {
+      strings.append(reg.next())
+
+    }
+    strings
+  }//方法结束
+  //判断单位，并且少量转换
+  def panduanRXUntil(yourArray:ArrayBuffer[String])= {
+
+    val regexGetNum = new Regex(
+      """
+        |[0-9]+\.[0-9]+|
+        |[0-9]+|
+      """)
+
+
+
+
+    val result_arr: ArrayBuffer[String] = yourArray.map(x => {
+
+      //初始化
+      var row: String = " "
+
+
+
+
+
+      //如果x包含mm
+      if (x.contains("mm")) {
+
+        var mmNum =regexGetNum.findAllIn(x)
+
+        //row_ints.append(5)
+        //mm如果是整数就不会进入循环
+        val row_ints = new ArrayBuffer[Double]
+
+        //获取每一行的数据
+        while (mmNum.hasNext){
+          var mm=" "
+          //每一行的数据装入一个数组
+          mm = mmNum.next()
+
+
+          row_ints.append(mm.toDouble)
+
+
+        }
+        //Int形式
+        //取出最大值
+        val row_ints1: Double = row_ints.max
+
+
+
+        val result_Max_Num: String = row_ints1.toString
+        //返回原始单位是毫秒的结果
+
+        //获取，内膜，卵巢，子宫肌瘤
+        if(x.contains("内膜")){
+          row= "内膜:"+result_Max_Num
+        }else if(x.contains("卵巢")){
+          row="卵巢:"+result_Max_Num
+        }else if(x.contains("子宫肌瘤")){
+          row="子宫肌瘤:"+result_Max_Num
+        }else if(x.contains("附件")) {
+          row="附件:"+result_Max_Num
+        }
+        else {
+          row = result_Max_Num
+        }
+
+
+
+      } else if (x.contains("cm")) {
+
+        //过滤出数值,单位mm
+        val mmNum = regexGetNum.findAllIn(x)
+        var mm=" "
+
+        val row_ints = new ArrayBuffer[Double]
+
+        //获取每一行的数据
+        while (mmNum.hasNext){
+          //每一行的数据装入一个数组
+          mm = mmNum.next()
+
+          row_ints.append(mm.toDouble*10)
+
+        }
+        //Int形式
+        val max: Double = row_ints.max
+        val result_Max_Num: String = max.toString
+        //返回原始单位是毫秒的结果
+
+        //获取，内膜，卵巢，子宫肌瘤
+        if(x.contains("内膜")){
+          row= "内膜:"+result_Max_Num
+        }else if(x.contains("卵巢")){
+          row="卵巢囊肿:"+result_Max_Num
+        }else if(x.contains("子宫肌瘤")){
+          row="子宫肌瘤"+result_Max_Num
+        }else {
+          row = result_Max_Num
+        }
+
+
+
+      } else {
+        row = x
+      }
+
+
+      //返回值
+      row
+    })
+    //返回排序好的数值单位mm
+
+    result_arr
+  }
+
+  //判断方法结束
+
+  //结果方法
+  //结果数据的打印
+  def result(yourString2:ArrayBuffer[String])={
+
+    val regexGetNum = new Regex(
+      """
+        |[0-9]+\.[0-9]+|
+        |[0-9]+|
+      """)
+    //创建结果集
+    val result_arr=new ArrayBuffer[String]
+    var status_leave="good"
+    //第一遍判断疾病等级
+
+    var status:String = "good"
+    //第二遍正则表达式数值过滤
+    yourString2.foreach(x=>{
+
+      //判断内膜是否大于12，否则判断囊肿是否大于50
+      if(x.contains("内膜")) {
+        val reg = regexGetNum.findAllIn(x)
+        while (reg.hasNext) {
+          if (reg.next().toDouble >= 12) {
+            status = "overGG"
+            result_arr.append(status_leave)
+          }
+        }
+      }else if(x.contains("囊肿")|x.contains("子宫肌瘤")|x.contains("附件")){
+        val reg = regexGetNum.findAllIn(x)
+        while (reg.hasNext) {
+          if (reg.next().toDouble >= 50) {
+            status = "overGG"
+            result_arr.append(status_leave)
+          }
+        }
+      }
+
+
+
+    })
+    //返回结果集合
+    var status_result=" "
+    if(result_arr.isEmpty){
+      status_result="1"
+    }else{
+      status_result="0"
+    }
+    status_result
+
+
+  }
+  //最后判断结束
+  //封装3个方法.
+  def getStatus(yourString:String)= {
+    val arr: ArrayBuffer[String] = zigong(yourString)
+    //          arr.foreach(x=>println(x))
+    val strings: ArrayBuffer[String] = panduanRXUntil(arr)
+
+    //          strings.foreach(x=>println(x))
+    val result_status: String = result(strings)
+    result_status
+  }
 
 
 

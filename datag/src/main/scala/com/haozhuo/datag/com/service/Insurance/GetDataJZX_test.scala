@@ -1,5 +1,4 @@
-package com.haozhuo.datag.service.Insurance
-
+package com.haozhuo.datag.com.service.Insurance
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
@@ -17,7 +16,6 @@ object GetDataJZX_test {
   def main(args: Array[String]) {
 
     //返回一个过滤了数据的集合
-    import scala.collection.mutable._
 
 
 

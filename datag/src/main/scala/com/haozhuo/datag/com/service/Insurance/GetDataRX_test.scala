@@ -1,6 +1,4 @@
-package com.haozhuo.datag.service.Insurance
-
-import java.lang.Exception
+package com.haozhuo.datag.com.service.Insurance
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
@@ -27,7 +25,6 @@ object GetDataRX_test {
 
 
     //导入可变集合
-  import scala.collection.mutable._
 
 
 

@@ -1,6 +1,7 @@
 package com.haozhuo.datag.service.Insurance;
 
 import ch.qos.logback.core.joran.conditional.ElseAction;
+import com.haozhuo.datag.com.service.Insurance.GetDataXDT_test;
 import com.haozhuo.datag.model.report.HongKang;
 
 import com.haozhuo.datag.model.report.RepAbnormal;
@@ -17,6 +18,7 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
@@ -1341,7 +1343,7 @@ public class Hongkang {
             String status = GetDataGJ_test.getStatus(hongKang.getGongjingtct());
             if (Integer.parseInt(status) == 0) {
                 hongKang.setGongjingtct("3");
-            } else if (Integer.parseInt(status) == 1) {
+           } else if (Integer.parseInt(status) == 1) {
 
             }
         }
@@ -1392,11 +1394,11 @@ public class Hongkang {
         if (equals(hongKang.getXuebiqiu(), "3") || equals(hongKang.getGt(), "3") || equals(hongKang.getAlt(), "3") || equals(hongKang.getAst(), "3") || equals(hongKang.getTba(), "3")
                 || equals(hongKang.getTbil(), "3") || equals(hongKang.getTp(), "3") || equals(hongKang.getQiudanbai(), "3")) {
             hongKang.setGangong("3");
-        } else if (equals(hongKang.getXuebiqiu(), "1") || equals(hongKang.getGt(), "1") || equals(hongKang.getAlt(), "1") || equals(hongKang.getAst(), "1") || equals(hongKang.getTba(), "1")
-                || equals(hongKang.getTbil(), "1") || equals(hongKang.getTp(), "1") || equals(hongKang.getQiudanbai(), "1")) {
-            hongKang.setGangong("1");
-        } else {
+        } else if (equals(hongKang.getXuebiqiu(), "0") || equals(hongKang.getGt(), "0") || equals(hongKang.getAlt(), "0") || equals(hongKang.getAst(), "0") || equals(hongKang.getTba(), "0")
+                || equals(hongKang.getTbil(), "0") || equals(hongKang.getTp(), "0") || equals(hongKang.getQiudanbai(), "0")) {
             hongKang.setGangong("0");
+        } else {
+            hongKang.setGangong("1");
         }
 
         if (equals(hongKang.getTc(), "3") || equals(hongKang.getTg(), "3")) {

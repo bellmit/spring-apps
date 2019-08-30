@@ -1,4 +1,4 @@
-package com.haozhuo.datag.service.Insurance
+package com.haozhuo.datag.com.service.Insurance
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex

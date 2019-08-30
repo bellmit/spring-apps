@@ -1,7 +1,6 @@
-package com.haozhuo.datag.service.Insurance
-
-import scala.util.matching.Regex
+package com.haozhuo.datag.com.service.Insurance
 import scala.collection.mutable._
+import scala.util.matching.Regex
 
 object GetDataGJ_test {
   val str1:String="（宫颈刮片）ASC-H（非典型鳞状细胞，不除外CIN II-III）；建议宫颈活检。"

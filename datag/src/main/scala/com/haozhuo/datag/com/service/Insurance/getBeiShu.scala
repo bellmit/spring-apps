@@ -1,8 +1,7 @@
-package com.haozhuo.datag.service.Insurance
+package com.haozhuo.datag.com.service.Insurance
 
 object getBeiShu {
 
-  import scala.collection.mutable._
   import scala.util.matching.Regex
 
 

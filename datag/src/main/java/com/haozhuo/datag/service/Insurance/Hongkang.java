@@ -1,7 +1,7 @@
 package com.haozhuo.datag.service.Insurance;
 
 import ch.qos.logback.core.joran.conditional.ElseAction;
-import com.haozhuo.datag.com.service.Insurance.GetDataXDT_test;
+import com.haozhuo.datag.com.service.Insurance.*;
 import com.haozhuo.datag.model.report.HongKang;
 
 import com.haozhuo.datag.model.report.RepAbnormal;
@@ -1344,7 +1344,9 @@ public class Hongkang {
             if (Integer.parseInt(status) == 0) {
                 hongKang.setGongjingtct("3");
            } else if (Integer.parseInt(status) == 1) {
-
+                hongKang.setGongjingtct("1");
+            }else if(Integer.parseInt(status) == 2){
+                hongKang.setGongjingtct("2");
             }
         }
 /**

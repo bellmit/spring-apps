@@ -1,12 +1,10 @@
 package com.haozhuo.datag.service;
 
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.haozhuo.datag.model.RcmdMsg;
 import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.model.bisys.UserBehavior;
-import org.mortbay.util.ajax.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

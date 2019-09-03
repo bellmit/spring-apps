@@ -25,6 +25,7 @@ public class SqlSplit {
         }
         return  result;
     }
+
     public static void main(String[] args){
         String[] bodys = {"肺部","妇科","肝脏","化验","甲状腺","口腔","内科","尿液","泌尿生殖系统","肾脏","外科","胃肠","心脏","眼耳鼻喉","一般检查","影像","肿瘤标志物","其他"};
         // System.out.println("人体"+list2.toString());

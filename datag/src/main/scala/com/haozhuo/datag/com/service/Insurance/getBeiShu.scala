@@ -13,7 +13,7 @@ object getBeiShu {
 
 
      val d: Double =
-    getBeiShu(78.9, "-<20.00")
+    getBeiShu(78.9, "")
     println(d)
   }
   def filterChaobiao(yourString: String) = {
@@ -35,8 +35,13 @@ object getBeiShu {
   //参数描述:第一个你传递的值Double类型比如10,第二个是你传递的取值范围比如0.9-100
   //返回结果，如果是正常，则返回原始值，不正常，则返回倍数
   def getBeiShu(rs_val: Double, text_ref: String) = {
-
     var result = rs_val
+
+    if(text_ref.isEmpty){
+      result=0
+    }else{
+
+
     //判断<
     //正则表达式获取数值
     if(text_ref.contains("<")){
@@ -60,6 +65,8 @@ object getBeiShu {
 
 
     }
+
+    }//else结束
 
     result
   }

@@ -91,6 +91,7 @@ public class Hongkang {
                         System.out.println(rowName + "," + key + "," + value);
                     }
                 }
+
                 if ((rownmaes[2].contains("耳鼻喉")) && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         hongKang.setErbihou(value);
@@ -99,10 +100,61 @@ public class Hongkang {
                 }
 
                 //待定
-                if ((rownmaes[2].contains("眼科")) && rownmaes[3].contains("小结") || (rownmaes[2].contains("视力")) && rownmaes[3].contains("小结") || (rownmaes[2].contains("眼底")) && rownmaes[3].contains("小结")) {
+                if ((rownmaes[2].contains("眼科") && (rownmaes[3].contains("视力") && rownmaes[3].contains("左"))) || (rownmaes[2].contains("视力")) && (rownmaes[3].contains("视力") && rownmaes[3].contains("左")) || (rownmaes[2].contains("眼底")) && (rownmaes[3].contains("视力") && rownmaes[3].contains("左"))) {
                     if (key.equals("rs_val")) {
-                        hongKang.setYanke(value);
+                        hongKang.setZuoyan(value);
                         System.out.println(rowName + "," + key + "," + value);
+                        if (hongKang.getZuoyan() == null) {
+                            hongKang.setZuoyan("0");
+                        } else {
+                            if (hongKang.getZuoyan().contains("查") || hongKang.getZuoyan().contains("动")||hongKang.getZuoyan().contains("数")) {
+                                hongKang.setZuoyan("0");
+                            } else {
+                                String REGEX = "[^0-9.]";
+                                Double zuoyan = Double.parseDouble(Pattern.compile(REGEX).matcher(hongKang.getZuoyan()).replaceAll("").trim());
+                                if (zuoyan >= 0.2 && zuoyan <= 0.4) {
+                                    hongKang.setZuoyan("2");
+                                } else if (zuoyan < 0.2) {
+                                    if (rownmaes[3].contains("矫正")) {
+                                        hongKang.setZuoyan("3");
+                                    } else {
+                                        hongKang.setZuoyan("2");
+                                    }
+                                } else {
+                                    hongKang.setYouyan("1");
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                if ((rownmaes[2].contains("眼科") && (rownmaes[3].contains("视力") && rownmaes[3].contains("右"))) || (rownmaes[2].contains("视力")) && (rownmaes[3].contains("视力") && rownmaes[3].contains("右")) || (rownmaes[2].contains("眼底")) && (rownmaes[3].contains("视力") && rownmaes[3].contains("右"))) {
+                    if (key.equals("rs_val")) {
+                        hongKang.setYouyan(value);
+                        System.out.println(rowName + "," + key + "," + value);
+                        if (hongKang.getYouyan() == null) {
+                            hongKang.setYouyan("0");
+                        } else {
+                            if (hongKang.getYouyan().contains("查") || hongKang.getYouyan().contains("动")||hongKang.getYouyan().contains("数")) {
+                                hongKang.setYouyan("0");
+                            } else {
+                                String REGEX = "[^0-9.]";
+                                Double youyan = Double.parseDouble(Pattern.compile(REGEX).matcher(hongKang.getYouyan()).replaceAll("").trim());
+                                if (youyan >= 0.2 && youyan <= 0.4) {
+                                    hongKang.setYouyan("2");
+                                } else if (youyan < 0.2) {
+                                    if (rownmaes[3].contains("矫正")) {
+                                        hongKang.setYouyan("3");
+                                    } else {
+                                        hongKang.setYouyan("2");
+                                    }
+                                } else {
+                                    hongKang.setYouyan("1");
+                                }
+                            }
+
+                        }
                     }
                 }
 
@@ -153,14 +205,14 @@ public class Hongkang {
                     }
                 }
                 if ((rownmaes[2].contains("腹部") && rownmaes[3].contains("左肾")) || (rownmaes[2].contains("肝胆脾胰") && rownmaes[3].contains("左肾"))
-                    ||(rownmaes[2].contains("双肾")&&rownmaes[3].contains("左肾"))) {
+                        || (rownmaes[2].contains("双肾") && rownmaes[3].contains("左肾"))) {
                     if (key.equals("rs_val")) {
                         hongKang.setZuoshen(value);
                         System.out.println(rowName + "," + key + "," + value);
                     }
                 }
                 if ((rownmaes[2].contains("腹部") && rownmaes[3].contains("右肾")) || (rownmaes[2].contains("肝胆脾胰") && rownmaes[3].contains("右肾"))
-                        ||(rownmaes[2].contains("双肾")&&rownmaes[3].contains("右肾"))) {
+                        || (rownmaes[2].contains("双肾") && rownmaes[3].contains("右肾"))) {
                     if (key.equals("rs_val")) {
                         hongKang.setYoushen(value);
                         System.out.println(rowName + "," + key + "," + value);
@@ -203,7 +255,7 @@ public class Hongkang {
                         System.out.println(rowName + "," + key + "," + value);
                     }
                 }
-                if (((rownmaes[2].contains("乳腺") || rownmaes[2].contains("双乳") || rownmaes[2].contains("乳房") )&& rownmaes[3].contains("描述"))) {
+                if (((rownmaes[2].contains("乳腺") || rownmaes[2].contains("双乳") || rownmaes[2].contains("乳房")) && rownmaes[3].contains("描述"))) {
                     if (key.equals("rs_val")) {
                         hongKang.setRuxian(value);
                         System.out.println(rowName + "," + key + "," + value);
@@ -361,7 +413,7 @@ public class Hongkang {
                 /**
                  * 肝
                  */
-                if (rownmaes[2].contains("肝功") && rownmaes[3].contains("/")) {
+         /*       if (rownmaes[2].contains("肝功") && rownmaes[3].contains("/")) {
                     if (key.equals("rs_val")) {
                         hongKang.setXuebiqiu(value);
                         System.out.println(rowName + "," + key + "," + value);
@@ -372,7 +424,7 @@ public class Hongkang {
                     }
 
 
-                }
+                }*/
                 if (rownmaes[2].contains("肝功") && (rownmaes[3].contains("谷氨酰基") || rownmaes[3].contains("GT"))) {
                     if (key.equals("rs_val")) {
                         hongKang.setGt(value);
@@ -619,14 +671,12 @@ public class Hongkang {
         } else {
             hongKang.setErbihou("1");
         }
-
-
-        //眼科 问题------------
+//眼科
         if (hongKang.getYanke() == null) {
             hongKang.setYanke("0");
-        } else {
-            hongKang.setYanke("1");
         }
+
+
         //口腔
         if (hongKang.getKouqiang() == null) {
             hongKang.setKouqiang("0");
@@ -734,24 +784,24 @@ public class Hongkang {
                 || a.contains("海绵肾") || a.contains("脾钙化灶") || a.contains("脾囊肿") || a.contains("脾血管瘤") || a.contains("脾脏未探及") || a.contains("胰腺囊肿") || a.contains("游走肾")
                 || a.contains("脂肪瘤") || a.contains("子宫稍大") || a.contains("子宫体积增大") || a.contains("子宫未探及") || a.contains("子宫增大")) {
             hongKang.setFubucaichao("2");
-        } else  if (equals(hongKang.getGan(), "0") && equals(hongKang.getDan(), "0") && equals(hongKang.getPi(), "0") && equals(hongKang.getYi(), "0")) {
+        } else if (equals(hongKang.getGan(), "0") && equals(hongKang.getDan(), "0") && equals(hongKang.getPi(), "0") && equals(hongKang.getYi(), "0")) {
             hongKang.setFubucaichao("0");
-        } else{
+        } else {
             hongKang.setFubucaichao("1");
         }
 
-        if (hongKang.getZuoshen()==null && hongKang.getYoushen()==null){
+        if (hongKang.getZuoshen() == null && hongKang.getYoushen() == null) {
             hongKang.setShen("0");
-        }else {
-            if (hongKang.getZuoshen().contains("积水")||hongKang.getZuoshen().contains("肾盂扩张")||hongKang.getZuoshen().contains("马蹄肾")||hongKang.getZuoshen().contains("多囊肾")||
-                    hongKang.getYoushen().contains("积水")|| hongKang.getYoushen().contains("肾盂扩张")||hongKang.getYoushen().contains("马蹄肾")||hongKang.getYoushen().contains("多囊肾")){
+        } else {
+            if (hongKang.getZuoshen().contains("积水") || hongKang.getZuoshen().contains("肾盂扩张") || hongKang.getZuoshen().contains("马蹄肾") || hongKang.getZuoshen().contains("多囊肾") ||
+                    hongKang.getYoushen().contains("积水") || hongKang.getYoushen().contains("肾盂扩张") || hongKang.getYoushen().contains("马蹄肾") || hongKang.getYoushen().contains("多囊肾")) {
                 hongKang.setShen("3");
-            }else {
+            } else {
                 String status = GetDataS_test.getStatus(hongKang.getZuoshen());
                 String status1 = GetDataS_test.getStatus(hongKang.getYoushen());
-                if (Integer.parseInt(status)==0||Integer.parseInt(status1)==0){
+                if (Integer.parseInt(status) == 0 || Integer.parseInt(status1) == 0) {
                     hongKang.setShen("2");
-                }else {
+                } else {
                     hongKang.setShen("1");
                 }
             }
@@ -802,14 +852,14 @@ public class Hongkang {
         }
 
 
-        //甲状腺 有问题
+        //甲状腺
         if (hongKang.getJiazuangxian() == null) {
             hongKang.setJiazuangxian("0");
         } else {
             String status = GetDataJZX_test.getStatus(hongKang.getJiazuangxian());
             if (Integer.parseInt(status) == 0) {
                 hongKang.setJiazuangxian("3");
-            } else if (hongKang.getJiazuangxian().contains("结节")) {
+            } else if (hongKang.getJiazuangxian().contains("结节") || a.contains("甲状腺结节")) {
                 hongKang.setJiazuangxian("2");
             } else {
                 hongKang.setJiazuangxian("1");
@@ -821,7 +871,7 @@ public class Hongkang {
             if (Integer.parseInt(status) == 0) {
                 hongKang.setRuxian("3");
             } else if (Integer.parseInt(status) == 1) {
-                if (hongKang.getRuxian().contains("结节")) {
+                if (hongKang.getRuxian().contains("结节") || a.contains("乳腺结节")) {
                     hongKang.setRuxian("2");
                 } else {
                     hongKang.setRuxian("1");
@@ -830,7 +880,6 @@ public class Hongkang {
         } else {
             hongKang.setRuxian("0");
         }
-
 
 
         //胸片
@@ -1059,7 +1108,7 @@ public class Hongkang {
 
 
         //肝功
-        if (hongKang.getXuebiqiu() != null) {
+     /*   if (hongKang.getXuebiqiu() != null) {
             Double xuebiqiu = Double.parseDouble(Pattern.compile(REGEX).matcher(hongKang.getXuebiqiu()).replaceAll("").trim());
             beiShu = getBeiShu.getBeiShu(xuebiqiu, hongKang.getXuebiqiu_ref());
             System.out.println(beiShu);
@@ -1076,7 +1125,7 @@ public class Hongkang {
         }
         if (hongKang.getXuebiqiu() == null) {
             hongKang.setXuebiqiu("0");
-        }
+        }*/
 
         if (hongKang.getGt() != null) {
             Double gt = Double.parseDouble(Pattern.compile(REGEX).matcher(hongKang.getGt()).replaceAll("").trim());
@@ -1265,7 +1314,7 @@ public class Hongkang {
         //血脂
         if (hongKang.getTc() != null) {
             Double tc = Double.parseDouble(Pattern.compile(REGEX).matcher(hongKang.getTc()).replaceAll("").trim());
-            beiShu = getBeiShu.getBeiShu(Double.parseDouble(hongKang.getTc()), hongKang.getTc_ref());
+            beiShu = getBeiShu.getBeiShu(tc, hongKang.getTc_ref());
             int i = tc.compareTo(beiShu);
             if (i == 0) {
                 hongKang.setTc("1");
@@ -1286,7 +1335,7 @@ public class Hongkang {
 
         if (hongKang.getTg() != null) {
             Double tg = Double.parseDouble(Pattern.compile(REGEX).matcher(hongKang.getTg()).replaceAll("").trim());
-            beiShu = getBeiShu.getBeiShu(Double.parseDouble(hongKang.getTg()), hongKang.getTg_ref());
+            beiShu = getBeiShu.getBeiShu(tg, hongKang.getTg_ref());
             int i = tg.compareTo(beiShu);
             if (i == 0) {
                 hongKang.setTg("1");
@@ -1343,9 +1392,9 @@ public class Hongkang {
             String status = GetDataGJ_test.getStatus(hongKang.getGongjingtct());
             if (Integer.parseInt(status) == 0) {
                 hongKang.setGongjingtct("3");
-           } else if (Integer.parseInt(status) == 1) {
+            } else if (Integer.parseInt(status) == 1) {
                 hongKang.setGongjingtct("1");
-            }else if(Integer.parseInt(status) == 2){
+            } else if (Integer.parseInt(status) == 2) {
                 hongKang.setGongjingtct("2");
             }
         }
@@ -1393,10 +1442,10 @@ public class Hongkang {
             hongKang.setMianyi("0");
         }
 
-        if (equals(hongKang.getXuebiqiu(), "3") || equals(hongKang.getGt(), "3") || equals(hongKang.getAlt(), "3") || equals(hongKang.getAst(), "3") || equals(hongKang.getTba(), "3")
+        if (equals(hongKang.getGt(), "3") || equals(hongKang.getAlt(), "3") || equals(hongKang.getAst(), "3") || equals(hongKang.getTba(), "3")
                 || equals(hongKang.getTbil(), "3") || equals(hongKang.getTp(), "3") || equals(hongKang.getQiudanbai(), "3")) {
             hongKang.setGangong("3");
-        } else if (equals(hongKang.getXuebiqiu(), "0") || equals(hongKang.getGt(), "0") || equals(hongKang.getAlt(), "0") || equals(hongKang.getAst(), "0") || equals(hongKang.getTba(), "0")
+        } else if (equals(hongKang.getGt(), "0") || equals(hongKang.getAlt(), "0") || equals(hongKang.getAst(), "0") || equals(hongKang.getTba(), "0")
                 || equals(hongKang.getTbil(), "0") || equals(hongKang.getTp(), "0") || equals(hongKang.getQiudanbai(), "0")) {
             hongKang.setGangong("0");
         } else {
@@ -1424,7 +1473,7 @@ public class Hongkang {
 
     public void test() throws IOException {
         String idcard = null;
-        String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\result3.txt";
+        String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\1000.txt";
         // String finalXlsxPath = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\测试数据.xls";
         FileReader reader = null;
         FileOutputStream out = null;
@@ -1440,12 +1489,12 @@ public class Hongkang {
                 idcard = line;
                 System.out.println(idcard);
                 HongKang hongKang = getHongkangValue(idcard);
-                FileInputStream fs = new FileInputStream("d:/workbook4.xls");
+                FileInputStream fs = new FileInputStream("d:/workbook6.xls");
                 POIFSFileSystem ps = new POIFSFileSystem(fs);
                 HSSFWorkbook wb = new HSSFWorkbook(ps);
                 HSSFSheet sheet = wb.getSheetAt(0);
                 HSSFRow row = sheet.getRow(0);
-                out = new FileOutputStream("d:/workbook4.xls");
+                out = new FileOutputStream("d:/workbook6.xls");
                 row = sheet.createRow((sheet.getLastRowNum() + 1));
                 row.createCell(0).setCellValue(idcard);
                 row.createCell(1).setCellValue("0");
@@ -1487,13 +1536,21 @@ public class Hongkang {
     }
 
     public static void main(String[] args) {
-        String REGEX = "[^0-9.]";
+      /*  String REGEX = "[^0-9.]";
         Double tp = Double.parseDouble(Pattern.compile(REGEX).matcher("5.82").replaceAll("").trim());
         double beiShu = getBeiShu.getBeiShu(tp, "1-10");
         boolean c = tp == beiShu;
         System.out.println(c);
         String a = "延期拒";
         boolean s = equals(a, "3");
-        System.out.println(s);
+        System.out.println(s);*/
+        String a = "0.4";
+        double v = Double.parseDouble(a);
+        if (v <= 0.4) {
+            System.out.println("true");
+        } else {
+            System.out.println("f");
+
+        }
     }
 }

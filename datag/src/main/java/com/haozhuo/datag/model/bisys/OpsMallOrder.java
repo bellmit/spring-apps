@@ -57,7 +57,6 @@ public class OpsMallOrder {
     double refundGrossProfit = -1;
 
 
-
     public void setRefundGrossProfit(double refundGrossProfit) {
         this.refundGrossProfit = refundGrossProfit;
     }
@@ -87,91 +86,96 @@ public class OpsMallOrder {
     }
 
     @JsonIgnore
-    public boolean isInputMallOrder(){
+    public boolean isInputMallOrder() {
         return isInputMallOrder(id);
     }
 
-    public static boolean  isInputMallOrder(int id ) {
+    public static boolean isInputMallOrder(int id) {
         return id >= 10 && id <= 13;
     }
 
     //毛利润
     public Double getGrossProfit() {
 
-        if(isInputMallOrder() && grossProfit >= 0) {
-            return  grossProfit;
+        if (isInputMallOrder() && grossProfit >= 0) {
+            return grossProfit;
         }
 
         double value = 0D;
         switch (id) {
             case 1:
             case 2:
-                value = payOrderAmount - payOrderNum * 22;break;
+                value = payOrderAmount - payOrderNum * 22;
+                break;
             case 3:
-                value = payOrderAmount * 0.3;break;
+                value = payOrderAmount * 0.3;
+                break;
             case 4:
-                value =payOrderAmount - payOrderNum * 5;break;
+                value = payOrderAmount - payOrderNum * 5;
+                break;
             case 5:
-                value = payOrderAmount - payOrderNum * 15;break;
+                value = payOrderAmount - payOrderNum * 15;
+                break;
             case 6:
             case 7:
             case 8:
-                value = payOrderAmount;break;
+                value = payOrderAmount;
+                break;
             case 9:
                 if (payOrderNum > 0) {
                     value = payOrderAmount - 15;
                 }
                 break;
         }
-        return JavaUtils.retainDecimal(value,2);
+        return JavaUtils.retainDecimal(value, 2);
     }
 
-    public double round(double value){
+    public double round(double value) {
         return new BigDecimal(value).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 
     //毛利润率
     public Double getGrossProfitRate() {
-        if(isInputMallOrder() && grossProfitRate >= 0) {
+        if (isInputMallOrder() && grossProfitRate >= 0) {
             return grossProfitRate;
         }
 
         if (payOrderNum == 0) {
             return 0D;
         } else {
-            return payOrderAmount==0? 0 : JavaUtils.retainDecimal(getGrossProfit() / payOrderAmount,4);
+            return payOrderAmount == 0 ? 0 : JavaUtils.retainDecimal(getGrossProfit() / payOrderAmount, 4);
         }
     }
 
     //支付转化率
     public Double getPayConversionRate() {
-        if(isInputMallOrder() && payConversionRate >= 0) {
+        if (isInputMallOrder() && payConversionRate >= 0) {
             return payConversionRate;
         }
 
         if (orderNum == 0) {
             return 0D;
         } else {
-            return JavaUtils.retainDecimal(Double.valueOf(payOrderNum) / orderNum,2);
+            return orderNum == 0 ? 0 : JavaUtils.retainDecimal(Double.valueOf(payOrderNum) / orderNum, 2);
         }
 
     }
 
     //退款率
     public Double getRefundRate() {
-        if(isInputMallOrder() && refundRate >= 0) {
-            return  refundRate;
+        if (isInputMallOrder() && refundRate >= 0) {
+            return refundRate;
         }
 
         if (payOrderNum == 0) {
             return 0D;
         } else {
-            return JavaUtils.retainDecimal(Double.valueOf(refundOrderNum) / payOrderNum,4);
+            return payOrderNum == 0 ? 0 : JavaUtils.retainDecimal(Double.valueOf(refundOrderNum) / payOrderNum, 4);
         }
     }
 
     @JsonIgnore
-    public String getGenre(){
+    public String getGenre() {
         return getGenre(id);
     }
 
@@ -283,5 +287,7 @@ public class OpsMallOrder {
     public int getId() {
         return id;
     }
-    public OpsMallOrder(){}
+
+    public OpsMallOrder() {
+    }
 }

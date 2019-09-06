@@ -3,7 +3,6 @@ package com.haozhuo.datag.service;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.*;
-import com.haozhuo.datag.model.report.Body;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import com.haozhuo.datag.util.SqlSplit;
 import org.slf4j.Logger;

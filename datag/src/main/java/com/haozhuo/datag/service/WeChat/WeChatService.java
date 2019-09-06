@@ -238,6 +238,7 @@ public class WeChatService {
         String s = null;
         try {
             s = httpUtil.sendPostByJson(URL, body);
+            System.out.println(s);
         } catch (Exception e) {
             System.out.println("接口请求失败" + e.getStackTrace());
         }
@@ -283,5 +284,6 @@ public class WeChatService {
 
         return token;
     }
+
 }
 

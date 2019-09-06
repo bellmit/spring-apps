@@ -11,7 +11,7 @@ public class Application{
         try {
             SpringApplication.run(Application.class, args);
         }catch (Exception e){
-            e.getStackTrace();
+            e.printStackTrace();
         }
 
     }

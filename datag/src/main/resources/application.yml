@@ -53,7 +53,7 @@ spring:
       password: yjkdatag
       maximum-pool-size: 15
     bisys:
-      url: jdbc:mysql://192.168.1.162:3306/bisys?characterEncoding=utf-8
+      url: jdbc:mysql://212.64.92.152:3306/bisys?characterEncoding=utf-8
       username: datag
       password: yjkdatag
       maximum-pool-size: 15

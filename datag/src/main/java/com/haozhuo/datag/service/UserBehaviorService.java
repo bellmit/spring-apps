@@ -2,7 +2,6 @@ package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.model.bisys.UserBehavior;
 import com.haozhuo.datag.model.bisys.UserBehaviorDTO;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

@@ -150,7 +150,7 @@ public class HbaseService {
                 String value = new String(CellUtil.cloneValue(cell));
                 String rowName = new String(CellUtil.cloneRow(cell));
                 String[] rownmaes = rowName.split("_");
-                System.out.println(rowName + "," + key + "," + value);
+             //   System.out.println(rowName + "," + key + "," + value);
                 if ((rownmaes[2].contains("血压") || rownmaes[2].contains("一般")) && rownmaes[3].equals("收缩压")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setGaoya(value);

@@ -29,8 +29,8 @@ public class Mayi {
     public RepAbnormal getAbnormalValue(String idcard) {
         String reportId = esService.getrptid(idcard);
         String day = esService.getchkday(idcard);
-        System.out.println(day);
-        System.out.println(reportId);
+      //  System.out.println(day);
+       // System.out.println(reportId);
         StringBuffer sb = new StringBuffer(day);
 
         StringBuffer rowkey = sb.append("_" + reportId + "_");
@@ -53,60 +53,70 @@ public class Mayi {
                 String value = new String(CellUtil.cloneValue(cell));
                 String rowName = new String(CellUtil.cloneRow(cell));
                 String[] rownmaes = rowName.split("_");
-                System.out.println(rowName + "," + key + "," + value);
+                //System.out.println(rowName + "," + key + "," + value);
                 if ((rownmaes[2].contains("血压") || rownmaes[2].contains("一般")) && rownmaes[3].equals("收缩压")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setGaoya(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if ((rownmaes[2].contains("血压") || rownmaes[2].contains("一般")) && rownmaes[3].equals("舒张压")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setDiya(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if ((rownmaes[2].contains("体重指数") || rownmaes[2].contains("一般") || rownmaes[2].contains("人体成分分析") || rownmaes[2].contains("体重")) && rownmaes[3].contains("体重指数")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setBmi(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if ((rownmaes[2].contains("血糖") || rownmaes[2].contains("生化")) && rownmaes[3].contains("血糖")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setXuetang(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("糖化血红蛋白") && rownmaes[3].contains("糖化血红蛋白")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setTanghuaxuehongdanbai(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
 
-                if ((rownmaes[2].contains("甲状腺") || rownmaes[3].contains("小结")) || (rownmaes[2].contains("外科") && rownmaes[3].contains("甲状腺"))) {
+                if ((rownmaes[2].contains("甲状腺") && rownmaes[3].contains("小结"))) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setJiazhuangxianjiejie(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 //乳腺结节
                 if ((rownmaes[2].contains("乳腺") || rownmaes[2].contains("双乳") || rownmaes[2].contains("乳房") && rownmaes[3].contains("小结")) || (rownmaes[2].contains("外科") && rownmaes[3].contains("乳房"))) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setRuxianjiejie(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 //肺结节
                 if (rownmaes[2].contains("肺") && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setFeijiejie(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 //肝脏结节
                 if ((rownmaes[2].contains("腹") || rownmaes[2].contains("肝")) && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setGanzangjiejie(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 //胃息肉 直肠息肉
                 if (rownmaes[2].contains("外科") && (rownmaes[3].contains("肛门") || rownmaes[3].contains("直肠"))) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setWeixirou(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
 
@@ -114,19 +124,23 @@ public class Mayi {
                 if ((rownmaes[2].contains("妇科") || rownmaes[2].contains("阴超") || rownmaes[2].contains("盆腔") || rownmaes[2].contains("腹")) && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setLuanchaolangzhong(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 //宫颈TCT  疑议
                 if ((rownmaes[2].contains("TCT") && rownmaes[3].contains("小结")) || (rownmaes[2].contains("阴道镜") && rownmaes[3].contains("结果"))) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setGongjingtct(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
 
                 //宫颈HPV  存疑议
                 if (rownmaes[2].contains("HPV")) {
+                    System.out.println(rowName+"----"+key+"----"+value);
                     if (rownmaes[3].contains("16")) {
                         if (key.equals("rs_flag_id")) {
+                            System.out.println(rowName+"----"+key+"----"+value);
                             repAbnormal.setGongjinghpv("r");
                             int a = Integer.parseInt(value);
                             if (a > 1) {
@@ -135,6 +149,7 @@ public class Mayi {
                         }
                     } else if (rownmaes[3].contains("18")) {
                         if (key.equals("rs_flag_id")) {
+                            System.out.println(rowName+"----"+key+"----"+value);
                             repAbnormal.setGongjinghpv("r");
                             int a = Integer.parseInt(value);
                             if (a > 1) {
@@ -143,6 +158,7 @@ public class Mayi {
                         }
                     } else {
                         if (key.equals("rs_flag_id")) {
+                            System.out.println(rowName+"----"+key+"----"+value);
                             repAbnormal.setGongjinghpv("r");
                             int a = Integer.parseInt(value);
                             if (a > 1) {
@@ -153,81 +169,104 @@ public class Mayi {
                 }
                 if (repAbnormal.getGongjinghpv() == null) {
                     repAbnormal.setGongjinghpv("0");
-                } else if (list.size() != 0 && list1.size() == 0) {
-                    repAbnormal.setGongjinghpv("2");
-                } else if (list.size() == 0 && list1.size() != 0) {
-                    repAbnormal.setGongjinghpv("3");
-                } else if (list.size() != 0 && list1.size() != 0) {
-                    repAbnormal.setGongjinghpv("2,3");
-                } else {
-                    repAbnormal.setGongjinghpv("1");
+                } else{
+                    if (list.size() != 0 && list1.size() == 0) {
+                        repAbnormal.setGongjinghpv("2");
+                    } else if (list.size() == 0 && list1.size() != 0) {
+                        repAbnormal.setGongjinghpv("3");
+                    } else if (list.size() != 0 && list1.size() != 0) {
+                        repAbnormal.setGongjinghpv("2,3");
+                    } else if (repAbnormal.getGongjinghpv().equals("r")||(repAbnormal.getGongjinghpv()!=null&&Integer.parseInt(repAbnormal.getGongjinghpv())!=0)){
+                        repAbnormal.setGongjinghpv("1");
+                    }
                 }
 
 
                 if ((rownmaes[2].contains("肝功能") || rownmaes[2].contains("ALT")) && (rownmaes[3].contains("丙") || rownmaes[3].contains("ALT"))) {
                     if (key.equals("rs_flag_id")) {
                         repAbnormal.setGangongnengalt(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
+                    }if (key.equals("rs_val")){
+                        System.out.println(rowName+"----"+key+"----"+value);
+                    }if (key.equals("text_ref")){
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if ((rownmaes[2].contains("肝功") || rownmaes[2].contains("AST")) && (rownmaes[3].contains("草") || rownmaes[3].contains("冬氨酸") || rownmaes[3].contains("AST"))) {
                     if (key.equals("rs_flag_id")) {
                         repAbnormal.setGangongnengast(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
+                    }if (key.equals("rs_val")){
+                        System.out.println(rowName+"----"+key+"----"+value);
+                    }if (key.equals("text_ref")){
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("乙肝") && rownmaes[3].contains("乙肝表面抗原")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setYiganbiaomiankangyuan(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("乙肝") && rownmaes[3].contains("乙肝表面抗体")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setYiganbiaomiankangti(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("乙肝") && rownmaes[3].contains("e抗原")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setYiganekangyuan(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("乙肝") && rownmaes[3].contains("e抗体")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setYiganekangti(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("乙肝") && rownmaes[3].contains("乙肝核心抗体")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setYiganhexinkangti(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
 
                 if (rownmaes[2].contains("乙肝") && rownmaes[3].contains("S1")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setYiganqians1kangyuan(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("丙肝") && rownmaes[3].contains("丙")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setBingganbingdukangti(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if ((rownmaes[2].contains("丙肝") && rownmaes[2].contains("RNA")) && (rownmaes[3].contains("丙") || rownmaes[3].contains("RNA"))) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setBingganbingdurna(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("肝硬化") && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setGanyinghuachaosheng(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("心脏") && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setXinzangchaoshengyichang(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
                 if (rownmaes[2].contains("心电图") && rownmaes[3].contains("小结")) {
                     if (key.equals("rs_val")) {
                         repAbnormal.setXindiantu(value);
+                        System.out.println(rowName+"----"+key+"----"+value);
                     }
                 }
 
@@ -314,7 +353,7 @@ public class Mayi {
         //甲状腺结节
         if (abnormalValue.getJiazhuangxianjiejie() == null) {
             abnormalValue.setJiazhuangxianjiejie("0");
-        } else if (a.contains("甲状腺结节") || a.contains("甲状腺钙化") || a.contains("甲状腺腺瘤") || a.contains("甲状腺占位性病变")) {
+        } else if (a.contains("甲状腺结节") || a.contains("甲状腺钙化") || a.contains("甲状腺腺瘤") || a.contains("甲状腺占位性病变")||abnormalValue.getJiazhuangxianjiejie().contains("结节")) {
             abnormalValue.setJiazhuangxianjiejie("2");
         } else {
             abnormalValue.setJiazhuangxianjiejie("1");
@@ -381,15 +420,19 @@ public class Mayi {
         //alt
         if (abnormalValue.getGangongnengalt() == null) {
             abnormalValue.setGangongnengalt("0");
-        } else if (Integer.parseInt(abnormalValue.getGangongnengalt()) > 1) {
+        } else if (Integer.parseInt(abnormalValue.getGangongnengalt()) == 1) {
             abnormalValue.setGangongnengalt("1");
+        }else{
+            abnormalValue.setGangongnengalt("2");
         }
 
         //ast
         if (abnormalValue.getGangongnengast() == null) {
             abnormalValue.setGangongnengast("0");
-        } else if (Integer.parseInt(abnormalValue.getGangongnengast()) > 1) {
+        } else if (Integer.parseInt(abnormalValue.getGangongnengast()) == 1) {
             abnormalValue.setGangongnengast("1");
+        }else{
+            abnormalValue.setGangongnengast("2");
         }
 
         //乙肝表面抗原

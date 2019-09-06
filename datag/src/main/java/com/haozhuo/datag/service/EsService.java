@@ -5,10 +5,12 @@ import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.crm.UserIdTagsId;
+import com.haozhuo.datag.model.report.ReVO;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -17,6 +19,7 @@ import org.elasticsearch.index.query.functionscore.*;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.core.env.Environment;
 import org.slf4j.Logger;
@@ -561,7 +564,45 @@ public String getchkday(String idcard){
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
     }
+    public List<ReVO> query1(String idcard) {
+        //条件查询
 
+        SearchResponse searchResponse = client.prepareSearch("tmp_stu_es_index1")
+                .setQuery(matchQuery("id_card", idcard)).get();
+        //打印查询结果
+        SearchHits searchHits = searchResponse.getHits();
+        System.out.println("查询的结果有" + searchHits.getTotalHits() + "条");
+        SearchHit[] hits1 = searchHits.getHits();
+        List list = new ArrayList();
+        List<ReVO> reVOS = new ArrayList<>();
+
+        for (SearchHit hit : hits1) {
+            ReVO reVO = new ReVO();
+            list.add(hit.getSourceAsMap().get("rpt_id"));
+            reVO.setRpt_id(hit.getSourceAsMap().get("rpt_id").toString());
+            reVO.setChk_date(hit.getSourceAsMap().get("chk_date").toString());
+            reVO.setRpt_create_date(hit.getSourceAsMap().get("rpt_create_date").toString());
+            reVOS.add(reVO);
+        }
+        Collections.sort(reVOS, new Comparator<ReVO>() {
+            @Override
+            public int compare(ReVO o1, ReVO o2) {
+                // 返回值为int类型，大于0表示正序，小于0表示逆序
+                if (o1.getChk_date() == "")
+                    return 1;
+                return o1.getChk_date().compareTo(o2.getChk_date());
+            }
+        });
+
+        if (reVOS.size() >= 3) {
+            for (int index = 0; index < reVOS.size() - 2; index++) {
+                reVOS.remove(index);
+            }
+        }
+
+
+        return reVOS;
+    }
 //--------------------------------
 
     //---------------------- live start -----------------------------------

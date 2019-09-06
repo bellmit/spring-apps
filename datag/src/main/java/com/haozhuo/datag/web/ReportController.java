@@ -4,6 +4,7 @@ import com.haozhuo.datag.model.report.HongKang;
 import com.haozhuo.datag.model.report.RepAbnormal;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.Hongkang;
+import com.haozhuo.datag.service.Insurance.Mayi;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,8 @@ public class ReportController {
     private HbaseService hbaseService;
     @Autowired
     private Hongkang hongkang;
+    @Autowired
+    private Mayi mayi;
 
     @GetMapping(value = "/body/reportId/{reportId}")
     @ApiOperation(value = "根据报告Id返回人体图数据", notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
@@ -34,7 +37,13 @@ public class ReportController {
     @ApiOperation(value = "蚂蚁保险返回值")
     public RepAbnormal getAnt(@PathVariable(value = "idcard") String idcard) {
         RepAbnormal insurance = hbaseService.insurance(idcard);
-        return hbaseService.insurance(idcard);
+        return mayi.getAbnormalValue(idcard);
+    }
+    @GetMapping(value = "/antvalue/{idcard}")
+    @ApiOperation(value = "蚂蚁保险返回值")
+    public RepAbnormal getAnt1(@PathVariable(value = "idcard") String idcard) {
+        RepAbnormal insurance = hbaseService.insurance(idcard);
+        return mayi.insurance(idcard);
     }
 
     @GetMapping(value = "/hongkang/{idcard}")

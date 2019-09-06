@@ -473,7 +473,7 @@ public class Hongkang {
                             System.out.println(rowName + "," + key + "," + value);
                         }
                         if (key.equals("text_ref")) {
-                            hongKang.setAst_ref(value);
+                            hongKang.setTba_ref(value);
                             System.out.println(rowName + "," + key + "," + value);
                         }
 

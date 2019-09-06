@@ -9,7 +9,7 @@ object GetDataGJ_test {
   val str4:String=" （宫颈刮片）HSIL（高级别鳞状上皮内病变，符合CIN II-III）；建议宫颈活检。"
   val str5:String="阴道残端刮片巴氏I级白带检查清洁度II级，正常范围。"
   val str6:String="阴道残端刮片巴氏II级白带检查清洁度II级，正常范围。"
-  val str7:String="gongjingtct\\\": \\\"低级别鳞状上皮病变（LSIL），细胞形态改变提示HPV感染可能"
+  val str7:String="gongjingtct\\\": \\\"低级别鳞状上皮病变，细胞形态改变提示HPV感染可能"
   val str8:String="HPV检测：HPV[11]低危型为阴性HPV检测：HPV[16]低危危型为阳性HPV检测：HPV[18]高危型为阴性HPV检测："
 
   def gongjing(yourString: String) ={
@@ -19,6 +19,7 @@ object GetDataGJ_test {
         |CIN.{0,9}III|CIN.{0,6}3|
         |CIN.{0,9}II|CIN.{0,6}2|
         |刮片.{0,9}级|LSIL|ASU-US|
+        |低级别鳞状上皮病变|高级别鳞状上皮病变|
         |HPV.{0,9}低危.{0,5}阳性|
       """)
 
@@ -53,6 +54,8 @@ object GetDataGJ_test {
         result_arr.append("CIN癌变")
       }else if((x.contains("高危"))&&(x.contains("HPV"))){
         result_arr.append("HPV:高危阳性")
+      }else if(x.contains("高级")){
+        result_arr.append("低级别鳞状上皮病变")
       }
       else if((x.contains("IV"))&&(x.contains("V"))){
         result_arr.append("刮片等级》III拒保")
@@ -66,6 +69,8 @@ object GetDataGJ_test {
         result_rg.append("转人工:LSIL或者ASU")
       }else if((x.contains("HPV"))&&(x.contains("低危"))){
         result_rg.append("转人工:HPV低危阳性")
+      }else if(x.contains("低级")){
+        result_rg.append("转人工:低级别鳞状上皮病变")
       }
     })
 
@@ -104,7 +109,7 @@ object GetDataGJ_test {
 
 
 
-val str: String = getStatus(str8)
+val str: String = getStatus(str7)
   println(str)
   }
   //封装方法

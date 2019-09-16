@@ -5,6 +5,7 @@ import com.haozhuo.datag.model.report.RepAbnormal;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.Hongkang;
 import com.haozhuo.datag.service.Insurance.Mayi;
+import com.haozhuo.datag.service.Insurance.WeiBao;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.List;
 
 @RequestMapping(value = "/report")
 @RestController
@@ -26,6 +28,8 @@ public class ReportController {
     private Hongkang hongkang;
     @Autowired
     private Mayi mayi;
+    @Autowired
+    private WeiBao weiBao;
 
     @GetMapping(value = "/body/reportId/{reportId}")
     @ApiOperation(value = "根据报告Id返回人体图数据", notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
@@ -65,6 +69,13 @@ public class ReportController {
     public void test11() throws IOException {
 
         hongkang.test();
+    }
+
+    @GetMapping(value = "/weibao")
+    @ApiOperation(value = "弘康保险返回值")
+    public List Weibao(String rptid)  {
+
+      return  weiBao.getRep1(rptid);
     }
 
 }

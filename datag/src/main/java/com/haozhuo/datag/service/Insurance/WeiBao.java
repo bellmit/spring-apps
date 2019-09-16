@@ -10,6 +10,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 import static java.util.Arrays.stream;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
+@Component
 public class WeiBao {
     @Autowired
     private HbaseTemplate hbaseTemplate;

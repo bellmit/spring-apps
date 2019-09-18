@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.haozhuo.datag.com.service.Insurance.getBeiShu;
 import com.haozhuo.datag.com.service.Insurance.matchMain;
 import com.haozhuo.datag.common.StringUtil;
+import com.haozhuo.datag.model.report.Msg1;
 import com.haozhuo.datag.model.report.WeiBaoM;
 import com.haozhuo.datag.service.EsService;
 import org.apache.hadoop.hbase.Cell;
@@ -46,13 +47,14 @@ public class WeiBao {
         return stream(searchHits).map(x -> x.getSourceAsMap().get("labelCreateTime")).findFirst().orElse("").toString();
     }
 
-    public WeiBaoM getRep1(String rptid) {
-        WeiBaoM weiBaom = new WeiBaoM();
+    public Msg1 getRep1(String rptid) {
+        Msg1 msg = new Msg1();
+        WeiBaoM weiBaoM = new WeiBaoM();
         String day = getchkday(rptid);
         if (StringUtil.isEmpty(day)){
-            weiBaom.setCode(300);
-            weiBaom.setMsg("没有此报告id");
-            return weiBaom;
+            msg.setCode(300);
+            msg.setMsg("没有此报告id");
+            return msg;
         }
         String rs = "2";
         String rsa = null;
@@ -121,20 +123,20 @@ public class WeiBao {
             }else {
                 rs="1";
                 String s = split[1];
-                weiBaom.setLabel(rs);
-                weiBaom.setAbnormal(s);
+                weiBaoM.setLabel(rs);
+                weiBaoM.setAbnormal(s);
+                msg.setWeiBaoM(weiBaoM);
 
-
-                return weiBaom;
+                return msg;
             }
         }else {
             rs="1";
             String s = split[1];
-            weiBaom.setLabel(rs);
-            weiBaom.setAbnormal(s);
+            weiBaoM.setLabel(rs);
+            weiBaoM.setAbnormal(s);
+            msg.setWeiBaoM(weiBaoM);
 
-
-            return weiBaom;
+            return msg;
         }
 
         String niaotang = null;
@@ -257,43 +259,55 @@ public class WeiBao {
                 // 6、空腹血糖（FPG）≤2.8mmol/L（无糖尿病史）
                 // 7、空腹血糖（FPG）≤ 3.9mmol/L（糖尿病史）
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v >= 16.7 && str.contains("糖尿病")) {
-                    rs = "1";
-                    rsa = a + "该重大阳性";
-                    break;
-                }
-                if (v >= 13.9) {
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")){
 
-                }
-                if (v <= 2.8) {
-                    if (str.contains("糖尿病")) {
-
-                    } else {
+                }else{
+                    double v = Double.parseDouble(trim);
+                    if (v >= 16.7 && str.contains("糖尿病")) {
                         rs = "1";
                         rsa = a + "该重大阳性";
                         break;
                     }
-                }
-                if (v <= 3.9) {
-                    if (str.contains("糖尿病")) {
-                        rs = "1";
-                        rsa = a + "该重大阳性";
-                        break;
+                    if (v >= 13.9) {
+
+                    }
+                    if (v <= 2.8) {
+                        if (str.contains("糖尿病")) {
+
+                        } else {
+                            rs = "1";
+                            rsa = a + "该重大阳性";
+                            break;
+                        }
+                    }
+                    if (v <= 3.9) {
+                        if (str.contains("糖尿病")) {
+                            rs = "1";
+                            rsa = a + "该重大阳性";
+                            break;
+                        }
                     }
                 }
+
             }
             if (a.contains("肾功") && a.contains("血") && a.contains("肌酐")) {
                 //8、血肌酐(Cr) ≥707μmol/L
                 //10、血肌酐(Cr) ≥445μmol/L（首次）
                 //11、血肌酐(Cr) ≥707μmol/L（历次）.
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v >= 445) {
-                    rs = "1";
-                    rsa = a + "该重大阳性";
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                }else{
+                    double v = Double.parseDouble(trim);
+                    if (v >= 445) {
+                        rs = "1";
+                        rsa = a + "该重大阳性";
+                        break;
+                    }
                 }
+
             }
             //(key[0].contains("眼压") || key[0].contains("眼科") &&
             if ( key[1].contains("眼压")) {
@@ -955,16 +969,16 @@ public class WeiBao {
                 rsa = "pgi呈重大阳性";
             }
         }
-        weiBaom.setLabel(rs);
-        weiBaom.setAbnormal(rsa);
-
+        weiBaoM.setLabel(rs);
+        weiBaoM.setAbnormal(rsa);
+        msg.setWeiBaoM(weiBaoM);
 
         /*json.put("code",200);
         json.put("msg","success");
         json.put("data",rs);*/
 
 
-        return weiBaom;
+        return msg;
     }
 
     public  void test() throws IOException {

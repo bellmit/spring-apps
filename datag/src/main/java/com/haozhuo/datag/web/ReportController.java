@@ -5,6 +5,7 @@ import com.haozhuo.datag.common.StringUtil;
 import com.haozhuo.datag.common.TipConstBase;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.HongKang;
+import com.haozhuo.datag.model.report.Msg1;
 import com.haozhuo.datag.model.report.RepAbnormal;
 import com.haozhuo.datag.model.report.WeiBaoM;
 import com.haozhuo.datag.service.HbaseService;
@@ -70,20 +71,20 @@ public class ReportController {
         return hongkang.getHongkangValue(idcard);
     }
 
-    @GetMapping(value = "/hongkangvaluetest")
+/*    @GetMapping(value = "/hongkangvaluetest")
     @ApiOperation(value = "弘康保险返回值")
     public void test11() throws IOException {
 
         hongkang.test();
-    }
+    }*/
 
     @GetMapping(value = "/weibao/{rptid}")
     @ApiOperation(value = "微保")
     public ResponseEntity<WeiBaoM> Weibao(@PathVariable(value = "rptid") String rptid)  {
-        WeiBaoM rep1 = weiBao.getRep1(rptid);
+        Msg1 rep1 = weiBao.getRep1(rptid);
 
 
-        return  new ResponseEntity<>(rep1.getCode()==0 ? ResultCodeBase.CODE_SUCCESS :rep1.getCode(),StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 :rep1.getMsg() ,rep1);
+        return  new ResponseEntity<>(rep1.getCode()==0 ? ResultCodeBase.CODE_SUCCESS :rep1.getCode(),StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 :rep1.getMsg() ,rep1.getWeiBaoM());
     }
 
     @GetMapping(value = "/weibao")

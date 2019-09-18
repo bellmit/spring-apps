@@ -41,7 +41,7 @@ object getBeiShu {
       result=0
     }else{
 
-
+//1
     //判断<
     //正则表达式获取数值
     if(text_ref.contains("<")){

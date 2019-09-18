@@ -1,7 +1,10 @@
 package com.haozhuo.datag.service.Insurance;
 
+import com.alibaba.fastjson.JSONObject;
 import com.haozhuo.datag.com.service.Insurance.getBeiShu;
 import com.haozhuo.datag.com.service.Insurance.matchMain;
+import com.haozhuo.datag.common.StringUtil;
+import com.haozhuo.datag.model.report.WeiBaoM;
 import com.haozhuo.datag.service.EsService;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -13,10 +16,8 @@ import org.elasticsearch.search.SearchHit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
-import sun.applet.Main;
 
-import javax.activation.MailcapCommandMap;
-import javax.xml.bind.SchemaOutputResolver;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,25 +40,31 @@ public class WeiBao {
 
     public String getchkday(String rptid) {
 
-        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
-                .setQuery(matchQuery("rpt_id", rptid.trim()));
+        SearchRequestBuilder srb = client.prepareSearch("reportlabel").setSize(1)
+                .setQuery(matchQuery("healthReportId", rptid.trim()));
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
-        return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_create_date")).findFirst().orElse("").toString();
+        return stream(searchHits).map(x -> x.getSourceAsMap().get("labelCreateTime")).findFirst().orElse("").toString();
     }
 
-    public String getRep1(String rptid) {
-        String rs = "正常";
+    public WeiBaoM getRep1(String rptid) {
+        WeiBaoM weiBaom = new WeiBaoM();
+        String day = getchkday(rptid);
+        if (StringUtil.isEmpty(day)){
+            weiBaom.setCode(300);
+            weiBaom.setMsg("没有此报告id");
+            return weiBaom;
+        }
+        String rs = "2";
+        String rsa = null;
         String pgi = "";
         String pgiz = "";
         String REGEX = "[^0-9.]";
         List list1 = new ArrayList();
-        // SubstringComparator substringComparator = new SubstringComparator(rptid);
-        String day = getchkday(rptid);
-        //StringBuffer sb = new StringBuffer(day);
-      //  String day1 = day.substring(0, 10);
-        StringBuffer sb1 = new StringBuffer(day);
-        StringBuffer rowkey = sb1.append("_" + rptid + "_");
-        String endrowkey = day + "_" + (Integer.parseInt(rptid) + 1) + "_";
+        /*StringBuffer sb1 = new StringBuffer(day);
+        String substring = day.substring(0, 10);*/
+        String substring = day.substring(0, 10);
+        String rowkey = substring+("_" + rptid + "_");
+        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1) + "_";
         Map<String, String> map = new HashMap<>();//value
         Map<String, String> map1 = new HashMap<>();//text_ref
         Map<String, String> map2 = new HashMap<>();//rs_flag_id
@@ -65,11 +72,11 @@ public class WeiBao {
         StringBuffer sb2 = new StringBuffer(rsval);
         Scan scan = new Scan();
         // scan.setFilter(filter);
-        int i2 = Integer.parseInt(rptid);
+        int i2 = Integer.parseInt(rptid)+1;
         String s5 = String.valueOf(i2);
+        scan.setStartRow(rowkey.getBytes());
+        scan.setStopRow(endrowkey.getBytes());
 
-        scan.setStartRow(rptid.getBytes());
-        scan.setStopRow(s5.getBytes());
         hbaseTemplate.find(HBASENAME, scan, (Result result, int i) -> {
             Cell[] cells = result.rawCells();
             for (Cell cell : cells) {
@@ -78,14 +85,23 @@ public class WeiBao {
                 String rowName = new String(CellUtil.cloneRow(cell));
                 String[] rownmaes = rowName.split("_");
                 if (key.equals("rs_val")) {
-                    map.put(rownmaes[2] + "," + rownmaes[3], value);
+                    if (rownmaes.length>3){
+                        map.put(rownmaes[2] + "," + rownmaes[3], value);
+                    }
                     sb2.append(value+"\n");
                 }
                 if (key.equals("text_ref")) {
-                    map1.put(rownmaes[2] + "," + rownmaes[3], value);
+                    if (rownmaes.length>3){
+                        map1.put(rownmaes[2] + "," + rownmaes[3], value);
+                    }
+
                 }
                 if (key.equals("rs_flag_id")) {
-                    map2.put(rownmaes[2] + "," + rownmaes[3], value);
+                    //System.out.println(rowName);
+                    if (rownmaes.length>3){
+                        map2.put(rownmaes[2] + "," + rownmaes[3], value);
+                    }
+
                 }
                 //System.out.println(key+","+value);
             }
@@ -103,18 +119,28 @@ public class WeiBao {
             if (Integer.parseInt(split1[0])==1){
 
             }else {
-                rs = s4;
-                return rs;
+                rs="1";
+                String s = split[1];
+                weiBaom.setLabel(rs);
+                weiBaom.setAbnormal(s);
+
+
+                return weiBaom;
             }
         }else {
-            rs=s3;
-            return rs;
+            rs="1";
+            String s = split[1];
+            weiBaom.setLabel(rs);
+            weiBaom.setAbnormal(s);
+
+
+            return weiBaom;
         }
 
         String niaotang = null;
         String tongti = null;
         for (String a : map.keySet()) {
-           // System.out.println(a+","+map.get(a));
+           System.out.println(a+","+map.get(a));
             String s1 = map.get(a);
             String[] key = a.split(",");
             System.out.println(key[0] + "," + key[1]);
@@ -124,7 +150,8 @@ public class WeiBao {
                 int i1 = Integer.parseInt(s);
 
                 if (i1 >= 180 || i1 < 80) {
-                    rs = a + "呈重大阳性";
+                    rs =  "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -133,7 +160,8 @@ public class WeiBao {
                 String s = map.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 >= 110 || i1 < 50) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -144,7 +172,8 @@ public class WeiBao {
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
 
                 if ((v <= 45 || v >= 150) && (str.contains("心律不齐") || str.contains("心界扩大"))) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -154,7 +183,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v <= 60) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -163,7 +193,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v <= 1.0) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -174,7 +205,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v <= 30.0 || v >= 1000 || (v >= 30 && v <= 50)) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -183,7 +215,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v <= 0.5) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -196,7 +229,8 @@ public class WeiBao {
 
                 } else {
                     if (v > 200) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -211,7 +245,8 @@ public class WeiBao {
 
                 } else {
                     if (v > 200) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -224,7 +259,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v >= 16.7 && str.contains("糖尿病")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
                 if (v >= 13.9) {
@@ -234,13 +270,15 @@ public class WeiBao {
                     if (str.contains("糖尿病")) {
 
                     } else {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
                 }
                 if (v <= 3.9) {
                     if (str.contains("糖尿病")) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -252,11 +290,13 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v >= 445) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
-            if ((key[0].contains("眼压") || key[0].contains("眼科") && key[1].contains("眼压"))) {
+            //(key[0].contains("眼压") || key[0].contains("眼科") &&
+            if ( key[1].contains("眼压")) {
                 //11、眼压＞25mmHg
                 String s = map.get(a);
               //  [0-9]+
@@ -264,12 +304,16 @@ public class WeiBao {
                 if (trim.equals("")) {
 
                 } else {
-                    double v = Double.parseDouble(trim);
-                    if (v > 25) {
-                        rs = a + "呈重大阳性";
-                        break;
-                    }
+                    if (s.contains("视力")){
 
+                    }else{
+                        double v = Double.parseDouble(trim);
+                        if (v > 25) {
+                            rs = "1";
+                            rsa = a + "该重大阳性";
+                            break;
+                        }
+                    }
                 }
             }
             if (a.contains("血常规") && (a.contains("红细胞计数") || a.contains("RBC"))) {
@@ -281,7 +325,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v < 2.5 || v > 6.8) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
 
@@ -296,7 +341,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v > 25) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
 
@@ -306,7 +352,8 @@ public class WeiBao {
                 //、尿潜血﹥+++
                 String s = map.get(a);
                 if (s.contains("3+") || s.contains("+++") || s.contains("4+") || s.contains("5+") || s.contains("++++") || s.contains("+++++")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -314,7 +361,8 @@ public class WeiBao {
                 //2、尿蛋白﹥+++
                 String s = map.get(a);
                 if (s.contains("3+") || s.contains("+++") || s.contains("4+") || s.contains("5+") || s.contains("++++") || s.contains("+++++")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -323,7 +371,8 @@ public class WeiBao {
                 //、尿糖+ + +～ + + + +
                 niaotang = map.get(a);
                 if (niaotang.contains("3+") || niaotang.contains("+++") || niaotang.contains("4+") || niaotang.contains("++++")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -339,7 +388,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v > 20) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
 
@@ -357,7 +407,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v > 20) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
 
@@ -369,13 +420,15 @@ public class WeiBao {
                 //7、酮体≥+++（无糖尿病史）
                 tongti = map.get(a);
                 if (tongti.contains("2+") || tongti.contains("++") && str.contains("糖尿病")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 } else if (tongti.contains("3+") || tongti.contains("+++")) {
                     if (str.contains("糖尿病")) {
 
                     } else {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                        rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -384,7 +437,8 @@ public class WeiBao {
                 //2、大便隐血(OB)≥+++
                 String s = map.get(a);
                 if (s.contains("3+") || s.contains("+++")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -393,7 +447,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 200) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -402,7 +457,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v < 40) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -414,7 +470,8 @@ public class WeiBao {
 
                 } else {
                     if (v < 20) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -425,7 +482,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 50) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -435,7 +493,8 @@ public class WeiBao {
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
 
                 if (v >= 17 && niaotang.contains("+++") && niaotang.contains("+")) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
 
                 }
@@ -445,7 +504,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 21) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -455,7 +515,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 650) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -465,7 +526,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 8) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -474,7 +536,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 10) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -483,7 +546,8 @@ public class WeiBao {
                 String s = map.get(a);
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
                 if (v > 200) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -496,7 +560,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v > 200) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -513,7 +578,8 @@ public class WeiBao {
                     } else {
                         double v = Double.parseDouble(trim);
                         if (v >= 10) {
-                            rs = a + "呈重大阳性";
+                            rs = "1";
+                    rsa = a + "该重大阳性";
                             break;
                         }
                     }
@@ -528,7 +594,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v < 0.15) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -542,7 +609,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 70) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -551,7 +619,8 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -560,7 +629,8 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -569,7 +639,8 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -583,7 +654,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 40) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -596,7 +668,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 72) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -609,7 +682,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 10) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -623,7 +697,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 6.6) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -638,7 +713,8 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 3.0) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -655,7 +731,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     getBeiShu.getBeiShu(v, s2);
                     if (v >= 2.0) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -673,7 +750,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     getBeiShu.getBeiShu(v, s2);
                     if (v > 100) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -690,7 +768,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     getBeiShu.getBeiShu(v, s2);
                     if (v > 1000) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -707,7 +786,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (beiShu > 2) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -723,7 +803,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (beiShu > 2) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -739,7 +820,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (beiShu > 2) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -755,7 +837,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (v > 1000) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -771,7 +854,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (beiShu > 2) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -787,7 +871,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (beiShu > 2) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -803,7 +888,8 @@ public class WeiBao {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
                     if (beiShu > 2) {
-                        rs = a + "呈重大阳性";
+                        rs = "1";
+                    rsa = a + "该重大阳性";
                         break;
                     }
                 }
@@ -836,7 +922,8 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -845,7 +932,7 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
-                    rs = a + "呈重大阳性";
+                    rs = "1,"+"1";
                     break;
                 }
             }
@@ -854,7 +941,8 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
-                    rs = a + "呈重大阳性";
+                    rs = "1";
+                    rsa = a + "该重大阳性";
                     break;
                 }
             }
@@ -863,17 +951,50 @@ public class WeiBao {
 
         }else {
             if (Double.parseDouble(pgi) <= 70 && Double.parseDouble(pgiz) <= 7.0) {
-                rs =   "pgi呈重大阳性";
+                rs =   "1";
+                rsa = "pgi呈重大阳性";
             }
         }
+        weiBaom.setLabel(rs);
+        weiBaom.setAbnormal(rsa);
 
 
-        return rs;
+        /*json.put("code",200);
+        json.put("msg","success");
+        json.put("data",rs);*/
+
+
+        return weiBaom;
+    }
+
+    public  void test() throws IOException {
+        String rptid = null;
+        String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\wbcs.txt";
+        FileReader reader = null;
+        try {
+            reader = new FileReader(pathname);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            int i =1;
+            while ((line = br.readLine()) != null) {
+                // 一次读入一行数据
+                rptid = line;
+                System.out.println(rptid+","+i);
+                i++;
+               getRep1(rptid);
+
+            }
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
-        String REGEX= "[0-9]+";
-        String str = "20mmHg 正常范围值(10-21mmHg)";
-        String trim = Pattern.compile(REGEX).matcher(str).replaceAll("").trim();
+        String str = "2018-02-01 19:10:05";
+        String substring = str.substring(0, 10);
+        String[] split = str.split("_");
+        System.out.println(substring);
     }
 }

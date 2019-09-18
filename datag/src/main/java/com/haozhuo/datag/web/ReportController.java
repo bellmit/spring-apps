@@ -1,7 +1,12 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.common.ResultCodeBase;
+import com.haozhuo.datag.common.StringUtil;
+import com.haozhuo.datag.common.TipConstBase;
+import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.HongKang;
 import com.haozhuo.datag.model.report.RepAbnormal;
+import com.haozhuo.datag.model.report.WeiBaoM;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.Hongkang;
 import com.haozhuo.datag.service.Insurance.Mayi;
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping(value = "/report")
 @RestController
@@ -71,11 +77,20 @@ public class ReportController {
         hongkang.test();
     }
 
-    @GetMapping(value = "/weibao")
-    @ApiOperation(value = "弘康保险返回值")
-    public List Weibao(String rptid)  {
+    @GetMapping(value = "/weibao/{rptid}")
+    @ApiOperation(value = "微保")
+    public ResponseEntity<WeiBaoM> Weibao(@PathVariable(value = "rptid") String rptid)  {
+        WeiBaoM rep1 = weiBao.getRep1(rptid);
 
-      return  weiBao.getRep1(rptid);
+
+        return  new ResponseEntity<>(rep1.getCode()==0 ? ResultCodeBase.CODE_SUCCESS :rep1.getCode(),StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 :rep1.getMsg() ,rep1);
+    }
+
+    @GetMapping(value = "/weibao")
+    @ApiOperation(value = "微保")
+    public void Weibao() throws IOException {
+
+        weiBao.test();
     }
 
 }

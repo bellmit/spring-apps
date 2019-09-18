@@ -322,16 +322,7 @@ object matchMain {
 
     }
 
-    val max: String = getCm(rs_val)
 
-
-    if(max.contains("没有单位")){
-      //做没有单位的处理---暂时未处理
-      //返回原有值
-    }else{
-      println(max)
-
-    }
 
     //获取每条异常最大值与配置参数进行对比，返回结果为0（异常）
     var Regex=regex.findAllIn(rs_val)

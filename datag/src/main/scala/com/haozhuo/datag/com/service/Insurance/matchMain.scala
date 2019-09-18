@@ -225,7 +225,7 @@ object matchMain {
     }
 
     if(rs_val.contains("性病")&(!rs_val.contains("占位性病变"))&(!rs_val.contains("恶性病变"))
-    &(!rs_val.contains("良性病变"))){
+    &(!rs_val.contains("良性病变"))&(!rs_val.contains("病变"))){
       vue="性病"
     }
 

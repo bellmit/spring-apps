@@ -224,7 +224,8 @@ object matchMain {
       }
     }
 
-    if(rs_val.contains("性病")&(!rs_val.contains("占位性病变"))){
+    if(rs_val.contains("性病")&(!rs_val.contains("占位性病变"))&(!rs_val.contains("恶性病变"))
+    &(!rs_val.contains("良性病变"))){
       vue="性病"
     }
 
@@ -557,7 +558,7 @@ object matchMain {
 
 
   def main(args: Array[String]): Unit = {
-    val Match= noNumMatch("膀胱充盈良好，壁光滑，延续性好，其内透声性良好，未见明显占位性病变。  ")
+    val Match= noNumMatch("胸部CT平扫未见明显异常肝硬化，门脉高压，脾大可能,建议结合临床，进一步检查。附见胆囊结石。  ")
 //    甲状腺.{0,5}实.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}实.{0,3}性占位.{0,35}|
 //      甲状腺.{0,5}混合.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}混合.{0,3}性占位.{0,35}|
     val str: String = numMatch(

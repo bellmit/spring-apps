@@ -165,7 +165,6 @@ object matchMain {
         |恶性病变.*胰腺占位|胰腺占位.*恶性病变|
         |恶性病变.*脾脏占位|脾脏占位.*恶性病变|
         |(肝|脾).*(中度|重度)肿大|
-        |肝硬化.*伴门脉高压|
         |肝外.{0,5}梗阻|
         |膀胱.*占位性病变.*恶.{0,3}性|膀胱.*恶.{0,3}性.*占位性病变|
         |前列腺.*占位性病变.*恶.{0,3}性|前列腺.*.恶.{0,3}性.*占位性病变|
@@ -210,7 +209,7 @@ object matchMain {
     if(rs_val.contains("占位性病变")&rs_val.contains("腹膜后")&(!rs_val.contains("未见占位性病变"))){
       val r =new Regex(
         """
-        |.{20}占位性病变.*|
+        |.{0,20}占位性病变.{0,20}|
         """)
       var str=" "
       val Regex1= r.findAllIn(rs_val)
@@ -227,6 +226,24 @@ object matchMain {
     if(rs_val.contains("性病")&(!rs_val.contains("占位性病变"))&(!rs_val.contains("恶性病变"))
     &(!rs_val.contains("良性病变"))&(!rs_val.contains("病变"))){
       vue="性病"
+    }
+
+    if(rs_val.contains("肝硬化")&(rs_val.contains("门脉高压"))){
+      val r =new Regex(
+        """
+          |.{0,20}肝硬化.{0,20}|
+        """)
+      var str=" "
+      val Regex1= r.findAllIn(rs_val)
+      while (Regex1.hasNext){
+        str=Regex1.next()
+
+      }
+      if(str.contains("未见")){
+
+      }else{
+        vue="肝硬化伴门脉高压"
+      }
     }
 
 
@@ -253,7 +270,7 @@ object matchMain {
       |内膜.{0,10}厚.{0,15}|
       |子宫肌瘤.{0,20}|
       |泌尿.{0,20}实性占位性病变|生殖系统.{0,20}实性占位性病变|
-      |腹部.{0,20}占位性病变|
+      |腹.{0,20}m.*腹部.{0,20}占位性病变|
       |胰腺囊肿.{0,20}|
       |肾.{0,30}m|
       |主胰管扩张.{0,30}胰腺囊肿|
@@ -449,7 +466,8 @@ object matchMain {
         result_vue=if(max.toDouble>5.0) string_next else result_vue
       }
 
-      if(string_next.contains("腹部")&string_next.contains("占位性病变")){
+      if(string_next.contains("腹部")&string_next.contains("占位性病变")&(!string_next.contains("未见"))){
+
         val max: String = getCm(string_next)
         //判断
         result_status = if(max.toDouble>3.0) "0" else result_status
@@ -563,7 +581,7 @@ object matchMain {
 //      甲状腺.{0,5}混合.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}混合.{0,3}性占位.{0,35}|
     val str: String = numMatch(
                                """
-                                 |右肾形态大小正常，包膜光整，实质回声均匀，肾内似见一个无回声区（疑似囊肿），大小约61mmx8mm，后方回声增强。集合系统未见分离。（结合临床，复查）
+                                 腹最大截面约61mm*49mm，边界清晰，壁光滑，内见脂肪密度及软组织密度影，局部结构受压移位。  印象：1、子宫异常改变，考虑子宫肌瘤伴钙化，结合临床进一步检查2、左下腹部占位性病变，
                                """
     )
     println(Match)

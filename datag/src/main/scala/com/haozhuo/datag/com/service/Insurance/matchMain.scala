@@ -162,8 +162,8 @@ object matchMain {
         |胆囊息肉病变.*(变宽|增大)|
         |胆囊息肉.*病灶.*周围黏膜.*(浸润|增厚)|
         |胆囊占位.*恶性病变|恶性病变.*胆囊占位|
-        |恶性病变.*胰腺占位|胰腺占位.*恶性病变|
-        |恶性病变.*脾脏占位|脾脏占位.*恶性病变|
+        |恶性病变.*胰腺.*占位|胰腺.*占位.*恶性病变|
+        |恶性病变.*脾脏.*占位|脾脏.*占位.*恶性病变|
         |(肝|脾).*(中度|重度)肿大|
         |肝外.{0,5}梗阻|
         |膀胱.*占位性病变.*恶.{0,3}性|膀胱.*恶.{0,3}性.*占位性病变|
@@ -191,13 +191,31 @@ object matchMain {
     )
 
 
+
+
   val Regex=regex.findAllIn(rs_val)
 
     //遍历集合
     var vue="1"
 
+
     while (Regex.hasNext){
-      vue=Regex.next()
+      //排除未见占位性病变
+      val paichu_vue=Regex.next()
+      val Regex_1 =new Regex(
+        """
+          |.{0,30}性病变|
+        """)
+      val bianli=Regex_1.findAllIn(paichu_vue)
+      while (bianli.hasNext){
+        if(bianli.next().contains("未见")){
+
+        }else{
+          vue=paichu_vue
+        }
+
+      }
+//      vue=Regex.next()
 
     }
 
@@ -576,7 +594,7 @@ object matchMain {
 
 
   def main(args: Array[String]): Unit = {
-    val Match= noNumMatch("胸部CT平扫未见明显异常肝硬化，门脉高压，脾大可能,建议结合临床，进一步检查。附见胆囊结石。  ")
+    val Match= noNumMatch("胰腺占位性恶性病变。  ")
 //    甲状腺.{0,5}实.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}实.{0,3}性占位.{0,35}|
 //      甲状腺.{0,5}混合.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}混合.{0,3}性占位.{0,35}|
     val str: String = numMatch(

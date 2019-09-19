@@ -152,8 +152,8 @@ object matchMain {
         |颅内动脉瘤|
         |颅内动静脉畸形|脑.*血管畸形|
         |椎管.*占位|
-        |脑梗塞|
-        |大片.{0,5}(肺实变|肺渗出性.*变)|
+        |{0,5}.脑梗.{0,5}|
+        |大片.{0,5}肺实变|肺.{0,30}渗出性改变|
         |肝.*恶性肿瘤|
         |胆管囊腺瘤|
         |肝脏囊肿合并.{0,5}(感染|出血)|
@@ -270,7 +270,7 @@ object matchMain {
     if(vue.equals("1")){
       "1"
     }else{
-      "0,"+vue
+      "0_"+vue
     }
 
   }
@@ -296,9 +296,9 @@ object matchMain {
       |主胰管扩张.{0,30}胰腺囊肿|
       |胆囊.{0,20}息肉.{0,10}|
       |肝脏.{0,20}血管瘤.{0,20}|
-      |肝脏.{0,20}囊肿.{0,20}|
       |颈.{0,3}动脉.{0,5}狭窄.{0,20}%|
       |血管瘤.{0,20}|
+      |.*肝.*囊肿.*|
       |肝.{0,3}血管瘤.{0,20}|
       |血清肌酸激酶-MB同工酶(CK-MB)升高，肌钙蛋白:阳性，肌红蛋白:阳性|
       |宫颈刮片.{0,10}巴氏.{0,10}级|
@@ -527,12 +527,26 @@ object matchMain {
         result_vue=if(max.toDouble>10) string_next else result_vue
       }
 
-      if(string_next.contains("肝脏")&string_next.contains("囊肿")){
-        val max: String = getCm(string_next)
-        //判断
-        result_status = if(max.toDouble>10) "0" else result_status
-//        println(string_next)
-        result_vue=if(max.toDouble>10) string_next else result_vue
+      if(string_next.contains("肝")&string_next.contains("囊肿")&
+        (!string_next.contains("考虑肝囊肿"))){
+        val r =new Regex(
+          """
+            |肝.{0,30}m.*肝.{0,3}囊肿|肝.{0,3}囊肿.*m|
+          """)
+        var str=" "
+        val Regex1= r.findAllIn(rs_val)
+        while (Regex1.hasNext){
+          str=Regex1.next()
+          if(str.contains("肝")) {
+            val max: String = getCm(string_next)
+            //判断
+            result_status = if (max.toDouble > 10) "0" else result_status
+            //        println(string_next)
+            result_vue = if (max.toDouble > 10) string_next else result_vue
+          }
+        }
+
+
       }
 
       if(string_next.contains("颈")&string_next.contains("狭窄")){
@@ -587,7 +601,7 @@ object matchMain {
     if(result_status.equals("1")){
       "1"
     }else{
-      "0,"+result_vue
+      "0_"+result_vue
     }
 
 
@@ -596,12 +610,13 @@ object matchMain {
 
 
   def main(args: Array[String]): Unit = {
-    val Match= noNumMatch("急腹症")
+    val Match= noNumMatch(" 既往疾病史:冠心病史,脑梗死史心音:心音。")
 //    甲状腺.{0,5}实.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}实.{0,3}性占位.{0,35}|
 //      甲状腺.{0,5}混合.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}混合.{0,3}性占位.{0,35}|
     val str: String = numMatch(
                                """
-                                 |胰腺形态大小正常，实质回声均匀，胰体部可见一无回声区，大小约35mm×7mm，后方回声增强。（胰腺囊肿可能，建议短期内复查或进一步检查）
+
+
                                """
     )
     println(Match)

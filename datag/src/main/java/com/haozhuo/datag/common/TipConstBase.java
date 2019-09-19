@@ -19,6 +19,7 @@ public class TipConstBase {
     public static final String OPERATION_DELETE_ERROR = "删除失败";
     public static final String INVALID_PARAMETER = "非法参数";
 
+    public static final String OPERATION_SAVE_SUCCESS1 = "查询成功";
 
     public static final String TOKEN_COMPARE_ERROR = "token有误";
 

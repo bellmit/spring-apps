@@ -47,7 +47,6 @@ public class WeiBao {
             return stream(searchHits).map(x -> x.getSourceAsMap().get("labelCreateTime")).findFirst().orElse("").toString();
         }*/
     public String getchkday(String rptid) {
-
         SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
                 .setQuery(matchQuery("rpt_id", rptid.trim()));
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
@@ -365,9 +364,9 @@ public class WeiBao {
                         rsa = a;
                         break;
                     }
-
                 }
             }
+
             if (a.contains("尿常规") && (a.contains("隐血") || a.contains("潜血"))) {
                 //、尿潜血﹥+++
                 String s = map.get(a);
@@ -377,6 +376,7 @@ public class WeiBao {
                     break;
                 }
             }
+
             if (a.contains("尿常规") && (a.contains("尿蛋白") || a.contains("PRO"))) {
                 //2、尿蛋白﹥+++
                 String s = map.get(a);
@@ -465,34 +465,51 @@ public class WeiBao {
             if (a.contains("肝功") && (key[1].contains("谷氨酰基") || key[1].contains("GGT"))) {
                 //3、γ-谷氨酰转移酶（GGT）＞200U/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 200) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 200) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
+
+
             }
             if (a.contains("肝功") && (key[1].contains("总蛋白") || key[1].contains("TP"))) {
                 // 4、总蛋白＜40g/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v < 40) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v < 40) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
             if (a.contains("肝功") && (key[1].contains("白蛋白") || key[1].contains("Alb"))) {
                 //5、白蛋白＜20g/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
                 if (a.contains("/")) {
 
                 } else {
-                    if (v < 20) {
-                        rs = "1";
-                        rsa = a;
-                        break;
+                    if (trim.equals("")) {
+
+                    } else {
+                        double v = Double.parseDouble(trim);
+                        if (v < 40) {
+                            rs = "1";
+                            rsa = a;
+                            break;
+                        }
                     }
                 }
 
@@ -500,75 +517,108 @@ public class WeiBao {
             if (a.contains("肝功") && (key[1].contains("总胆红素") || key[1].contains("T-Bil"))) {
                 //6、总胆红素＞50μmol/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 50) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 50) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
             if (a.contains("餐后") && (a.contains("血糖"))) {
                 //8、餐后血糖≥17mmol/L，伴尿糖 +++，尿酮+
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")){
 
-                if (v >= 17 && niaotang.contains("+++") && niaotang.contains("+")) {
-                    rs = "1";
-                    rsa = a;
-                    break;
-
+                }else {
+                    double v = Double.parseDouble(trim);
+                    if (v >= 17 && niaotang.contains("+++") && niaotang.contains("+")) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
             if (a.contains("肾功") && (key[1].contains("尿素") || key[1].contains("Urea"))) {
                 //9、尿素(Urea)＞21mmol/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 21) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 21) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
             if (a.contains("肾功") && (key[1].contains("尿酸") || key[1].contains("UA"))) {
 
                 //  12、尿酸(UA)＞650μmol/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 650) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 650) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
 
             if (a.contains("肾功") && (a.contains("总胆固醇") || a.contains("TC"))) {
                 //13、总胆固醇(TC)＞8mmol/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 8) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 8) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
             if (a.contains("肾功") && (a.contains("甘油三酯") || a.contains("TG"))) {
                 //14、甘油三酯(TG)＞10mmol/L
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 10) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 10) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
             if (a.contains("血清淀粉酶")) {
                 //16、血清淀粉酶:＞200U/L(PNP法)
                 String s = map.get(a);
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s).replaceAll("").trim());
-                if (v > 200) {
-                    rs = "1";
-                    rsa = a;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
+                if (trim.equals("")) {
+
+                } else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 200) {
+                        rs = "1";
+                        rsa = a;
+                        break;
+                    }
                 }
             }
 
@@ -664,7 +714,6 @@ public class WeiBao {
                     break;
                 }
             }
-
             if (key[1].contains("CA242")) {
                 //1、绝经后女性 CA125 增高到≥95 U/mL
                 //2、未绝经女性CA125 增高2倍并结合其他检查结果
@@ -694,7 +743,7 @@ public class WeiBao {
                     }
                 }
             }
-            if (key[1].contains("CEA")||key[1].contains("癌胚抗原")) {
+            if (key[1].contains("CEA") || key[1].contains("癌胚抗原")) {
                 //5、癌胚抗原（CEA）≥ 2倍并结合其他检查结果
                 String s = map.get(a);
                 String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
@@ -708,7 +757,6 @@ public class WeiBao {
                     }
                 }
             }
-
             if (key[1].contains("CYFRA21-1") || key[1].contains("细胞角蛋白19片段")) {
                 //细胞角蛋白19片段（CYFRA21-1）≥2倍并结合其他检查结果
                 String s = map.get(a);
@@ -723,7 +771,6 @@ public class WeiBao {
                     }
                 }
             }
-
             if (a.contains("SCC") || a.contains("鳞状细胞癌抗原")) {
                 //鳞状细胞癌抗原（SCC）≥2倍并结合其他检查结果
                 String s = map.get(a);
@@ -750,7 +797,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu >= 2.0&&beiShu!=v) {
+                    if (beiShu >= 2.0 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -769,7 +816,7 @@ public class WeiBao {
 
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -805,7 +852,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -822,7 +869,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -839,7 +886,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -856,7 +903,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 1000&&beiShu!=v) {
+                    if (beiShu > 1000 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -873,7 +920,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -890,7 +937,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -907,7 +954,7 @@ public class WeiBao {
                 } else {
                     double v = Double.parseDouble(trim);
                     double beiShu = getBeiShu.getBeiShu(v, s2);
-                    if (beiShu > 2&&beiShu!=v) {
+                    if (beiShu > 2 && beiShu != v) {
                         rs = "1";
                         rsa = a;
                         break;
@@ -959,6 +1006,15 @@ public class WeiBao {
                 String s = map2.get(a);
                 int i1 = Integer.parseInt(s);
                 if (i1 == 3) {
+                    rs = "1";
+                    rsa = a;
+                    break;
+                }
+            }
+
+            if (a.contains("HIV")) {
+                String s = map.get(a);
+                if (s.contains("阳")) {
                     rs = "1";
                     rsa = a;
                     break;

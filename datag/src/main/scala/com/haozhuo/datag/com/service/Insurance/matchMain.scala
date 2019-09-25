@@ -950,7 +950,7 @@ object matchMain {
         result_vue=if(max.toDouble>3.0) string_next else result_vue
       }
 
-      if(string_next.contains("肾")&rs_val.contains("囊肿")){
+      if(string_next.contains("肾")&string_next.contains("囊肿")){
         val max: String = getCm(string_next)
         //判断
         result_status = if(max.toDouble>5.0) "0" else result_status
@@ -1134,12 +1134,10 @@ object matchMain {
   }
 
   def main(args: Array[String]): Unit = {
-    val Match= noNumMatch("")
+    val Match= noNumMatch("右肾大小约129x58mm，包膜欠光滑，肾实质厚度稍变薄、回声欠均匀，于实质中段见一个无回声区，大小约27x25mm，向外凸起，边界清晰，形态规则，集合系统未见分离\")")
 
     val str: String = numMatch(
                                """
-|1.异位心律2.阵发性室上性心动过速（心率1329次/分）
-
                                """
     )
     println(Match)

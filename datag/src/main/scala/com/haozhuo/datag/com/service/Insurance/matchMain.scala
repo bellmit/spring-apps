@@ -14,8 +14,13 @@ import scala.util.matching.Regex
 
 
 object matchMain {
+  //先调用这个，匹配玩非数值的，在调用数值匹配,错误返回0并且+_vue值，正确返回1
 
-  //非数值匹配
+  /**非数值匹配
+    如果需要修改，在正则中添加需要匹配的内容，如果内容比较复杂，请勿在正则中添加
+    请参照其他的方法，使用if(container)添加
+    如果想更精准的匹配请调用修改paichu_string方法(添加后，对其进行排除 （患病状态排除) )
+  **/
   def noNumMatch(rs_val:String) ={
     val regex = new Regex(
       """
@@ -44,20 +49,17 @@ object matchMain {
         |颅内.{0,10}急性.{0,10}大面积脑梗死|
         |严重.{0,5}脊柱损伤|脊柱损伤.{0,5}重|
         |(肺栓塞|肺梗死)|
-        |大量.{0,10}胸腔积液|胸腔积液.{0,10}大量|
         |主动脉夹层|
         |食道.{0,10}异物|
         |消化道.{0,20}穿孔|
         |绞窄性.{0,3}肠梗阻|
         |急性.{0,3}胆道梗阻|
-        |急性出血坏死性胰腺炎|
-        |多发复合伤.{0,40}破裂|破裂.{0,20}多发复合伤|
+        |急性.{0,10}坏死性胰腺炎|
+        |多发复合伤.{0,40}破裂|.*破裂.*多发复合伤|
         |外伤.{0,15}出血.{0,20}腹腔积液|
         |急性.*胆囊炎.*胆囊化脓.*穿孔|
         |胆囊颈部结石.*嵌顿|
-        |急性.*坏死性胰腺炎|
         |(肝硬化|腹膜炎|肿瘤).*腹腔积液|
-        |宫外孕|
         |卵巢(囊肿|肿瘤).*蒂扭转|卵.*蒂扭转|
         |卵巢(囊肿|肿瘤).*破裂|
         |黄体.{0,5}破裂|
@@ -74,66 +76,49 @@ object matchMain {
         |严重.{0,5}低钾血症|低钾血症.{0,5}严重|
         |严重.{0,5}高钾血症|高钾血症.{0,5}严重|
         |急性.{0,5}肺栓塞|肺栓塞.{0,5}急性|
-        |显性T波电交替|
-        |多源性室性早搏.*RonT型室性早搏|
+        |显性.*T波电交替|
+        |多源性.{0,3}室性早搏|R.{0,3}T.{0,3}室性早搏|
         |心肌炎|
         |心脏起搏器.*(感知功能障碍|感知功能不良)|
-        |(食管|胃底).*重度静脉曲张|(食管|胃底).*静脉曲张.{0,5}重|
         |消化道.*活动性出血|
-        |肝脾表面不平.*结节|
+        |肝脾表面.{0,3}不平.|肝脾.{0,10}结节|
         |肝脾.{0,10}重度肿大|肝脾.{0,10}中度肿大|肝脾.{0,10}中度|肝脾.{0,10}重度|
-        |腹水|
-        |黄疸|
-        |腹部扪及包块|腹部.*可扪及包块|
+        |.{0,5}黄疸|
         |巨脾|
-        |皮肤.*恶性肿瘤|恶性肿瘤.*皮肤|皮肤癌|癌|
+        |皮肤.*恶性肿瘤|恶性肿瘤.*皮肤|皮肤癌|
         |恶性淋巴|转移性淋巴结肿大|
         |甲状腺癌|甲状腺.*恶性肿瘤|
-        |乳腺癌|乳腺.*恶性肿瘤|
-        |肛管癌|肛管.*恶性肿瘤|
-        |直肠癌|直肠.*恶性肿瘤|
-        |前列腺癌|前列腺.*恶性肿瘤|
+        |乳腺.{0,10}癌|乳腺.*恶性肿瘤|
+        |肛管.{0,10}癌|肛管.*恶性肿瘤|
+        |直肠.{0,10}癌|直肠.*恶性肿瘤|
+        |前列腺.{0,10}癌|前列腺.*恶性肿瘤|
         |睾丸.*恶性肿瘤|睾丸癌|
-        |阴茎癌|阴茎.*恶性肿瘤|
-        |恶性肿瘤|癌|
-        |宫颈上皮.*病变|
-        |外阴肿物|
-        |宫颈肿物|
+        |阴茎.{0,10}癌|阴茎.*恶性肿瘤|
         |急性虹膜睫状体炎|
-        |眶内肿瘤|眼眶.*肿瘤|
+        |眶内肿瘤|眼眶.*肿瘤.{0,10}|
         |急性视神经炎|
         |急性.*缺血性视网膜病变|缺血性视网膜病变.*急性|
         |视网膜脱.*|
         |黄斑裂孔|
-        |眼底静脉血栓|
-        |眼.*动脉栓塞|
-        |III.*视网膜动脉硬化|视网膜动脉硬化.*III|
+        |视网膜动脉硬化.{0,10}III.{0,3}期|视网膜动脉硬化.{0,10}3.{0,3}期|视网膜动脉硬化.{0,10}三.{0,3}期|
         |视乳头水肿|
         |角膜炎|
         |耳聋|
-        |鼻咽癌|
-        |急性会厌炎|声门上喉炎|会厌前咽峡炎|
+        |鼻咽.{0,10}癌|
+        |急性.{0,3}会厌炎|声门上喉炎|会厌前咽峡炎|
         |喉.*癌|
         |回缩性涕血|
-        |口腔.*肿块|口腔.*肿瘤|
         |经久不愈.*慢性溃疡|慢性溃疡.*经久不愈|
         |天疱疮|
-        |恶性肉芽肿|
+        |恶性肉芽肿|.{0,10}肉芽包.{0,10}恶性|
         |外周血.*幼稚细胞|
         |白细胞分类.*严重异常|白细胞分类.*异常.*重|
-        |痢疾|
-        |不典型鳞状细胞|非典型鳞状细胞|
-        |低级别鳞状上皮内病变|
-        |高级别鳞状上皮内病变|
-        |鳞状细胞癌|
+        |鳞状.{0,10}细胞癌|
         |不典型腺上皮细胞|非典型腺上皮细胞|
         |腺原位癌|
         |腺癌|
-        |肺部.*占位性病变.*可疑肿块|肺部.*可疑肿块.*占位性病变|
         |肿瘤标志物.*阳性|
-        |免疫缺陷病毒(HIV).*阳性|HIV.*阳性|免疫缺陷病毒.*阳性|艾滋病|
-        |肺.*结节.*恶性|恶性.*肺.*结节|
-        |中等量.*胸腔积液|胸腔积液.*中等量|
+        |肺.{0,3}结节.{0,20}恶性.{0,10}|恶性.{0,10}肺.{0,3}结节|肺.{0,20}恶性.*肺结节|
         |肺不张|
         |肺.{0,10}空洞|
         |心脏.*明显增大|心脏.*增大明显|
@@ -216,6 +201,27 @@ object matchMain {
     if(rs_val.contains("心肌病")&(!rs_val.contains("排除心肌病"))){
       vue="心肌病"
     }
+
+    if(rs_val.contains("宫外孕")){
+      val r = new Regex(
+        """
+          |.{0,10}宫外孕.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+
+        if(str.contains("术")){
+
+        }else{
+          vue=str
+        }
+
+      }
+    }
+
 
     if(rs_val.contains("占位性病变")&rs_val.contains("腹膜后")&(!rs_val.contains("未见占位性病变"))){
       val r =new Regex(
@@ -452,6 +458,272 @@ object matchMain {
 
     }
 
+    if(rs_val.contains("中等量")&rs_val.contains("胸腔积液")){
+      val r = new Regex(
+        """
+          |.{0,10}胸腔.{0,10}积液.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+
+        if (str.contains("中等")) {
+          //调用除去考虑，未见等不确定因素的方法
+          if (paichu_string(str)) {
+          } else {
+            vue = str
+          }
+        }
+      }
+
+    }
+
+//    肺部.*占位性病变.*可疑肿块|肺部.*可疑肿块.*占位性病变|
+    if(rs_val.contains("肺")&rs_val.contains("占位性病变")){
+      val r = new Regex(
+        """
+          |.{0,5}肺.{0,20}占位性病变.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+
+          //调用除去，未见等不确定因素的方法
+          if (paichu_string(str)) {
+          } else {
+            vue = str
+          }
+        }
+
+    }
+
+    //排除以上如果没有匹配到特殊癌症才走这一步
+    if(!(vue.contains("癌")|vue.contains("恶性肿瘤"))){
+      if(rs_val.contains("癌")|rs_val.contains("恶性肿瘤")){
+        val r = new Regex(
+          """
+            |.{0,5}(癌|恶性肿瘤).{0,10}|
+          """)
+        var str = " "
+        val Regex1 = r.findAllIn(rs_val)
+        while (Regex1.hasNext) {
+
+          str = Regex1.next()
+          println(str)
+          //调用除去考虑，未见等不确定因素的方法
+          if (paichu_string(str)) {
+          } else {
+            vue = str
+          }
+        }
+      }
+
+
+    }
+
+
+    if(rs_val.contains("胸腔积液")){
+  val r = new Regex(
+  """
+    |.{0,10}大量.{0,10}胸腔积液|.{0,10}胸腔积液.{0,10}大量|
+  """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+    }
+//    鳞状上皮内病变
+    if(rs_val.contains("鳞状")|rs_val.contains("鳞状上皮内病变")|(rs_val.contains("高级别")&rs_val.contains("病变"))
+    |(rs_val.contains("ASC-H"))){
+      val r = new Regex(
+        """
+          |.{0,10}鳞状上皮内病变.{0,10}|.{0,10}高级别.{0,10}内病变.{0,5}|
+          |.{0,10}鳞状.{0,5}细胞.{0,10}|.{0,10}ASC-H.{0,15}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+
+          vue = str
+
+      }
+    }
+
+    if(rs_val.contains("痢疾")){
+      val r = new Regex(
+        """
+        |.{0,10}痢疾.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+
+    }
+
+    if(rs_val.contains("口腔")&rs_val.contains("肿块")){
+//      口腔.*肿块|口腔.*肿瘤|
+
+      val r = new Regex(
+        """
+          |.{0,10}口腔.{0,10}肿块.{0,10}|.{0,10}肿块.{0,10}口腔.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+
+    }
+//    眼.*静脉血栓|眼.*动脉栓塞|
+    if(rs_val.contains("眼底")&(rs_val.contains("静脉血栓")|rs_val.contains("动脉栓塞"))){
+      val r = new Regex(
+        """
+          |.{0,10}眼.{0,10}静脉血栓|.{0,10}眼.{0,10}动脉栓塞|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+    }
+
+    if((rs_val.contains("宫颈")|| rs_val.contains("外阴"))&
+      (rs_val.contains("囊肿")|rs_val.contains("肿物")|rs_val.contains("肿瘤"))){
+      val r = new Regex(
+        """
+          |.{0,10}肿.{0,30}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+    }
+
+    if(rs_val.contains("宫颈")&rs_val.contains("上皮")){
+      val r = new Regex(
+        """
+          |.{0,10}病变.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+    }
+
+    if(rs_val.contains("扪及包块")&rs_val.contains("腹")){
+
+      val r = new Regex(
+        """
+          |.{0,10}扪及包块.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+    }
+
+    if(rs_val.contains("腹水")){
+      val r = new Regex(
+        """
+          |.{0,10}腹水.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+
+    }
+
+    if((rs_val.contains("食管")|rs_val.contains("胃底"))&rs_val.contains("静脉曲张")&rs_val.contains("重度")){
+      val r = new Regex(
+        """
+          |.{0,10}静脉曲张.{0,10}|
+        """)
+      var str = " "
+      val Regex1 = r.findAllIn(rs_val)
+      while (Regex1.hasNext) {
+
+        str = Regex1.next()
+        println(str)
+        //调用除去考虑，未见等不确定因素的方法
+        if (paichu_string(str)) {
+        } else {
+          vue = str
+        }
+      }
+    }
+
     if(vue.equals("1")){
       "1"
     }else{
@@ -461,7 +733,13 @@ object matchMain {
 
   }
 
-  //数值判断，从后往前
+  /**数值判断
+    *对数值进行判断，修改请参照if其他方法
+    *修改首先添加正则，拉取数据后
+    *使用if包含此数值
+    * 修改大于号小于的值即可
+    */
+
   def numMatch(rs_val:String)={
     //字符串的拉取
     val regex = new Regex(
@@ -490,11 +768,12 @@ object matchMain {
       |宫颈刮片.{0,10}巴氏.{0,10}级|
       |子宫内膜.{0,20}m|
       |.{0,10}心室停搏.{0,10}|
-      |室.{0,3}性心动过速.{0,20}心室率.{0,20}|
+      |室.{0,3}性心动过速.{0,20}心.{0,2}率.{0,20}|
       |QT间期延长.{0,20}|
-      |长RR间期.{0,20}|
-      |严重心动过缓、高度及三度房室阻滞，平均心室率≤35次/min|
-      |心房颤动伴心室预激，最短RR间期≤250 ms|
+      |长R.{0,3}R间期.{0,20}|
+      |严重.{0,10}心动过缓.*三度.{0,10}房室阻滞|
+      |心房颤动.{0,15}预激.*ms|
+      |.*便潜血.*|.*粪便隐血.*|
       """
     )
 
@@ -631,6 +910,13 @@ object matchMain {
 //        println(string_next)
         result_vue=if(max.toDouble>2.0) string_next else result_vue
       }
+      if(string_next.contains("心动过缓")&string_next.contains("阻滞")){
+        val max: String = getCm(string_next)
+        //判断
+        result_status = if(max.toDouble<35) "0" else result_status
+        //        println(string_next)
+        result_vue=if(max.toDouble<35) string_next else result_vue
+      }
 
       if(string_next.contains("卵巢")&string_next.contains("肿")){
         val max: String = getCm(string_next)
@@ -742,6 +1028,19 @@ object matchMain {
 //        println(string_next)
         result_vue=if(max.toDouble>50) string_next else result_vue
       }
+      if(string_next.contains("QT")&string_next.contains("间期延长")){
+        println(string_next)
+        val max: String = getCm(string_next)
+        result_status = if(max.toDouble>550) "0" else result_status
+        result_vue=if(max.toDouble>550) string_next else result_vue
+      }
+
+      if(string_next.contains("长")&string_next.contains("R")){
+        println(string_next)
+        val max: String = getCm(string_next)
+        result_status = if(max.toDouble>3) "0" else result_status
+        result_vue=if(max.toDouble>3) string_next else result_vue
+      }
 
       if(string_next.contains("胆囊")&string_next.contains("息肉")){
         val max: String = getCm(string_next)
@@ -767,10 +1066,12 @@ object matchMain {
         result_vue=if(max.toDouble>3) string_next else result_vue
       }
 
-      if(string_next.contains("宫颈刮片")&(string_next.contains("III")|string_next.contains("IV")|string_next.contains("V"))){
+      if(string_next.contains("宫颈刮片")&(string_next.contains("III")|string_next.contains("IV")|string_next.contains("V")|string_next.contains("3")
+        |string_next.contains("4")|string_next.contains("5")|string_next.contains("三")|string_next.contains("四")|string_next.contains("五"))){
         //判断
         result_status = "0"
 //        println(string_next)
+        result_vue="宫颈刮片>=3级"
       }
 
       if(string_next.contains("心动过速")){
@@ -794,13 +1095,17 @@ object matchMain {
 //    regex.findAllIn()
   }
 
-  //除外，可能，疑似，考虑，未见，无，不
+  //未见，无，不
   //包含的话返回true,否则false
   //需要过滤其他条件加上就可以
   def paichu_string(zhengze:String)={
-    if((!zhengze.contains("除外"))&(!zhengze.contains("可能"))&(!zhengze.contains("疑似"))
+/*    if((!zhengze.contains("除外"))&(!zhengze.contains("可能"))&(!zhengze.contains("疑似"))
     &(!zhengze.contains("考虑"))&(!zhengze.contains("未见"))&(!zhengze.contains("无"))
-    &(!zhengze.contains("不"))&(!zhengze.contains("是否"))&(!zhengze.contains("有否"))) {
+    &(!zhengze.contains("不"))&(!zhengze.contains("是否"))&(!zhengze.contains("有否"))) */
+
+    if(
+     (!zhengze.contains("未见"))&(!zhengze.contains("无"))
+      &(!zhengze.contains("不"))&(!zhengze.contains("未发现"))&(!zhengze.contains("未"))){
 
       false
   }else {
@@ -810,13 +1115,30 @@ object matchMain {
 
   }
 
+  //可能疑似,//如果没有说可能，那么2给都要走，如果说了可能，那么只走第一个
+  def keneng_string(zhengze:String)={
+    /*    if((!zhengze.contains("除外"))&(!zhengze.contains("可能"))&(!zhengze.contains("疑似"))
+        &(!zhengze.contains("考虑"))&(!zhengze.contains("未见"))&(!zhengze.contains("无"))
+        &(!zhengze.contains("不"))&(!zhengze.contains("是否"))&(!zhengze.contains("有否"))) */
+
+    if((!zhengze.contains("除外"))&(!zhengze.contains("可能"))&(!zhengze.contains("疑似"))
+      &(!zhengze.contains("考虑"))
+      &(!zhengze.contains("是否"))&(!zhengze.contains("有否"))){
+
+      false
+    }else {
+
+      true
+    }
+
+  }
+
   def main(args: Array[String]): Unit = {
-    val Match= noNumMatch("气胸，")
-//    甲状腺.{0,5}实.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}实.{0,3}性占位.{0,35}|
-//      甲状腺.{0,5}混合.{0,3}性占位.{0,35}|[0-9].{0,30}甲状腺.{0,5}混合.{0,3}性占位.{0,35}|
+    val Match= noNumMatch("")
+
     val str: String = numMatch(
                                """
-
+|1.异位心律2.阵发性室上性心动过速（心率1329次/分）
 
                                """
     )

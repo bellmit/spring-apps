@@ -154,13 +154,13 @@ public class WeiBao {
                 //收缩压≥180mmHg，伴急性症状或安静休息后复测仍达此标准     收缩压＜80mmHg，伴周围循环衰竭表现
                 String s = map.get(a);
                 int i1 = Integer.parseInt(s);
-
                 if (i1 >= 180 || i1 < 80) {
                     rs = "1";
                     rsa = a;
                     break;
                 }
             }
+
             if ((a.contains("一般") || a.contains("血压") || a.contains("内科")) && a.contains("舒张")) {
                 //2、舒张压≥110mmHg，伴急性症状或安静休息后复测仍达此标准  4、舒张压＜50mmHg，伴周围循环衰竭表现
                 String s = map.get(a);
@@ -171,6 +171,7 @@ public class WeiBao {
                     break;
                 }
             }
+
             if (a.contains("内科") && a.contains("心率")) {
                 //1、心率持续≥150次/分，伴心律不齐或心界扩大
                 //2、心率≤45次/分，伴心律不齐或心界扩大
@@ -205,6 +206,7 @@ public class WeiBao {
                     break;
                 }
             }
+
             if (a.contains("血常规") && (a.contains("血小板计数") || a.contains("PLT"))) {
                 //3、血小板计数(PLT)≤30.0×10^9/L或有明显出血倾向
                 //4、血小板计数(PLT)≥1000.0×10^9/L
@@ -533,9 +535,9 @@ public class WeiBao {
                 //8、餐后血糖≥17mmol/L，伴尿糖 +++，尿酮+
                 String s = map.get(a);
                 String trim = Pattern.compile(REGEX).matcher(s).replaceAll("").trim();
-                if (trim.equals("")){
+                if (trim.equals("")) {
 
-                }else {
+                } else {
                     double v = Double.parseDouble(trim);
                     if (v >= 17 && niaotang.contains("+++") && niaotang.contains("+")) {
                         rs = "1";

@@ -541,16 +541,15 @@ public class EsService {
 
     //---------------------- article end -----------------------------------
 
-//-----------------------rep
-public String getchkday(String idcard){
+    //-----------------------rep
+    public String getchkday(String rptid) {
+        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
+                .setQuery(matchQuery("rpt_id", rptid.trim()));
+        SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+        return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_create_date")).findFirst().orElse("").toString();
+    }
 
-    SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
-            .setQuery(matchQuery("id_card", idcard.trim()));
-    SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
-    return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_create_date")).findFirst().orElse("").toString();
-}
-
-    public String getrptid(String idcard){
+    public String getrptid(String idcard) {
 
         SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
                 .setQuery(matchQuery("id_card", idcard.trim()));
@@ -558,12 +557,13 @@ public String getchkday(String idcard){
         return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
     }
 
-    public String getrptid1(String idcard){
+    public String getrptid1(String idcard) {
         SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(10)
                 .setQuery(matchQuery("id_card", idcard.trim()));
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
     }
+
     public List<ReVO> query1(String idcard) {
         //条件查询
 

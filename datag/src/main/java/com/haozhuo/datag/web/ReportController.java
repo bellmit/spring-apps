@@ -4,14 +4,9 @@ import com.haozhuo.datag.common.ResultCodeBase;
 import com.haozhuo.datag.common.StringUtil;
 import com.haozhuo.datag.common.TipConstBase;
 import com.haozhuo.datag.model.ResponseEntity;
-import com.haozhuo.datag.model.report.HongKang;
-import com.haozhuo.datag.model.report.Msg1;
-import com.haozhuo.datag.model.report.RepAbnormal;
-import com.haozhuo.datag.model.report.WeiBaoM;
+import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.HbaseService;
-import com.haozhuo.datag.service.Insurance.Hongkang;
-import com.haozhuo.datag.service.Insurance.Mayi;
-import com.haozhuo.datag.service.Insurance.WeiBao;
+import com.haozhuo.datag.service.Insurance.*;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +32,10 @@ public class ReportController {
     private Mayi mayi;
     @Autowired
     private WeiBao weiBao;
+    @Autowired
+    private UserReport userReport;
+    @Autowired
+    private PushGan pushGan;
 
     @GetMapping(value = "/body/reportId/{reportId}")
     @ApiOperation(value = "根据报告Id返回人体图数据", notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
@@ -44,7 +43,7 @@ public class ReportController {
         return hbaseService.getBodyById(reportId);
     }
 
-    @GetMapping(value = "/ant/{idcard}")
+/*    @GetMapping(value = "/ant/{idcard}")
     @ApiOperation(value = "蚂蚁保险返回值")
     public RepAbnormal getAnt(@PathVariable(value = "idcard") String idcard) {
         RepAbnormal insurance = hbaseService.insurance(idcard);
@@ -69,7 +68,7 @@ public class ReportController {
     public HongKang getTest1(@PathVariable(value = "idcard") String idcard) {
 
         return hongkang.getHongkangValue(idcard);
-    }
+    }*/
 
 /*    @GetMapping(value = "/hongkangvaluetest")
     @ApiOperation(value = "弘康保险返回值")
@@ -92,6 +91,15 @@ public class ReportController {
     public void Weibao() throws IOException {
 
         weiBao.test();
+    }
+
+    @GetMapping(value = "/push/{rptid}")
+    @ApiOperation(value = "推送")
+    public InsuranceMap PushInsurance(@PathVariable(value = "rptid") String rptid)  {
+
+
+
+        return userReport.UserRep(rptid);
     }
 
 }

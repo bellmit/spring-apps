@@ -557,11 +557,11 @@ public class EsService {
         return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
     }
 
-    public String getrptid1(String idcard) {
-        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(10)
-                .setQuery(matchQuery("id_card", idcard.trim()));
+    public String getlastday(String rptid) {
+        SearchRequestBuilder srb = client.prepareSearch("reportlabel").setSize(1)
+                .setQuery(matchQuery("healthReportId", rptid.trim()));
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
-        return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();
+        return stream(searchHits).map(x -> x.getSourceAsMap().get("lastUpdateTime")).findFirst().orElse("").toString();
     }
 
     public List<ReVO> query1(String idcard) {

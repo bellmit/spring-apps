@@ -74,7 +74,7 @@ public class WeiBao {
         String s5 = String.valueOf(i2);
         scan.setStartRow(rowkey.getBytes());
         scan.setStopRow(endrowkey.getBytes());
-        logger.info("开始查询：rptid="+rptid);
+        logger.info("开始查询是否为正确rowkey：rptid="+rptid);
         hbaseTemplate.find(HBASENAME1, scan, (Result result, int i) -> {
             Cell[] cells = result.rawCells();
             for (Cell cell : cells) {
@@ -97,7 +97,7 @@ public class WeiBao {
             String endrowkey1 = newDate1 + "_" + (Integer.parseInt(rptid) + 1) + "_";
             scan1.setStartRow(rowkey1.getBytes());
             scan1.setStopRow(endrowkey1.getBytes());
-            logger.info("开始查询2：rptid="+rptid);
+            logger.info("rowkey不正确 天数-1查询：rptid="+rptid);
             hbaseTemplate.find(HBASENAME, scan1, (Result result, int i) -> {
                 Cell[] cells = result.rawCells();
                 for (Cell cell : cells) {
@@ -127,6 +127,7 @@ public class WeiBao {
                 return map;
             });
         }else {
+            logger.info("rowkey正确 开始查询");
             hbaseTemplate.find(HBASENAME, scan, (Result result, int i) -> {
                 Cell[] cells = result.rawCells();
                 for (Cell cell : cells) {
@@ -172,7 +173,6 @@ public class WeiBao {
                 weiBaoM.setLabel(rs);
                 weiBaoM.setAbnormal(s);
                 msg.setWeiBaoM(weiBaoM);
-
                 return msg;
             }
         } else {

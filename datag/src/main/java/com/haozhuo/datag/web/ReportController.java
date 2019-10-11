@@ -1,5 +1,6 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.common.RedisUtil;
 import com.haozhuo.datag.common.ResultCodeBase;
 import com.haozhuo.datag.common.StringUtil;
 import com.haozhuo.datag.common.TipConstBase;
@@ -7,14 +8,12 @@ import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.*;
+import com.haozhuo.datag.service.RedisService;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -93,13 +92,17 @@ public class ReportController {
         weiBao.test();
     }
 
-    @GetMapping(value = "/push/{rptid}")
+    @GetMapping(value = "/push")
     @ApiOperation(value = "推送")
-    public InsuranceMap PushInsurance(@PathVariable(value = "rptid") String rptid)  {
+    public String PushInsurance(@RequestParam(value = "rptid") String rptid,
+                                @RequestParam(value = "label") String label)  {
 
-
-
-        return userReport.UserRep(rptid);
+        return userReport.Push(rptid,label);
     }
+/*    @GetMapping(value = "/haskey")
+    public boolean haskey(@RequestParam(value = "key") String key){
+        RedisUtil redisUtil = new RedisUtil();
+       return redisUtil.hasKey(key);
+    }*/
 
 }

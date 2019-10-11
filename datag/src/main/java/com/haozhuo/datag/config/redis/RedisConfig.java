@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import redis.clients.jedis.JedisPoolConfig;
@@ -51,7 +52,7 @@ class RedisConfig {
     private String password;
 
     //连接超时时间(毫秒)
-    @Value("${spring.redis.timeout:3600}")
+    @Value("${spring.redis.timeout:36000}")
     private int timeout;
 
     private RedisSentinelConfiguration redisSentinelConfiguration() {
@@ -102,5 +103,12 @@ class RedisConfig {
     @Primary
     public StringRedisTemplate redisTemplate0() {
         return buildRedisTemplate(buildConnectionFactory(0));
+    }
+
+    @Bean(name = "redisTemplate")
+    @Primary
+    public RedisTemplate redisTemplate(){
+
+        return buildRedisTemplate(buildConnectionFactory(3));
     }
 }

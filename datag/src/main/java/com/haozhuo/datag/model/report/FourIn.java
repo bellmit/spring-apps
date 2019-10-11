@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class WeiBaoM {
-    private Integer label;
-    private String abnormal;
+public class FourIn {
+    private int abnormal;
+    private int label;
 }

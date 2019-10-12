@@ -978,6 +978,6 @@ object ClassiFication {
   //返回结果gan_rs _ rs _ rs_status _ xutang_rs
   def fourRs(): String ={
     var builder = new StringBuilder
-    builder.append(gan_rs+"_"+rs+"_"+rs_status+"_"+xutang_rs).toString()
+    builder.append(gan_rs+"_"+jzx_rs+"_"+gaoxueya_rs+"_"+xuetang_rs).toString()
   }
 }

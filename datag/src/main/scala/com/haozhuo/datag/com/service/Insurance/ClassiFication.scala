@@ -860,7 +860,7 @@ object ClassiFication {
   var rs: String=""
   var rs_status: String=""
   var xutang_rs: String=""
-  def getInsurancePush(label: String, insuranceMap: InsuranceMap, rptid: String) = {
+  def getInsurancePush(label: String, insuranceMap: InsuranceMap) = {
     import scala.collection.mutable._
     /*
       肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
@@ -953,8 +953,8 @@ object ClassiFication {
   /*
   肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
  */
-  def result(label: String, insuranceMap: InsuranceMap, rptid: String) = {
-    val rsString: String = getInsurancePush(label, insuranceMap, rptid)
+  def result(label: String, insuranceMap: InsuranceMap) = {
+    val rsString: String = getInsurancePush(label, insuranceMap)
     println(rsString)
     var rsValue: String = "-1"
     //肝优先级最高，肝如果在推送，那么忽视所有情况

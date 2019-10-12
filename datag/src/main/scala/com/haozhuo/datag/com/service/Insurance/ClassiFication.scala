@@ -1,9 +1,13 @@
 package com.haozhuo.datag.com.service.Insurance
 
+import com.haozhuo.datag.common.RedisUtil
 import com.haozhuo.datag.model.report.InsuranceMap
 import com.haozhuo.datag.service.Insurance.{PushGan, PushGaoxueya, PushTangniaobing}
+import org.springframework.beans.factory.annotation.Autowired
 
 object ClassiFication {
+
+
   val checkIndexRsFlagIdSpecialRules: Array[(String, String, String)] = Array(
     ("^(?=.*DNA|.*基因)(?=.*HPV).*$", "4", "HPV-DNA分型检测阳性"),
     ("^(?=.*RPR).*$", "4", "RPR阳性"),
@@ -37,28 +41,28 @@ object ClassiFication {
     ("^(?=.*风[疹|诊]病毒)(?=.*抗体).*$", "4", "风疹病毒抗体阳性"),
     ("^(?=.*锌).*$", "3", "锌测定偏低"),
     ("^(?=.*锌).*$", "2", "锌测定增高"),
-    ("^(?=.*C3).*$",  "2","C3降低"),
-    ("^(?=.*C4).*$",  "2","C4降低"),
+    ("^(?=.*C3).*$", "2", "C3降低"),
+    ("^(?=.*C4).*$", "2", "C4降低"),
     ("^(?=.*载脂蛋白A)(?=.*载脂蛋白B).*$", "3", "载脂蛋白A1/载脂蛋白B比值偏低"),
-    ("^(?=.*微球蛋白|.*MG)(?=.*β2).*$","3", "β2-微球蛋白增高"),
-    ("^(?=.*NSE|.*烯醇).*$","3", "NSE增高"),
-    ("^(?=.*C)(?=.*反应蛋白).*$", "3","C反应蛋白增高"),
+    ("^(?=.*微球蛋白|.*MG)(?=.*β2).*$", "3", "β2-微球蛋白增高"),
+    ("^(?=.*NSE|.*烯醇).*$", "3", "NSE增高"),
+    ("^(?=.*C)(?=.*反应蛋白).*$", "3", "C反应蛋白增高"),
     ("^(?=.*绒毛膜促性腺激素|HCG).*$", "3", "人绒毛膜促性腺激素增高"),
-    ("^(?=.*尿-微白蛋白|.*尿微量白蛋白)(?!.*肌酐).*$","3", "尿微量白蛋白增高"),
-    ("^(?=.*嗜碱性粒细胞比|.*嗜碱性粒细胞百分|.*嗜碱性粒细胞%).*$", "3","嗜碱性粒细胞比率增高"),
-    ("^(?=.*嗜碱性粒细胞#|.*嗜碱性粒细胞\\(BAS#\\)|.*嗜碱性粒细胞\\(BASO#\\)|.*嗜碱性粒细胞\\[BAS#\\]|.*嗜碱性粒细胞值|.*嗜碱性粒细胞数|.*嗜碱性粒细胞绝对|.*嗜碱性粒细胞计数).*$","3", "嗜碱性粒细胞计数增高"),
-    ("^(?=.*前列腺特异|.*PSA)(?!.*游离|.*F).*$","3", "前列腺特异性抗原增高"),
-    ("^(?=.*单核细胞#|.*单核细胞\\(MONO#\\)|.*单核细胞\\[Mon#\\]|.*单核细胞值|.*单核细胞数|.*单核细胞绝对|.*单核细胞计数|.*镜检单核细胞).*$","3", "单核细胞值增高"),
-    ("^(?=.*叶酸).*$","2", "叶酸降低"),
-    ("^(?=.*抗)(?=.*O).*$","3", "抗O增高"),
-    ("^(?=.*羟丁酸)(?=.*酶).*$", "3","羟丁酸脱氢酶增高"),
-    ("^(?=.*半胱氨酸)(?!.*基因).*$","3", "同型半胱氨酸增高"),
-    ("^(?=.*脂蛋白)(?=.*a).*$","3", "脂蛋白aLP(a)增高"),
-    ("^(?=.*岩藻糖苷酶).*$", "3","血清岩藻糖苷酶测定增高"),
-    ("^(?=.*血小板分布宽度).*$", "3","血小板分布宽度增高"),
-    ("^(?=.*类风湿因子).*$","3", "血清类风湿因子增高"),
-    ("^(?=.*鳞状细胞癌).*$","3", "鳞状细胞癌抗原增高"),
-    ("^(?=.*中值细胞\\(MON#\\)|.*中值细胞数|.*中值细胞绝对值|.*中值细胞计数|.*中间值粒细胞绝对值|.*中间白细胞数|.*中间细胞#|.*中间细胞数|.*中间细胞绝对值|.*中间细胞计数).*$","3", "中值细胞绝对值增高"),
+    ("^(?=.*尿-微白蛋白|.*尿微量白蛋白)(?!.*肌酐).*$", "3", "尿微量白蛋白增高"),
+    ("^(?=.*嗜碱性粒细胞比|.*嗜碱性粒细胞百分|.*嗜碱性粒细胞%).*$", "3", "嗜碱性粒细胞比率增高"),
+    ("^(?=.*嗜碱性粒细胞#|.*嗜碱性粒细胞\\(BAS#\\)|.*嗜碱性粒细胞\\(BASO#\\)|.*嗜碱性粒细胞\\[BAS#\\]|.*嗜碱性粒细胞值|.*嗜碱性粒细胞数|.*嗜碱性粒细胞绝对|.*嗜碱性粒细胞计数).*$", "3", "嗜碱性粒细胞计数增高"),
+    ("^(?=.*前列腺特异|.*PSA)(?!.*游离|.*F).*$", "3", "前列腺特异性抗原增高"),
+    ("^(?=.*单核细胞#|.*单核细胞\\(MONO#\\)|.*单核细胞\\[Mon#\\]|.*单核细胞值|.*单核细胞数|.*单核细胞绝对|.*单核细胞计数|.*镜检单核细胞).*$", "3", "单核细胞值增高"),
+    ("^(?=.*叶酸).*$", "2", "叶酸降低"),
+    ("^(?=.*抗)(?=.*O).*$", "3", "抗O增高"),
+    ("^(?=.*羟丁酸)(?=.*酶).*$", "3", "羟丁酸脱氢酶增高"),
+    ("^(?=.*半胱氨酸)(?!.*基因).*$", "3", "同型半胱氨酸增高"),
+    ("^(?=.*脂蛋白)(?=.*a).*$", "3", "脂蛋白aLP(a)增高"),
+    ("^(?=.*岩藻糖苷酶).*$", "3", "血清岩藻糖苷酶测定增高"),
+    ("^(?=.*血小板分布宽度).*$", "3", "血小板分布宽度增高"),
+    ("^(?=.*类风湿因子).*$", "3", "血清类风湿因子增高"),
+    ("^(?=.*鳞状细胞癌).*$", "3", "鳞状细胞癌抗原增高"),
+    ("^(?=.*中值细胞\\(MON#\\)|.*中值细胞数|.*中值细胞绝对值|.*中值细胞计数|.*中间值粒细胞绝对值|.*中间白细胞数|.*中间细胞#|.*中间细胞数|.*中间细胞绝对值|.*中间细胞计数).*$", "3", "中值细胞绝对值增高"),
     ("^(?=.*载脂蛋白A)(?=.*载脂蛋白B).*$", "2", "载脂蛋白A1/载脂蛋白B比值偏高")
   )
   val checkIndexRsFlagIdCommonRules: Array[(String, String)] = Array(
@@ -605,7 +609,7 @@ object ClassiFication {
     (".*鼻(中隔)?黏膜出血.*", "鼻黏膜出血"),
     (".*(体脂肪率偏低|体重不足|体重偏低|体重指数偏低|体重过低|偏瘦|消瘦).*", "偏瘦")
   )
-  val ResultLabel=Array(
+  val ResultLabel = Array(
     ("乙肝大三阳"),
     ("乙肝小三阳"),
     ("嗜酸性粒细胞计数增高"),
@@ -627,7 +631,7 @@ object ClassiFication {
   )
 
 
-  val MatchGXYLabel=Array(
+  val MatchGXYLabel = Array(
     ("^(?=.*125|.*12-5).*$"),
     ("^(?=.*153|.*15-3).*$"),
     ("^(?=.*199|.*19-9).*$"),
@@ -663,7 +667,7 @@ object ClassiFication {
 
   )
 
-  val MatchTNBLabel=Array(
+  val MatchTNBLabel = Array(
     ("^(?=.*125|.*12-5).*$"),
     ("^(?=.*153|.*15-3).*$"),
     ("^(?=.*199|.*19-9).*$"),
@@ -698,7 +702,7 @@ object ClassiFication {
     ("^(?=.*高血压|.*血压偏高)(?!.*视网膜).*$")
   )
 
-  val MatchGanLabel=Array(
+  val MatchGanLabel = Array(
     ("^(?=.*谷氨酰).*$"),
     ("^(?=.*丙氨酸氨基转移酶).*$"),
     (".*乙肝.*"),
@@ -753,88 +757,85 @@ object ClassiFication {
 
   )
 
-  val MatchJZXLabel=Array(
-      (".*甲.{0,4}亢.*"),
-      (".*(甲状旁腺结节).*"),
-      (".*(甲状腺.{0,3}占位).*"),
-      (".*(甲状腺.{0,5}回声(欠|不|稍欠)均|甲状腺腺体回声增粗|甲状腺片状低回声区|甲状腺回声弥漫性改变|甲状腺囊性回声).*"),
-      (".*(甲状腺.{0,3}弥漫性病变).*"),
-      (".*(甲状腺炎).*"),
-      ("(.*甲状腺.{0,10}结节.*)"),
-      ("(.*甲状腺.{0,5}大.*)"),
-      ("(.*甲状腺.{0,3}腺瘤.*)"),
-      (".*(甲状腺.{0,5}钙化).*")
+  val MatchJZXLabel = Array(
+    (".*甲.{0,4}亢.*"),
+    (".*(甲状旁腺结节).*"),
+    (".*(甲状腺.{0,3}占位).*"),
+    (".*(甲状腺.{0,5}回声(欠|不|稍欠)均|甲状腺腺体回声增粗|甲状腺片状低回声区|甲状腺回声弥漫性改变|甲状腺囊性回声).*"),
+    (".*(甲状腺.{0,3}弥漫性病变).*"),
+    (".*(甲状腺炎).*"),
+    ("(.*甲状腺.{0,10}结节.*)"),
+    ("(.*甲状腺.{0,5}大.*)"),
+    ("(.*甲状腺.{0,3}腺瘤.*)"),
+    (".*(甲状腺.{0,5}钙化).*")
 
 
-
-
-    )
+  )
 
   //单一label分类
-  def classFication(label:String)={
+  def classFication(label: String) = {
     //返回的结果字符串
     //肝返回1，甲状腺返回2，高血压返回3，糖尿病返回4,其它异常返回5,不存在此异常返回0
     var rs_builder = new StringBuilder
 
 
     //肝判断
-    MatchGanLabel.foreach(regex=>{
+    MatchGanLabel.foreach(regex => {
 
-     if( label.matches(regex.toString)){
-       rs_builder.append(1+"_")
+      if (label.matches(regex.toString)) {
+        rs_builder.append(1 + "_")
 
 
-
-       println(label)
-     }
+        println(label)
+      }
     })
     //高血压
-    MatchGXYLabel.foreach(regex=>{
+    MatchGXYLabel.foreach(regex => {
 
-      if( label.matches(regex.toString)){
-        rs_builder.append(3+"_")
+      if (label.matches(regex.toString)) {
+        rs_builder.append(3 + "_")
         println(label)
       }
     })
     //甲状腺
-    MatchJZXLabel.foreach(regex=>{
+    MatchJZXLabel.foreach(regex => {
 
-      if( label.matches(regex.toString)){
-        rs_builder.append(2+"_")
+      if (label.matches(regex.toString)) {
+        rs_builder.append(2 + "_")
         println(label)
       }
     })
     //糖尿病
-    MatchTNBLabel.foreach(regex=>{
+    MatchTNBLabel.foreach(regex => {
 
-      if( label.matches(regex.toString)){
-        rs_builder.append(4+"_")
+      if (label.matches(regex.toString)) {
+        rs_builder.append(4 + "_")
         println(label)
       }
     })
     //其它异常
-    checkIndexRsFlagIdCommonRules.foreach(line1=> {
+    checkIndexRsFlagIdCommonRules.foreach(line1 => {
       if (label.matches(line1._1)) {
         rs_builder.append("5")
       }
     })
-    checkIndexRsFlagIdSpecialRules.foreach(line2=>{
-      if(label.matches(line2._1)){
+    checkIndexRsFlagIdSpecialRules.foreach(line2 => {
+      if (label.matches(line2._1)) {
         rs_builder.append("5")
       }
     })
-    summaryRuleArray.foreach(line3=>{
-        if(label.matches(line3._1)){
-          rs_builder.append("5")
-        }
-      })
-    summaryRuleArray.foreach(line4=>{
-        if(label.matches(line4._2)){
-          rs_builder.append("5")
-        }
-      })
+    summaryRuleArray.foreach(line3 => {
+      if (label.matches(line3._1)) {
+        rs_builder.append("5")
+      }
+    })
+    summaryRuleArray.foreach(line4 => {
+      if (label.matches(line4._2)) {
+        rs_builder.append("5")
+      }
+    })
     //如果到这里还没有匹配到label,那么追加0
-    if(rs_builder.size<=0) {
+    if (rs_builder.size <= 0) {
       rs_builder.append("0")
     }
 
@@ -850,103 +851,108 @@ object ClassiFication {
 
     val flag: String = classFication("丙氨酸氨基转移酶").toString()
 
-//    insuranceMap: InsuranceMap
-/*val gan = new PushGan(InsuranceMap)
-    val rs: String = gan.PushGan(insuranceMap)*/
+    //    insuranceMap: InsuranceMap
+    /*val gan = new PushGan(InsuranceMap)
+        val rs: String = gan.PushGan(insuranceMap)*/
   }
 
 
-  def getInsurancePush(label:String,insuranceMap: InsuranceMap)={
+  def getInsurancePush(label: String, insuranceMap: InsuranceMap, rptid: String) = {
     import scala.collection.mutable._
-/*
-  肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
- */
+    /*
+      肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
+     */
+
     val labelResult: String = classFication(label).toString()
     val rs_Push = new StringBuilder
+    val gan = new PushGan()
+    val gan_rs: String = gan.PushGan(insuranceMap)
+    val rs: String = MatchJzx.panduan(label)
+    val gaoxueya = new PushGaoxueya()
+    val rs_status: String = gaoxueya.pushGaoxueya(insuranceMap)
+    val gaoxuetang = new PushTangniaobing()
+    val xutang_rs: String = gaoxuetang.Pushtangniaobing(insuranceMap)
+   /* val reds = new RedisUtil()
+    reds.set("sd","das")*/
     //肝判断
-      if(labelResult.contains("1")){
-        val gan = new PushGan()
-        val gan_rs: String = gan.PushGan(insuranceMap)
-        if(gan_rs.equals("0")){
-          //肝不推
-          rs_Push.append("肝n"+"_")
-        }
-        if(gan_rs.equals("1")){
-          //肝推
-          rs_Push.append("肝p"+"_")
-        }
-
-
+    if (labelResult.contains("1")) {
+      if (gan_rs.equals("0")) {
+        //肝不推
+        rs_Push.append("肝n" + "_")
+        println("肝不：" + rs_Push)
       }
+      if (gan_rs.equals("1")) {
+        //肝推
+        rs_Push.append("肝p" + "_")
+        println("肝：" + rs_Push)
+      }
+    }
 
     //甲状腺判断
-      if(labelResult.contains("2")){
-        val rs: String = MatchJzx.panduan(label)
-        if(rs.contains("0")){
-          //甲状腺不推
-          rs_Push.append("甲状腺n"+"_")
-        }
-        if(rs.equals("1")){
-          //甲状腺推
-          rs_Push.append("甲状腺p"+"_")
-        }
+    if (labelResult.contains("2")) {
+
+      if (rs.contains("0")) {
+        //甲状腺不推
+        rs_Push.append("甲状腺n" + "_")
       }
+      if (rs.equals("1")) {
+        //甲状腺推
+        rs_Push.append("甲状腺p" + "_")
+      }
+    }
 
     //高血压
-    if(labelResult.contains("3")){
-      val gaoxueya = new PushGaoxueya()
-      val rs_status: String = gaoxueya.pushGaoxueya(insuranceMap)
-      if(rs_status.equals("0")){
+    if (labelResult.contains("3")) {
+
+      if (rs_status.equals("0")) {
         //高血压不推
-        rs_Push.append("高血压n"+"_")
+        rs_Push.append("高血压n" + "_")
       }
-      if(rs_status.equals("1")){
+      if (rs_status.equals("1")) {
         //高血压推
-        rs_Push.append("高血压p"+"_")
+        rs_Push.append("高血压p" + "_")
       }
-
-
     }
 
     //高血糖
-    if(labelResult.contains("4")){
-      val gaoxuetang = new PushTangniaobing()
-      val gan_rs: String = gaoxuetang.Pushtangniaobing(insuranceMap)
-      if(gan_rs.equals("0")){
-        //糖尿病
-        rs_Push.append("糖n"+"_")
-      }
-      if(gan_rs.equals("1")){
-        //糖尿病
-        rs_Push.append("糖p"+"_")
-      }
+    if (labelResult.contains("4")) {
 
-
+      if (xutang_rs.equals("0")) {
+        //糖尿病
+        rs_Push.append("糖n" + "_")
+      }
+      if (xutang_rs.equals("1")) {
+        //糖尿病
+        rs_Push.append("糖p" + "_")
+      }
     }
 
+
+    //redisUtil.set("111","111")
     //其它异常
-    if(labelResult.contains("5")){
+    if (labelResult.contains("5")) {
       rs_Push.append("其它异常")
 
     }
 
     //不存在此label
-    if(labelResult.contains("0")){
-     rs_Push.append("不存在此异常")
+    if (labelResult.contains("0")) {
+      rs_Push.append("不存在此异常")
 
 
     }
-      labelResult
+    rs_Push.toString()
   }
 
   //判断后,进行优先级
-//  推送优先级：关爱肝  甲状腺  高血压  高血糖
+  //  推送优先级：关爱肝  甲状腺  高血压  高血糖
 
   /*
   肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
  */
-  def result(label:String,insuranceMap: InsuranceMap)= {
-    val rsString: String = getInsurancePush(label,insuranceMap)
+  def result(label: String, insuranceMap: InsuranceMap, rptid: String) = {
+    val rsString: String = getInsurancePush(label, insuranceMap, rptid)
+    println(rsString)
     var rsValue: String = "-1"
     //肝优先级最高，肝如果在推送，那么忽视所有情况
     if (rsString.contains("肝p")) {

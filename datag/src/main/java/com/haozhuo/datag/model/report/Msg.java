@@ -8,11 +8,6 @@ import lombok.Setter;
 public class Msg {
     private String code;
     private String msg;
-    private Object data;
+    private FourIn fourIn;
 
-    public Msg(String code, String msg, Object data) {
-        this.code = code;
-        this.msg = msg;
-        this.data = data;
-    }
 }

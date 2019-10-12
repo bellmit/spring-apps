@@ -94,7 +94,7 @@ public class ReportController {
 
     @GetMapping(value = "/push")
     @ApiOperation(value = "推送")
-    public String PushInsurance(@RequestParam(value = "rptid") String rptid,
+    public Msg PushInsurance(@RequestParam(value = "rptid") String rptid,
                                 @RequestParam(value = "label") String label)  {
 
         return userReport.Push(rptid,label);

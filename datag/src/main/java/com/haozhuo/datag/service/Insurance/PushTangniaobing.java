@@ -107,7 +107,7 @@ public class PushTangniaobing {
                 String s = flagIdMap.get(a);
                 int i = Integer.parseInt(s);
                 if (i > 1) {
-                    rs = "0" + a + "," + s;
+                    rs = "0";
                     break;
                 }
             }
@@ -115,7 +115,7 @@ public class PushTangniaobing {
             if (a.contains("糖化血红蛋白") || a.contains("总糖化血红蛋白")) {
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
                 if (v > 7.0) {
-                    rs = "0" + a + "," + s1;
+                    rs = "0";
                     break;
                 }
             }
@@ -127,7 +127,7 @@ public class PushTangniaobing {
                 } else {
                     double v = Double.parseDouble(trim);
                     if (v > 8.0) {
-                        rs = "0" + a + "," + s1;
+                        rs = "0";
                         break;
                     }
                 }
@@ -137,7 +137,7 @@ public class PushTangniaobing {
             if (a.contains("血糖") && a.contains("餐后")) {
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
                 if (v > 12.0) {
-                    rs = "0" + a + "," + s1;
+                    rs = "0" ;
                     break;
                 }
             }

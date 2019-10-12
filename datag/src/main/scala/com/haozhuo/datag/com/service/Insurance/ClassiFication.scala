@@ -865,7 +865,7 @@ object ClassiFication {
     val rs_Push = new StringBuilder
     //肝判断
       if(labelResult.contains("1")){
-        val gan = new PushGan(InsuranceMap)
+        val gan = new PushGan()
         val gan_rs: String = gan.PushGan(insuranceMap)
         if(gan_rs.equals("0")){
           //肝不推
@@ -894,7 +894,7 @@ object ClassiFication {
 
     //高血压
     if(labelResult.contains("3")){
-      val gaoxueya = new PushGaoxueya(InsuranceMap)
+      val gaoxueya = new PushGaoxueya()
       val rs_status: String = gaoxueya.pushGaoxueya(insuranceMap)
       if(rs_status.equals("0")){
         //高血压不推
@@ -910,7 +910,7 @@ object ClassiFication {
 
     //高血糖
     if(labelResult.contains("4")){
-      val gaoxuetang = new PushTangniaobing(InsuranceMap)
+      val gaoxuetang = new PushTangniaobing()
       val gan_rs: String = gaoxuetang.Pushtangniaobing(insuranceMap)
       if(gan_rs.equals("0")){
         //糖尿病
@@ -960,5 +960,6 @@ object ClassiFication {
     } else {
       rsValue = "0"
     }
+    rsValue
   }
 }

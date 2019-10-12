@@ -856,7 +856,10 @@ object ClassiFication {
         val rs: String = gan.PushGan(insuranceMap)*/
   }
 
-
+  var gan_rs: String=""
+  var rs: String=""
+  var rs_status: String=""
+  var xutang_rs: String=""
   def getInsurancePush(label: String, insuranceMap: InsuranceMap, rptid: String) = {
     import scala.collection.mutable._
     /*
@@ -866,12 +869,12 @@ object ClassiFication {
     val labelResult: String = classFication(label).toString()
     val rs_Push = new StringBuilder
     val gan = new PushGan()
-    val gan_rs: String = gan.PushGan(insuranceMap)
-    val rs: String = MatchJzx.panduan(label)
+    gan_rs= gan.PushGan(insuranceMap)
+    rs= MatchJzx.panduan(label)
     val gaoxueya = new PushGaoxueya()
-    val rs_status: String = gaoxueya.pushGaoxueya(insuranceMap)
+    rs_status= gaoxueya.pushGaoxueya(insuranceMap)
     val gaoxuetang = new PushTangniaobing()
-    val xutang_rs: String = gaoxuetang.Pushtangniaobing(insuranceMap)
+    xutang_rs= gaoxuetang.Pushtangniaobing(insuranceMap)
    /* val reds = new RedisUtil()
     reds.set("sd","das")*/
     //肝判断
@@ -967,5 +970,11 @@ object ClassiFication {
       rsValue = "0"
     }
     rsValue
+  }
+
+  //返回结果gan_rs _ rs _ rs_status _ xutang_rs
+  def fourRs(): String ={
+    var builder = new StringBuilder
+    builder.append(gan_rs+"_"+rs+"_"+rs_status+"_"+xutang_rs).toString()
   }
 }

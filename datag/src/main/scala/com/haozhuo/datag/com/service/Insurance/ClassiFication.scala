@@ -857,9 +857,9 @@ object ClassiFication {
   }
 
   var gan_rs: String=""
-  var rs: String=""
-  var rs_status: String=""
-  var xutang_rs: String=""
+  var jzx_rs: String=""
+  var gaoxueya_rs: String=""
+  var xuetang_rs: String=""
   def getInsurancePush(label: String, insuranceMap: InsuranceMap) = {
     import scala.collection.mutable._
     /*
@@ -870,11 +870,14 @@ object ClassiFication {
     val rs_Push = new StringBuilder
     val gan = new PushGan()
     gan_rs= gan.PushGan(insuranceMap)
-    rs= MatchJzx.panduan(label)
+    jzx_rs= MatchJzx.panduan(label)
+    if(jzx_rs.contains("0")){
+      jzx_rs="0"
+    }
     val gaoxueya = new PushGaoxueya()
-    rs_status= gaoxueya.pushGaoxueya(insuranceMap)
+    gaoxueya_rs= gaoxueya.pushGaoxueya(insuranceMap)
     val gaoxuetang = new PushTangniaobing()
-    xutang_rs= gaoxuetang.Pushtangniaobing(insuranceMap)
+    xuetang_rs= gaoxuetang.Pushtangniaobing(insuranceMap)
    /* val reds = new RedisUtil()
     reds.set("sd","das")*/
     //肝判断
@@ -894,11 +897,11 @@ object ClassiFication {
     //甲状腺判断
     if (labelResult.contains("2")) {
 
-      if (rs.contains("0")) {
+      if (jzx_rs.contains("0")) {
         //甲状腺不推
         rs_Push.append("甲状腺n" + "_")
       }
-      if (rs.equals("1")) {
+      if (jzx_rs.equals("1")) {
         //甲状腺推
         rs_Push.append("甲状腺p" + "_")
       }
@@ -907,11 +910,11 @@ object ClassiFication {
     //高血压
     if (labelResult.contains("3")) {
 
-      if (rs_status.equals("0")) {
+      if (gaoxueya.equals("0")) {
         //高血压不推
         rs_Push.append("高血压n" + "_")
       }
-      if (rs_status.equals("1")) {
+      if (gaoxueya.equals("1")) {
         //高血压推
         rs_Push.append("高血压p" + "_")
       }
@@ -920,11 +923,11 @@ object ClassiFication {
     //高血糖
     if (labelResult.contains("4")) {
 
-      if (xutang_rs.equals("0")) {
+      if (xuetang_rs.equals("0")) {
         //糖尿病
         rs_Push.append("糖n" + "_")
       }
-      if (xutang_rs.equals("1")) {
+      if (xuetang_rs.equals("1")) {
         //糖尿病
         rs_Push.append("糖p" + "_")
       }

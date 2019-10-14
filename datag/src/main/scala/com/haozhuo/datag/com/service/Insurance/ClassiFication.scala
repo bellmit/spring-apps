@@ -844,16 +844,46 @@ object ClassiFication {
     rs_builder
   }
 
-  def main(args: Array[String]): Unit = {
-    println(classFication("丙氨酸氨基转移酶"))
-    println(classFication("糖尿病"))
-    println(classFication("我是神经病"))
+  //分类排序
+  def fication(label:String):String={
+    val label_string: String = classFication(label).toString()
+    println(label_string)
+    var flag = new StringBuilder
+    println(flag)
+//    关爱肝4  甲状腺3  高血压2  高血糖1
+    //肝
+    if(label_string.contains("1")){
+      flag.append("4")
+    }
+    //甲状腺
+    if(label_string.contains("2")){
+      flag.append("3")
+    }
+    //高血压
+    if(label_string.contains("3")){
+      flag.append("2")
+    }
+    //糖尿病
+    if(label_string.contains("4")){
+      flag.append("1")
+    }
 
-    val flag: String = classFication("丙氨酸氨基转移酶").toString()
+  flag.toString()
+  }
+
+
+  def main(args: Array[String]): Unit = {
+
+//    println(classFication("丙氨酸氨基转移酶"))
+//    println(classFication("糖尿病"))
+//    println(classFication("我是神经病"))
+
+//    val flag: String = classFication("丙氨酸氨基转移酶").toString()
 
     //    insuranceMap: InsuranceMap
     /*val gan = new PushGan(InsuranceMap)
         val rs: String = gan.PushGan(insuranceMap)*/
+    println(fication("糖尿病")+"哈哈")
   }
 
   var gan_rs: String=""
@@ -974,6 +1004,12 @@ object ClassiFication {
     }
     rsValue
   }
+
+//1.label 2.分类=>糖尿病_高血压 3.糖尿病=>tui 高血压=》tui 4.优先级 高血压=>tui 5.缓存 (1(肝),0(高血压),1(糖尿病),0（jzx）)
+
+  //1.label 2.分类=》糖尿病，血压 3.缓存(1,0,1,0) 4.推1
+
+
 
   //返回结果gan_rs _ rs _ rs_status _ xutang_rs
   def fourRs(): String ={

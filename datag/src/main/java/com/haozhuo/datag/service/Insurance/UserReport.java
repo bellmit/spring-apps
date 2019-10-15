@@ -2,6 +2,7 @@ package com.haozhuo.datag.service.Insurance;
 
 import com.haozhuo.datag.com.service.Insurance.ClassiFication;
 import com.haozhuo.datag.com.service.Insurance.MatchJzx;
+import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.RedisUtil;
 import com.haozhuo.datag.model.report.FourIn;
 import com.haozhuo.datag.model.report.InsuranceMap;
@@ -123,60 +124,95 @@ public class UserReport {
         InsuranceMap insuranceMap = UserRep(rptid);
         String singleNormTag = dataEtlJdbcService.getSingleNormTag(label);
         String s = ClassiFication.result(singleNormTag, insuranceMap);
-        String s1 = ClassiFication.fourRs();
-        redisUtil.set(rptid, s1);
-//redisUtil.set(rptid,"asd");
-        if (s.contains("0")) {
-            msg.setCode("300");
-            msg.setMsg("查询成功");
-            fourIn.setAbnormal(0);
-            fourIn.setLabel(0);
-            msg.setFourIn(fourIn);
-            return msg;
-        } else if (s.contains("g")) {
-            msg.setCode("300");
-            msg.setMsg("查询成功");
-            fourIn.setAbnormal(1);
-            fourIn.setLabel(1);
-            msg.setFourIn(fourIn);
-            return msg;
-        } else if (s.contains("j")) {
-            msg.setCode("300");
-            msg.setMsg("查询成功");
-            fourIn.setAbnormal(1);
-            fourIn.setLabel(2);
-            msg.setFourIn(fourIn);
-            return msg;
-        } else if (s.contains("t")) {
-            msg.setCode("300");
-            msg.setMsg("查询成功");
-            fourIn.setAbnormal(1);
-            fourIn.setLabel(3);
-            msg.setFourIn(fourIn);
-            return msg;
-        } else if (s.contains("x")) {
-            msg.setCode("300");
-            msg.setMsg("查询成功");
-            fourIn.setAbnormal(1);
-            fourIn.setLabel(4);
-            msg.setFourIn(fourIn);
-            return msg;
+        if (redisUtil.hasKey(rptid)) {
+            String fication = ClassiFication.fication(label);
+            String[] split = redisUtil.get(rptid).toString().split("_");
+            if (fication.contains("4")) {//肝
+                if (split[0].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setAbnormal(1);
+                    fourIn.setLabel(1);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                }
+            } else if (fication.contains("3")) {   //甲
+                if (split[1].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setAbnormal(1);
+                    fourIn.setLabel(2);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                }
+            } else if (fication.contains("2")) {//高
+                if (split[2].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setAbnormal(1);
+                    fourIn.setLabel(4);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                } else if (fication.contains("1")) {//糖
+                    if (split[3].equals("1")) {
+                        msg.setCode("300");
+                        msg.setMsg("查询成功");
+                        fourIn.setAbnormal(1);
+                        fourIn.setLabel(3);
+                        msg.setFourIn(fourIn);
+                        return msg;
+                    }
+                } else {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setAbnormal(0);
+                    fourIn.setLabel(0);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                }
+            }
+        } else {
+            String s1 = ClassiFication.fourRs();
+            redisUtil.set(rptid, s1);
+            if (s.contains("0")) {
+                msg.setCode("300");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(0);
+                fourIn.setLabel(0);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (s.contains("g")) {
+                msg.setCode("300");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(1);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (s.contains("j")) {
+                msg.setCode("300");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(2);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (s.contains("t")) {
+                msg.setCode("300");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(3);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (s.contains("x")) {
+                msg.setCode("300");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(4);
+                msg.setFourIn(fourIn);
+                return msg;
+            }
         }
 
-      /*  PushGan pushGan = new PushGan();
-        PushGaoxueya pushGaoxueya = new PushGaoxueya();
-        PushTangniaobing pushTangniaobing = new PushTangniaobing();
-        String s = pushGan.PushGan(insuranceMap);
-        String s1 = pushGaoxueya.pushGaoxueya(insuranceMap);
-        String s2 = pushTangniaobing.Pushtangniaobing(insuranceMap);
-        String panduan = MatchJzx.panduan(label);
-        String[] split = panduan.split("_");
-        String s3 = split[0];
-        redisUtil.set(rptid,s+","+s1+","+s2+","+s3);
-        int i = Integer.parseInt(s);
-        int i1 = Integer.parseInt(s1);
-        int i2 = Integer.parseInt(s2);
-        int i3 = Integer.parseInt(s3);*/
+
         return msg;
     }
 }

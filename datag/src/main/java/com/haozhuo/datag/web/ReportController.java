@@ -99,10 +99,10 @@ public class ReportController {
 
         return userReport.Push(rptid,label);
     }
-/*    @GetMapping(value = "/haskey")
-    public boolean haskey(@RequestParam(value = "key") String key){
-        RedisUtil redisUtil = new RedisUtil();
-       return redisUtil.hasKey(key);
-    }*/
+    /*  @GetMapping(value = "/haskey")
+        public boolean haskey(@RequestParam(value = "key") String key){
+            RedisUtil redisUtil = new RedisUtil();
+           return redisUtil.hasKey(key);
+        }*/
 
 }

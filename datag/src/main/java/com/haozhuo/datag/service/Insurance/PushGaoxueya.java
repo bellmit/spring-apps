@@ -130,7 +130,7 @@ public class PushGaoxueya {
             if (a.contains("舒张压")){
                 double v = Double.parseDouble(s1);
                 if (v>105){
-                    rs = "0"+a+","+s1;
+                    rs = "0";
                     break;
                 }
             }
@@ -138,7 +138,7 @@ public class PushGaoxueya {
             if(a.contains("收缩压")){
                 double v = Double.parseDouble(s1);
                 if (v>170){
-                    rs = "0"+a+","+s1;
+                    rs = "0";
                     break;
                 }
             }

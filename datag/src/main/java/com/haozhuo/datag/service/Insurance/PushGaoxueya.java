@@ -122,7 +122,7 @@ public class PushGaoxueya {
                 String s = flagIdMap.get(a);
                 int i = Integer.parseInt(s);
                 if (i>1){
-                    rs = "0"+a+","+s;
+                    rs = "0";
                     break;
                 }
             }

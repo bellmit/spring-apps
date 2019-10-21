@@ -82,7 +82,7 @@ public class PushGan {
             if (a1 == true) {
                 int i = Integer.parseInt(flagid);
                 if (i > 1) {
-                    rs = "0" + a + "," + flagid;
+                    rs = "0";
                     break;
                 }
             }

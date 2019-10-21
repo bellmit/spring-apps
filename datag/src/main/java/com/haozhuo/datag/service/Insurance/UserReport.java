@@ -126,147 +126,85 @@ public class UserReport {
             String fication = ClassiFication.fication(label);
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
-            if (label.equals("label")) {
-                fourIn.setAbnormal(2);
-                if (split[0].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(1);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (split[1].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(2);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (split[2].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(4);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (split[3].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(3);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }else {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(0);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }
+            if (label.equals("label")){
+                Msg msg1 = getMsg(s, label);
+                return msg1;
+            }
+            if (fication.contains("4") && split[0].equals("1")) {//肝
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(1);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (fication.contains("3") && split[1].equals("1")) {   //甲
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(2);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (fication.contains("2") && split[2].equals("1")) {//高
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(4);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (fication.contains("1") && split[3].equals("1")) {//糖
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(3);
+                msg.setFourIn(fourIn);
+                return msg;
             } else {
-                if (fication.contains("4") && split[0].equals("1")) {//肝
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(1);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (fication.contains("3") && split[1].equals("1")) {   //甲
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(2);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (fication.contains("2") && split[2].equals("1")) {//高
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(4);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (fication.contains("1") && split[3].equals("1")) {//糖
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(3);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(0);
-                    fourIn.setLabel(0);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(0);
+                fourIn.setLabel(0);
+                msg.setFourIn(fourIn);
+                return msg;
             }
         } else {
             InsuranceMap insuranceMap = UserRep(rptid);
             String s = ClassiFication.result(singleNormTag, insuranceMap);
             String s1 = ClassiFication.fourRs();
             redisUtil.set(rptid, s1);
-            String[] split = s1.split("_");
-            if (label.equals("label")) {
-                fourIn.setAbnormal(2);
-                if (split[0].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(1);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (split[1].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(2);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (split[2].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(4);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (split[3].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(3);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }else {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setLabel(0);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }
+            if (label.equals("label")){
+                Msg msg1 = getMsg(s, label);
+                return msg1;
             }
             if (s.contains("0")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("g")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("j")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("t")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("x")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
@@ -278,4 +216,43 @@ public class UserReport {
 
         return msg;
     }
+
+    public Msg getMsg(String data, String label) {
+        Msg msg = new Msg();
+        FourIn fourIn = new FourIn();
+        String[] split = data.split("_");
+
+        if (label.equals("label")) {
+            fourIn.setAbnormal(2);
+            if (split[0].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(1);
+                msg.setFourIn(fourIn);
+            } else if (split[1].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(2);
+                msg.setFourIn(fourIn);
+            } else if (split[2].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(4);
+                msg.setFourIn(fourIn);
+            } else if (split[3].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(3);
+                msg.setFourIn(fourIn);
+            } else {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(0);
+                msg.setFourIn(fourIn);
+            }
+        }
+        return msg;
+    }
 }
+
+

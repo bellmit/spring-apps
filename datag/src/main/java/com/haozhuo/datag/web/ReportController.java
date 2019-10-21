@@ -6,10 +6,12 @@ import com.haozhuo.datag.common.StringUtil;
 import com.haozhuo.datag.common.TipConstBase;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.*;
+import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.*;
 import com.haozhuo.datag.service.RedisService;
 import io.swagger.annotations.ApiOperation;
+import org.apache.hadoop.hbase.client.Scan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,8 @@ public class ReportController {
     private UserReport userReport;
     @Autowired
     private PushGan pushGan;
+    @Autowired
+    private EsService esService;
 
     @GetMapping(value = "/body/reportId/{reportId}")
     @ApiOperation(value = "根据报告Id返回人体图数据", notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
@@ -99,10 +103,17 @@ public class ReportController {
 
         return userReport.Push(rptid,label);
     }
-    /*  @GetMapping(value = "/haskey")
-        public boolean haskey(@RequestParam(value = "key") String key){
-            RedisUtil redisUtil = new RedisUtil();
-           return redisUtil.hasKey(key);
-        }*/
+      @GetMapping(value = "/haskey")
+        public InsuranceMap haskey(@RequestParam(value = "listname") String listname ,
+                                   @RequestParam(value = "rptid") String rptid ){
+          String day = esService.getlastday(rptid);
+          String substring = day.substring(0, 10);
+          String rowkey = substring + "_" + rptid ;
+          String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
+          Scan scan = new Scan();
+          scan.setStartRow(rowkey.getBytes());
+          scan.setStopRow(endrowkey.getBytes());
+           return userReport.getRep(scan,listname);
+        }
 
 }

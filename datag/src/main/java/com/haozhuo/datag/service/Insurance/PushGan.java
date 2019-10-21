@@ -116,27 +116,36 @@ public class PushGan {
             }
 
             if (a.contains("肝功") && (key[1].contains("ALT") || key[1].contains("丙") || key[1].contains("丙氨酸"))) {
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                double beiShu = getBeiShu.getBeiShu(v, ref);
+                System.out.println(a+","+s1+","+ref+","+flagid);
+                if (a.contains("/")){
 
-                if (beiShu != v) {
-                    if (beiShu > 10) {
-                        rs = "0";
-                        rsv = key[1];
-                        break;
+                }else {
+                    double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
+                    double beiShu = getBeiShu.getBeiShu(v, ref);
+                    getBeiShu.getBeiShu(v, ref);
+                    if (beiShu != v) {
+                        if (beiShu > 10) {
+                            rs = "0";
+                            rsv = key[1];
+                            break;
+                        }
                     }
                 }
-
             }
 
             if (a.contains("肝功") && (key[1].contains("AST") || key[1].contains("谷草") || key[1].contains("冬氨酸"))) {
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                double beiShu = getBeiShu.getBeiShu(v, ref);
-                if (beiShu != v) {
-                    if (beiShu > 10) {
-                        rs = "0";
-                        rsv = key[1];
-                        break;
+                System.out.println(a+","+s1+","+ref+","+flagid);
+                if (a.contains("/")){
+
+                }else {
+                    double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
+                    double beiShu = getBeiShu.getBeiShu(v, ref);
+                    if (beiShu != v) {
+                        if (beiShu > 10) {
+                            rs = "0";
+                            rsv = key[1];
+                            break;
+                        }
                     }
                 }
             }

@@ -202,6 +202,41 @@ public class UserReport {
             String s = ClassiFication.result(singleNormTag, insuranceMap);
             String s1 = ClassiFication.fourRs();
             redisUtil.set(rptid, s1);
+            String[] split = s1.split("_");
+            if (label.equals("label")) {
+                fourIn.setAbnormal(2);
+                if (split[0].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setLabel(1);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                } else if (split[1].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setLabel(2);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                } else if (split[2].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setLabel(4);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                } else if (split[3].equals("1")) {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setLabel(3);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                }else {
+                    msg.setCode("300");
+                    msg.setMsg("查询成功");
+                    fourIn.setLabel(0);
+                    msg.setFourIn(fourIn);
+                    return msg;
+                }
+            }
             if (s.contains("0")) {
                 msg.setCode("300");
                 msg.setMsg("查询成功");

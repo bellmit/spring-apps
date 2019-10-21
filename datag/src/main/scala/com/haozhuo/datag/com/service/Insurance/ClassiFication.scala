@@ -786,7 +786,7 @@ object ClassiFication {
         rs_builder.append(1 + "_")
 
 
-        println(label)
+//        println(label)
       }
     })
     //高血压
@@ -794,7 +794,7 @@ object ClassiFication {
 
       if (label.matches(regex.toString)) {
         rs_builder.append(3 + "_")
-        println(label)
+//        println(label)
       }
     })
     //甲状腺
@@ -802,7 +802,7 @@ object ClassiFication {
 
       if (label.matches(regex.toString)) {
         rs_builder.append(2 + "_")
-        println(label)
+//        println(label)
       }
     })
     //糖尿病
@@ -810,7 +810,7 @@ object ClassiFication {
 
       if (label.matches(regex.toString)) {
         rs_builder.append(4 + "_")
-        println(label)
+//        println(label)
       }
     })
     //其它异常
@@ -847,9 +847,9 @@ object ClassiFication {
   //分类排序
   def fication(label:String):String={
     val label_string: String = classFication(label).toString()
-    println(label_string)
+//    println(label_string)
     var flag = new StringBuilder
-    println(flag)
+//    println(flag)
 //    关爱肝4  甲状腺3  高血压2  高血糖1
     //肝
     if(label_string.contains("1")){
@@ -883,7 +883,7 @@ object ClassiFication {
     //    insuranceMap: InsuranceMap
     /*val gan = new PushGan(InsuranceMap)
         val rs: String = gan.PushGan(insuranceMap)*/
-    println(fication("糖尿病")+"哈哈")
+//    println(fication("糖尿病")+"哈哈")
   }
 
   var gan_rs: String=""
@@ -915,12 +915,12 @@ object ClassiFication {
       if (gan_rs.equals("0")) {
         //肝不推
         rs_Push.append("肝n" + "_")
-        println("肝不：" + rs_Push)
+//        println("肝不：" + rs_Push)
       }
       if (gan_rs.equals("1")) {
         //肝推
         rs_Push.append("肝p" + "_")
-        println("肝：" + rs_Push)
+//        println("肝：" + rs_Push)
       }
     }
 
@@ -988,7 +988,7 @@ object ClassiFication {
  */
   def result(label: String, insuranceMap: InsuranceMap) = {
     val rsString: String = getInsurancePush(label, insuranceMap)
-    println(rsString)
+//    println(rsString)
     var rsValue: String = "-1"
     //肝优先级最高，肝如果在推送，那么忽视所有情况
     if (rsString.contains("肝p")) {

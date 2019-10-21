@@ -116,7 +116,6 @@ public class PushGan {
             }
 
             if (a.contains("肝功") && (key[1].contains("ALT") || key[1].contains("丙") || key[1].contains("丙氨酸"))) {
-                System.out.println(a+","+s1+","+ref+","+flagid);
                 if (a.contains("/")){
 
                 }else {
@@ -134,7 +133,6 @@ public class PushGan {
             }
 
             if (a.contains("肝功") && (key[1].contains("AST") || key[1].contains("谷草") || key[1].contains("冬氨酸"))) {
-                System.out.println(a+","+s1+","+ref+","+flagid);
                 if (a.contains("/")){
 
                 }else {

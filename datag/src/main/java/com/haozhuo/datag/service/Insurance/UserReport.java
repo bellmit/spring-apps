@@ -16,6 +16,8 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.elasticsearch.client.transport.TransportClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
@@ -46,12 +48,12 @@ public class UserReport {
 
     private final static String HBASENAME = "DATAETL:RPT_IND";
     private final static String HBASENAME1 = "DATAETL:RPT_B";
-
+    private static final Logger logger = LoggerFactory.getLogger(UserReport.class);
     public InsuranceMap UserRep(String rptid) {
         String day = esService.getlastday(rptid);
         String substring = day.substring(0, 10);
-        String rowkey = substring + "_" + rptid + "_";
-        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1) + "_";
+        String rowkey = substring + "_" + rptid;
+        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
         Scan scan = new Scan();
         scan.setStartRow(rowkey.getBytes());
         scan.setStopRow(endrowkey.getBytes());
@@ -60,10 +62,10 @@ public class UserReport {
             LocalDate date = LocalDate.parse(substring);
             LocalDate newDate1 = date.plus(-1, ChronoUnit.DAYS);
             Scan scan1 = new Scan();
-            String rowkey1 = newDate1 + "_" + rptid + "_";
-            String endrowkey1 = newDate1 + "_" + (Integer.parseInt(rptid) + 1) + "_";
-            scan.setStartRow(rowkey1.getBytes());
-            scan.setStopRow(endrowkey1.getBytes());
+            String rowkey1 = newDate1 + "_" + rptid;
+            String endrowkey1 = newDate1 + "_" + (Integer.parseInt(rptid) + 1);
+            scan1.setStartRow(rowkey1.getBytes());
+            scan1.setStopRow(endrowkey1.getBytes());
             InsuranceMap rep1 = getRep(scan1, HBASENAME);
             return rep1;
         } else {
@@ -121,89 +123,93 @@ public class UserReport {
     public Msg Push(String rptid, String label) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
-        InsuranceMap insuranceMap = UserRep(rptid);
         String singleNormTag = dataEtlJdbcService.getSingleNormTag(label);
-        String s = ClassiFication.result(singleNormTag, insuranceMap);
         if (redisUtil.hasKey(rptid)) {
+            logger.info("redis中存在此缓存id数据，开始查询");
             String fication = ClassiFication.fication(label);
-            String[] split = redisUtil.get(rptid).toString().split("_");
-            if (fication.contains("4")) {//肝
-                if (split[0].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(1);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }
-            } else if (fication.contains("3")) {   //甲
-                if (split[1].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(2);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }
-            } else if (fication.contains("2")) {//高
-                if (split[2].equals("1")) {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(4);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                } else if (fication.contains("1")) {//糖
-                    if (split[3].equals("1")) {
-                        msg.setCode("300");
-                        msg.setMsg("查询成功");
-                        fourIn.setAbnormal(1);
-                        fourIn.setLabel(3);
-                        msg.setFourIn(fourIn);
-                        return msg;
-                    }
-                } else {
-                    msg.setCode("300");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(0);
-                    fourIn.setLabel(0);
-                    msg.setFourIn(fourIn);
-                    return msg;
-                }
+            String s = redisUtil.get(rptid).toString();
+            String[] split = s.split("_");
+            if (label.equals("label")){
+                Msg msg1 = getMsg(s, label);
+                return msg1;
+            }
+            if (fication.contains("4") && split[0].equals("1")) {//肝
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(1);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (fication.contains("3") && split[1].equals("1")) {   //甲
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(2);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (fication.contains("2") && split[2].equals("1")) {//高
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(4);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else if (fication.contains("1") && split[3].equals("1")) {//糖
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(3);
+                msg.setFourIn(fourIn);
+                return msg;
+            } else {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(0);
+                fourIn.setLabel(0);
+                msg.setFourIn(fourIn);
+                return msg;
             }
         } else {
+            logger.info("redis中不存在此缓存id数据，开始查询hbase");
+            InsuranceMap insuranceMap = UserRep(rptid);
+            String s = ClassiFication.result(singleNormTag, insuranceMap);
             String s1 = ClassiFication.fourRs();
-            redisUtil.set(rptid, s1);
+            redisUtil.set(rptid, s1,3600);
+            logger.info("缓存添加完成");
+            if (label.equals("label")){
+                Msg msg1 = getMsg(s1, label);
+                return msg1;
+            }
             if (s.contains("0")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("g")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("j")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("t")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
                 return msg;
             } else if (s.contains("x")) {
-                msg.setCode("300");
+                msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
@@ -215,4 +221,43 @@ public class UserReport {
 
         return msg;
     }
+
+    public Msg getMsg(String data, String label) {
+        Msg msg = new Msg();
+        FourIn fourIn = new FourIn();
+        String[] split = data.split("_");
+
+        if (label.equals("label")) {
+            fourIn.setAbnormal(2);
+            if (split[0].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(1);
+                msg.setFourIn(fourIn);
+            } else if (split[1].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(2);
+                msg.setFourIn(fourIn);
+            } else if (split[2].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(4);
+                msg.setFourIn(fourIn);
+            } else if (split[3].equals("1")) {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(3);
+                msg.setFourIn(fourIn);
+            } else {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setLabel(0);
+                msg.setFourIn(fourIn);
+            }
+        }
+        return msg;
+    }
 }
+
+

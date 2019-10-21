@@ -16,6 +16,8 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.elasticsearch.client.transport.TransportClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
@@ -46,7 +48,7 @@ public class UserReport {
 
     private final static String HBASENAME = "DATAETL:RPT_IND";
     private final static String HBASENAME1 = "DATAETL:RPT_B";
-
+    private static final Logger logger = LoggerFactory.getLogger(UserReport.class);
     public InsuranceMap UserRep(String rptid) {
         String day = esService.getlastday(rptid);
         String substring = day.substring(0, 10);
@@ -123,6 +125,7 @@ public class UserReport {
         FourIn fourIn = new FourIn();
         String singleNormTag = dataEtlJdbcService.getSingleNormTag(label);
         if (redisUtil.hasKey(rptid)) {
+            logger.info("redis中存在此缓存id数据，开始查询");
             String fication = ClassiFication.fication(label);
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
@@ -167,12 +170,14 @@ public class UserReport {
                 return msg;
             }
         } else {
+            logger.info("redis中不存在此缓存id数据，开始查询hbase");
             InsuranceMap insuranceMap = UserRep(rptid);
             String s = ClassiFication.result(singleNormTag, insuranceMap);
             String s1 = ClassiFication.fourRs();
-            redisUtil.set(rptid, s1);
+            redisUtil.set(rptid, s1,3600);
+            logger.info("缓存添加完成");
             if (label.equals("label")){
-                Msg msg1 = getMsg(s, label);
+                Msg msg1 = getMsg(s1, label);
                 return msg1;
             }
             if (s.contains("0")) {

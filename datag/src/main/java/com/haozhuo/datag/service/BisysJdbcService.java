@@ -50,6 +50,8 @@ public class BisysJdbcService {
     private final static String opsMallOrderQuerySQL = "select date, order_num, order_amount, pay_order_num, pay_order_amount, apply_order_num as apply_refund_order_num, " +
             " apply_order_amount as apply_refund_order_amount, refund_order_num,refund_order_amount from ops_mall_order where date >= ? and date <=? and genre=?";
 
+    private final static String getUuid_num = "select * from content_active_num a  where a.`date`>= ? and a.`date` <= ?";
+
     private final static String dailyMallOrderInputQuerySQL = "select date, order_num, order_amount, pay_order_num, pay_order_amount, " +
             " ifnull(apply_refund_order_num, -1) as apply_refund_order_num, ifnull(apply_refund_order_amount, -1) as apply_refund_order_amount," +
             " ifnull(refund_order_num, -1) as refund_order_num, ifnull(refund_order_amount, -1) as refund_order_amount , " +
@@ -317,18 +319,31 @@ public class BisysJdbcService {
 
     public List<YouApp> getYouApp(String date, String endDate) {
         List<YouApp> list = null;
+        YouApp youApp = new YouApp();
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(getUuid_num, new Object[]{date, endDate},
+                    (resultSet, i) -> {
+
+                        youApp.setActiveUsers(resultSet.getInt("uuid_num"));
+                        return youApp;
+                    });
+        } catch (Exception ex) {
+            logger.error("getYouApp error", ex);
+        }
+
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(dailyYouAppQuerySQL, new Object[]{date, endDate,date,endDate},
                     (resultSet, i) -> {
-                        YouApp youApp = new YouApp();
-                        youApp.setActiveUsers(resultSet.getInt("active_users"));
+
+
                         youApp.setDate(resultSet.getString("date"));
                         youApp.setDownloadUsers(resultSet.getInt("download_users"));
                         youApp.setOs(resultSet.getInt("os"));
                         youApp.setStartNum(resultSet.getInt("start_num"));
                         youApp.setTotalDownloadUsers(resultSet.getInt("total_download_users"));
-                       System.out.println(youApp);
+                        System.out.println(youApp);
                         return youApp;
                     });
         } catch (Exception ex) {
@@ -434,19 +449,24 @@ public class BisysJdbcService {
 
   public List<Register> getRegister(String date, String endDate) {
         List<Register> list = null;
+      Register register = new Register();
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(dailyRegisterQuerySQL, new Object[]{date, endDate},
                     (resultSet, i) -> {
-                        Register register = new Register();
+
                         register.setDate(resultSet.getString("date"));
                         register.setDownloadUsers(resultSet.getInt("download_users"));
                         register.setTotalDownloadUsers(resultSet.getInt("total_download_users"));
-                        register.setActiveUsers(resultSet.getInt("active_users"));
                         register.setStartNum(resultSet.getInt("start_num"));
                         register.setRegisterUsers(resultSet.getInt("register_users"));
                         register.setTotalRegisterUsers(resultSet.getInt("total_register_users"));
                         register.setDownloadUnregister(resultSet.getInt("download_unregister"));
+                        return register;
+                    });
+            list = bisysDB.query(getUuid_num, new Object[]{date, endDate},
+                    (resultSet, i) -> {
+                        register.setActiveUsers(resultSet.getInt("uuid_num"));
                         return register;
                     });
         } catch (Exception ex) {

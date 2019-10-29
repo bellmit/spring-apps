@@ -54,7 +54,7 @@ object getBeiShu {
       val max: Double = strings(1).toDouble
 
       if (min < rs_val && rs_val < max) {
-        println("合理范围")
+        //println("合理范围")
       } else if (rs_val >= max) {
         val d: Double = rs_val / max
         result = d

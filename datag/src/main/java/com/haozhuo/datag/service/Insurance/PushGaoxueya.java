@@ -8,6 +8,7 @@ public class PushGaoxueya {
     public String pushGaoxueya(InsuranceMap insuranceMap){
         /* InsuranceMap insuranceMap = userReport.UserRep(rptid);*/
         String rs = "1";
+        String rsa = "";
         Map<String, String> valueMap = insuranceMap.getValueMap();
         Map<String, String> textRefMap = insuranceMap.getTextRefMap();
         Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
@@ -123,6 +124,7 @@ public class PushGaoxueya {
                 int i = Integer.parseInt(s);
                 if (i>1){
                     rs = "0";
+                   rsa = a+s1;
                     break;
                 }
             }
@@ -131,6 +133,7 @@ public class PushGaoxueya {
                 double v = Double.parseDouble(s1);
                 if (v>105){
                     rs = "0";
+                    rsa = a+s1;
                     break;
                 }
             }
@@ -139,11 +142,12 @@ public class PushGaoxueya {
                 double v = Double.parseDouble(s1);
                 if (v>170){
                     rs = "0";
+                    rsa = a+s1;
                     break;
                 }
             }
         }
-
+        //System.out.println("高血压："+rsa);
         return rs;
     }
 }

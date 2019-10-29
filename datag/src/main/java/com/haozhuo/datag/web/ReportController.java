@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
 
@@ -99,10 +101,19 @@ public class ReportController {
     @GetMapping(value = "/push")
     @ApiOperation(value = "推送")
     public Msg PushInsurance(@RequestParam(value = "rptid") String rptid,
-                                @RequestParam(value = "label") String label)  {
-
-        return userReport.Push(rptid,label);
+                                @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
+        //System.out.println(URLDecoder.decode(label,"utf-8"));
+        return userReport.Push(rptid,URLDecoder.decode(label,"utf-8"));
     }
+
+    @GetMapping(value = "/push1")
+    @ApiOperation(value = "报告查询")
+    public InsuranceMap PushInsurance(@RequestParam(value = "rptid") String rptid)  {
+
+
+        return userReport.UserRep(rptid);
+    }
+
       @GetMapping(value = "/haskey")
         public InsuranceMap haskey(@RequestParam(value = "listname") String listname ,
                                    @RequestParam(value = "rptid") String rptid ){

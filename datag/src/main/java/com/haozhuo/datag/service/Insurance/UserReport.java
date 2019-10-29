@@ -54,6 +54,8 @@ public class UserReport {
         String substring = day.substring(0, 10);
         String rowkey = substring + "_" + rptid;
         String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
+        //String rowkey ="2018-04-28_7292025";
+       // String endrowkey ="2018-04-28_7292026";
         Scan scan = new Scan();
         scan.setStartRow(rowkey.getBytes());
         scan.setStopRow(endrowkey.getBytes());
@@ -64,6 +66,8 @@ public class UserReport {
             Scan scan1 = new Scan();
             String rowkey1 = newDate1 + "_" + rptid;
             String endrowkey1 = newDate1 + "_" + (Integer.parseInt(rptid) + 1);
+            //String rowkey1 ="2018-04-28_7292025";
+           // String endrowkey1 ="2018-04-28_7292026";
             scan1.setStartRow(rowkey1.getBytes());
             scan1.setStopRow(endrowkey1.getBytes());
             InsuranceMap rep1 = getRep(scan1, HBASENAME);
@@ -126,7 +130,8 @@ public class UserReport {
         String singleNormTag = dataEtlJdbcService.getSingleNormTag(label);
         if (redisUtil.hasKey(rptid)) {
             logger.info("redis中存在此缓存id数据，开始查询");
-            String fication = ClassiFication.fication(label);
+            String fication = ClassiFication.fication(singleNormTag);
+            System.out.println(fication);
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
             if (label.equals("label")){
@@ -173,6 +178,7 @@ public class UserReport {
             logger.info("redis中不存在此缓存id数据，开始查询hbase");
             InsuranceMap insuranceMap = UserRep(rptid);
             String s = ClassiFication.result(singleNormTag, insuranceMap);
+            System.out.println(s);
             String s1 = ClassiFication.fourRs();
             redisUtil.set(rptid, s1,3600);
             logger.info("缓存添加完成");

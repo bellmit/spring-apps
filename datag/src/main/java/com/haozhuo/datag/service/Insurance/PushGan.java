@@ -65,11 +65,12 @@ public class PushGan {
         String[] split2 = num.split("_");
         if (Integer.parseInt(split1[0]) == 0) {
             rs = "0";
-            return rs + split1[1];
+
+            return rs;
         } else {
             if (Integer.parseInt(split2[0]) == 0) {
                 rs = "0";
-                return rs + split2[1];
+                return rs;
             }
         }
 
@@ -83,6 +84,7 @@ public class PushGan {
                 int i = Integer.parseInt(flagid);
                 if (i > 1) {
                     rs = "0";
+                    rsv=a+s1;
                     break;
                 }
             }
@@ -95,7 +97,7 @@ public class PushGan {
                     double v = Double.parseDouble(trim);
                     if (v >= 12) {
                         rs = "0";
-                        rsv = key[1];
+                        rsv=a+s1;
                         break;
                     }
                 }
@@ -109,7 +111,7 @@ public class PushGan {
                     double v = Double.parseDouble(trim);
                     if (v < 90) {
                         rs = "0";
-                        rsv = key[1];
+                        rsv=a+s1;
                         break;
                     }
                 }
@@ -125,7 +127,7 @@ public class PushGan {
                     if (beiShu != v) {
                         if (beiShu > 10) {
                             rs = "0";
-                            rsv = key[1];
+                            rsv=a+s1;
                             break;
                         }
                     }
@@ -141,7 +143,7 @@ public class PushGan {
                     if (beiShu != v) {
                         if (beiShu > 10) {
                             rs = "0";
-                            rsv = key[1];
+                            rsv=a+s1;
                             break;
                         }
                     }
@@ -157,7 +159,7 @@ public class PushGan {
                 int i = Integer.parseInt(flagid);
                 if (i > 1) {
                     rs = "0";
-                    rsv = key[1];
+                    rsv=a+s1;
                     break;
                 }
             }
@@ -169,7 +171,7 @@ public class PushGan {
                 if (beiShu != v) {
                     if (beiShu > 10) {
                         rs = "0";
-                        rsv = key[1];
+                        rsv=a+s1;
                         break;
                     }
                 }
@@ -185,7 +187,7 @@ public class PushGan {
         }else {
             double v = Double.parseDouble(trim);
         }*/
-
+        //System.out.println("肝："+rsv);
         return rs;
     }
 

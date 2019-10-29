@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public class PushTangniaobing {
     public String Pushtangniaobing(InsuranceMap insuranceMap) {
-
+        String rsa= "";
         String rs = "1";
         String REGEX = "[^0-9.]";
         Map<String, String> valueMap = insuranceMap.getValueMap();
@@ -108,6 +108,7 @@ public class PushTangniaobing {
                 int i = Integer.parseInt(s);
                 if (i > 1) {
                     rs = "0";
+                    rsa=a+s1;
                     break;
                 }
             }
@@ -116,6 +117,7 @@ public class PushTangniaobing {
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
                 if (v > 7.0) {
                     rs = "0";
+                    rsa=a+s1;
                     break;
                 }
             }
@@ -128,6 +130,7 @@ public class PushTangniaobing {
                     double v = Double.parseDouble(trim);
                     if (v > 8.0) {
                         rs = "0";
+                        rsa=a+s1;
                         break;
                     }
                 }
@@ -138,11 +141,14 @@ public class PushTangniaobing {
                 double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
                 if (v > 12.0) {
                     rs = "0" ;
+                    rsa=a+s1;
                     break;
                 }
             }
 
         }
+
+       // System.out.println("糖尿病："+rsa);
 
         return rs;
     }

@@ -939,12 +939,13 @@ object ClassiFication {
 
     //高血压
     if (labelResult.contains("3")) {
+//      println("gxy"+gaoxueya)
 
-      if (gaoxueya.equals("0")) {
+      if (gaoxueya_rs.equals("0")) {
         //高血压不推
         rs_Push.append("高血压n" + "_")
       }
-      if (gaoxueya.equals("1")) {
+      if (gaoxueya_rs.equals("1")) {
         //高血压推
         rs_Push.append("高血压p" + "_")
       }
@@ -977,6 +978,7 @@ object ClassiFication {
 
 
     }
+//    println("push"+rs_Push.toString())
     rs_Push.toString()
   }
 
@@ -1002,6 +1004,7 @@ object ClassiFication {
     } else {
       rsValue = "0"
     }
+//    println("推"+rsValue)
     rsValue
   }
 
@@ -1015,5 +1018,7 @@ object ClassiFication {
   def fourRs(): String ={
     var builder = new StringBuilder
     builder.append(gan_rs+"_"+jzx_rs+"_"+gaoxueya_rs+"_"+xuetang_rs).toString()
+//    println(builder.toString())
+    builder.toString()
   }
 }

@@ -100,6 +100,7 @@ public class ReportController {
     public Msg PushInsurance(@RequestParam(value = "rptid") String rptid,
                                 @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
         //System.out.println();
+
         Utf8 utf8 = new Utf8();
         String s = utf8.convertPercent(label);
         return userReport.Push(rptid,URLDecoder.decode(s,"utf8"));

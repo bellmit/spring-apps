@@ -1,9 +1,6 @@
 package com.haozhuo.datag.web;
 
-import com.haozhuo.datag.common.RedisUtil;
-import com.haozhuo.datag.common.ResultCodeBase;
-import com.haozhuo.datag.common.StringUtil;
-import com.haozhuo.datag.common.TipConstBase;
+import com.haozhuo.datag.common.*;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.EsService;
@@ -102,8 +99,10 @@ public class ReportController {
     @ApiOperation(value = "推送")
     public Msg PushInsurance(@RequestParam(value = "rptid") String rptid,
                                 @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
-        //System.out.println(URLDecoder.decode(label,"utf-8"));
-        return userReport.Push(rptid,URLDecoder.decode(label,"utf-8"));
+        //System.out.println();
+        Utf8 utf8 = new Utf8();
+        String s = utf8.convertPercent(label);
+        return userReport.Push(rptid,URLDecoder.decode(s,"utf8"));
     }
 
     @GetMapping(value = "/push1")

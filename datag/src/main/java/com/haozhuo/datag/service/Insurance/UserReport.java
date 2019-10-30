@@ -145,13 +145,13 @@ public class UserReport {
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (fication.contains("3") && split[1].equals("1")) {   //甲
-                msg.setCode("200");
-                msg.setMsg("查询成功");
-                fourIn.setAbnormal(1);
-                fourIn.setLabel(2);
-                msg.setFourIn(fourIn);
-                return msg;
+            } else if (fication.contains("j1")) {//甲
+                    msg.setCode("200");
+                    msg.setMsg("查询成功");
+                    fourIn.setAbnormal(1);
+                    fourIn.setLabel(2);
+                    msg.setFourIn(fourIn);
+                    return msg;
             } else if (fication.contains("2") && split[2].equals("1")) {//高
                 msg.setCode("200");
                 msg.setMsg("查询成功");

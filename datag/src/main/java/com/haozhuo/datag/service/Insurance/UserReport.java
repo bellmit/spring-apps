@@ -180,6 +180,7 @@ public class UserReport {
             String s = ClassiFication.result(singleNormTag, insuranceMap);
             System.out.println(s);
             String s1 = ClassiFication.fourRs();
+            System.out.println(s1);
             redisUtil.set(rptid, s1,3600);
             logger.info("缓存添加完成");
             if (label.equals("label")){

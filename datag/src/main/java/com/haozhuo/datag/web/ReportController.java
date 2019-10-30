@@ -103,7 +103,7 @@ public class ReportController {
     public Msg PushInsurance(@RequestParam(value = "rptid") String rptid,
                                 @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
         //System.out.println(URLDecoder.decode(label,"utf-8"));
-        return userReport.Push(rptid,URLDecoder.decode(label,"utf-8"));
+        return userReport.Push(rptid,URLDecoder.decode(label.replaceAll("%", "%25"),"utf-8"));
     }
 
     @GetMapping(value = "/push1")

@@ -857,7 +857,11 @@ object ClassiFication {
     }
     //甲状腺
     if(label_string.contains("2")){
-      flag.append("3")
+      if(jzx_rs.equals("0")){
+        flag.append("j0")
+      }else {
+        flag.append("j1")
+      }
     }
     //高血压
     if(label_string.contains("3")){
@@ -939,7 +943,7 @@ object ClassiFication {
 
     //高血压
     if (labelResult.contains("3")) {
-//      println("gxy"+gaoxueya)
+      println("gxy"+gaoxueya_rs)
 
       if (gaoxueya_rs.equals("0")) {
         //高血压不推

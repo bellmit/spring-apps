@@ -143,7 +143,7 @@ public class UserReport {
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
-                msg.setFourIn(fourIn);
+                msg.setFourIn(fourIn)  ;
                 return msg;
             } else if (fication.contains("j1")) {//甲
                     msg.setCode("200");

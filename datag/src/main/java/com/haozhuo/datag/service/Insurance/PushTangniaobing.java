@@ -1,5 +1,6 @@
 package com.haozhuo.datag.service.Insurance;
 
+import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.report.InsuranceMap;
 
 import java.util.Map;
@@ -102,6 +103,9 @@ public class PushTangniaobing {
         for (String a : valueMap.keySet()) {
             String s1 = valueMap.get(a);
             String[] split = a.split(",");
+            if (s1.contains("弃")||s1.contains("查")){
+                continue;
+            }
             boolean a1 = str.contains(split[1]);
             if (a1 == true) {
                 String s = flagIdMap.get(a);
@@ -114,12 +118,18 @@ public class PushTangniaobing {
             }
 
             if (a.contains("糖化血红蛋白") || a.contains("总糖化血红蛋白")) {
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                if (v > 7.0) {
-                    rs = "0";
-                    rsa=a+s1;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
+                if (JavaUtils.isEmpty(trim)){
+
+                }else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 7.0) {
+                        rs = "0";
+                        rsa=a+s1;
+                        break;
+                    }
                 }
+
             }
 
             if (a.contains("血糖") || a.contains("空腹血糖") || a.contains("平均血糖") || a.contains("血液葡萄糖") || a.contains("血清葡萄糖") || a.contains("葡萄糖") || a.contains("快速血糖")) {
@@ -138,12 +148,18 @@ public class PushTangniaobing {
             }
 
             if (a.contains("血糖") && a.contains("餐后")) {
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                if (v > 12.0) {
-                    rs = "0" ;
-                    rsa=a+s1;
-                    break;
+                String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
+                if (JavaUtils.isEmpty(trim)){
+
+                }else {
+                    double v = Double.parseDouble(trim);
+                    if (v > 12.0) {
+                        rs = "0" ;
+                        rsa=a+s1;
+                        break;
+                    }
                 }
+
             }
 
         }

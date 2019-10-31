@@ -2,6 +2,7 @@ package com.haozhuo.datag.service.Insurance;
 
 import com.haozhuo.datag.com.service.Insurance.MatchGan;
 import com.haozhuo.datag.com.service.Insurance.getBeiShu;
+import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.report.InsuranceMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -79,12 +80,15 @@ public class PushGan {
             String s1 = valueMap.get(a);
             String ref = textRefMap.get(a);
             String[] key = a.split(",");
+            if (s1.contains("弃")||s1.contains("查")){
+                continue;
+            }
             boolean a1 = str.contains(key[1]);
             if (a1 == true) {
                 int i = Integer.parseInt(flagid);
                 if (i > 1) {
                     rs = "0";
-                    rsv=a+s1;
+                    rsv = a + s1;
                     break;
                 }
             }
@@ -97,7 +101,7 @@ public class PushGan {
                     double v = Double.parseDouble(trim);
                     if (v >= 12) {
                         rs = "0";
-                        rsv=a+s1;
+                        rsv = a + s1;
                         break;
                     }
                 }
@@ -111,39 +115,45 @@ public class PushGan {
                     double v = Double.parseDouble(trim);
                     if (v < 90) {
                         rs = "0";
-                        rsv=a+s1;
+                        rsv = a + s1;
                         break;
                     }
                 }
             }
 
             if (a.contains("肝功") && (key[1].contains("ALT") || key[1].contains("丙") || key[1].contains("丙氨酸"))) {
-                if (a.contains("/")){
+                if (a.contains("/") || a.contains("比")) {
 
-                }else {
-                    double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                    double beiShu = getBeiShu.getBeiShu(v, ref);
-                    getBeiShu.getBeiShu(v, ref);
-                    if (beiShu != v) {
-                        if (beiShu > 10) {
-                            rs = "0";
-                            rsv=a+s1;
-                            break;
+                } else {
+                    String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
+                    if (JavaUtils.isEmpty(trim)){
+
+                    }else {
+                        double v = Double.parseDouble(trim);
+                        double beiShu = getBeiShu.getBeiShu(v, ref);
+                        getBeiShu.getBeiShu(v, ref);
+                        if (beiShu != v) {
+                            if (beiShu > 10) {
+                                rs = "0";
+                                rsv = a + s1;
+                                break;
+                            }
                         }
                     }
+
                 }
             }
 
             if (a.contains("肝功") && (key[1].contains("AST") || key[1].contains("谷草") || key[1].contains("冬氨酸"))) {
-                if (a.contains("/")){
+                if (a.contains("/") || a.contains("比")) {
 
-                }else {
+                } else {
                     double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
                     double beiShu = getBeiShu.getBeiShu(v, ref);
                     if (beiShu != v) {
                         if (beiShu > 10) {
                             rs = "0";
-                            rsv=a+s1;
+                            rsv = a + s1;
                             break;
                         }
                     }
@@ -159,21 +169,30 @@ public class PushGan {
                 int i = Integer.parseInt(flagid);
                 if (i > 1) {
                     rs = "0";
-                    rsv=a+s1;
+                    rsv = a + s1;
                     break;
                 }
             }
 
             if (key[1].contains("总胆红") || key[1].contains("T-Bil") || key[1].contains("TBil") || key[1].contains("TB-K") || key[1].contains("血清白蛋白") || key[1].contains("ALB")) {
-                double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                double beiShu = getBeiShu.getBeiShu(v, ref);
+                String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
+                if (key[1].contains("/") || key[0].contains("尿")||key[1].contains("尿")) {
 
-                if (beiShu != v) {
-                    if (beiShu > 10) {
-                        rs = "0";
-                        rsv=a+s1;
-                        break;
+                } else {
+                    if (JavaUtils.isEmpty(trim)) {
+
+                    } else {
+                        double v = Double.parseDouble(trim);
+                        double beiShu = getBeiShu.getBeiShu(v, ref);
+                        if (beiShu != v) {
+                            if (beiShu > 10) {
+                                rs = "0";
+                                rsv = a + s1;
+                                break;
+                            }
+                        }
                     }
+
                 }
             }
         }

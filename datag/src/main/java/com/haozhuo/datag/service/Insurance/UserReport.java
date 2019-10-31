@@ -23,6 +23,10 @@ import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
 import scala.collection.mutable.StringBuilder;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -127,6 +131,12 @@ public class UserReport {
     public Msg Push(String rptid, String label) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
+        String day = esService.getlastday(rptid);
+        if (JavaUtils.isEmpty(day)){
+            msg.setCode("300");
+            msg.setMsg("没有此报告id");
+            return msg;
+        }
         String singleNormTag = dataEtlJdbcService.getSingleNormTag(label);
         if (redisUtil.hasKey(rptid)) {
             logger.info("redis中存在此缓存id数据，开始查询");
@@ -181,7 +191,7 @@ public class UserReport {
             System.out.println(s);
             String s1 = ClassiFication.fourRs();
             System.out.println(s1);
-            redisUtil.set(rptid, s1,3600);
+            //redisUtil.set(rptid, s1,3600);
             logger.info("缓存添加完成");
             if (label.equals("label")){
                 Msg msg1 = getMsg(s1, label);
@@ -264,6 +274,29 @@ public class UserReport {
             }
         }
         return msg;
+    }
+
+    public void test() throws IOException {
+        String rptid = null;
+        String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\1000.txt";
+        FileReader reader = null;
+        try {
+            reader = new FileReader(pathname);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            int i = 1;
+            while ((line = br.readLine()) != null) {
+                // 一次读入一行数据
+                rptid = line;
+                System.out.println(rptid + "," + i);
+                i++;
+                Push(rptid,"label");
+            }
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 }
 

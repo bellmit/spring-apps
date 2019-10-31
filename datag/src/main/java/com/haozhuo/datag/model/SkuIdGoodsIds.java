@@ -24,6 +24,42 @@ public class SkuIdGoodsIds {
 
     private double score;
 
+    public static Random getRandom() {
+        return random;
+    }
+
+    public String getSkuId() {
+        return skuId;
+    }
+
+    public void setSkuId(String skuId) {
+        this.skuId = skuId;
+    }
+
+    public List<String> getGoodsIds() {
+        return goodsIds;
+    }
+
+    public void setGoodsIds(List<String> goodsIds) {
+        this.goodsIds = goodsIds;
+    }
+
+    public int getRcmdScore() {
+        return rcmdScore;
+    }
+
+    public void setRcmdScore(int rcmdScore) {
+        this.rcmdScore = rcmdScore;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
     public String getRandomGoodsId() {
         if (goodsIds != null && goodsIds.size() > 0) {
             return goodsIds.get(random.nextInt(goodsIds.size()));

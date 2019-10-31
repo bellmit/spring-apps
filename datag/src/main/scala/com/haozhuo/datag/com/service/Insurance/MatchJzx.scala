@@ -50,7 +50,7 @@ object MatchJzx {
   }
 
   def main(args: Array[String])= {
-    println(panduan("甲状腺挺好部分切除术"))
+    println(panduan("★+甲状腺超声%20甲状腺双叶结节（多发）%3A++%28结果%3A45+范围：0-38+U%2FL%29"))
 
 
   }

@@ -171,6 +171,17 @@ public class EsService {
 
     }
 
+    public String getBrithdayByReportId(String reportId) {
+        SearchRequestBuilder srb = client.prepareSearch(reportLabelIndex).setSize(1)
+                .setQuery(matchQuery("healthReportId", reportId.trim()));
+        logger.debug(srb.toString());
+        SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+        System.out.println(stream(searchHits).map(x -> x.getSource().get("birthday")).findFirst().orElse("").toString());
+        return stream(searchHits).map(x -> x.getSource().get("birthday")).findFirst().orElse("").toString();
+
+    }
+
+
     public String getSexByReportId(String reportId) {
         SearchRequestBuilder srb = client.prepareSearch(reportLabelIndex).setSize(1)
                 .setQuery(matchQuery("healthReportId", reportId.trim()));
@@ -341,7 +352,7 @@ public class EsService {
     }
 
     @Async("rcmdExecutor")
-    private CompletableFuture<Long> getFutureGoodsCountByType(String goodsType) {
+     CompletableFuture<Long> getFutureGoodsCountByType(String goodsType) {
         return CompletableFuture.completedFuture(
                 client.prepareSearch(goodsIndex).setTypes(goodsType).setSize(0).get().getHits().getTotalHits());
     }
@@ -551,7 +562,7 @@ public class EsService {
 
     public String getrptid(String idcard) {
 
-        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1").setSize(1)
+        SearchRequestBuilder srb = client.prepareSearch("tmp_stu_es_index1")
                 .setQuery(matchQuery("id_card", idcard.trim()));
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_id")).findFirst().orElse("").toString();

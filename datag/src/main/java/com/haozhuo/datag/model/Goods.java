@@ -66,6 +66,70 @@ public class Goods {
         }
     }
 
+    public static int getScoreMax() {
+        return SCORE_MAX;
+    }
+
+    public static int getScoreMin() {
+        return SCORE_MIN;
+    }
+
+    public static int getScoreDefault() {
+        return SCORE_DEFAULT;
+    }
+
+    public String getSkuId() {
+        return skuId;
+    }
+
+    public List<String> getGoodsIds() {
+        return goodsIds;
+    }
+
+    public String getGoodsName() {
+        return goodsName;
+    }
+
+    public String getGoodsDescription() {
+        return goodsDescription;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getSubCategory() {
+        return subCategory;
+    }
+
+    public List<String> getGoodsTags() {
+        return goodsTags;
+    }
+
+    public String getSearchKeywords() {
+        return searchKeywords;
+    }
+
+    public List<String> getCityIds() {
+        return cityIds;
+    }
+
+    public int getGoodsType() {
+        return goodsType;
+    }
+
+    public int getRcmdScore() {
+        return rcmdScore;
+    }
+
+    public int getSalesNum() {
+        return salesNum;
+    }
+
+    public String getCreateTime() {
+        return createTime;
+    }
+
     public void setGoodsIds(List<String> goodsIds) {
         this.goodsIds = goodsIds;
     }

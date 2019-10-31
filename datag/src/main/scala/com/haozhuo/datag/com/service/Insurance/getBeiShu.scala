@@ -12,9 +12,9 @@ object getBeiShu {
 
 
 
-//     val d: Double =
-//    getBeiShu(78.9, filter("1.2:1-2.4:1"))
-//    println(d)
+     val d: Double =
+    getBeiShu(78.9, filter("1.2:1-2.4:1"))
+    println(d)
   }
   def filterChaobiao(yourString: String) = {
     val regx = new Regex(
@@ -30,18 +30,35 @@ object getBeiShu {
     }
     max
   }
+
+  //目前支持替换~,-的比值(:)
   def filter(text_ref:String)={
+    //替换数组
+   val matchTh= Array(
+      ("0-","-<"),
+      ("-","~"),
+     (":","：")
+    )
+    var text_ref_result=text_ref
+    matchTh.foreach(r=>{
+      if(text_ref.contains(r._2)) {
+        text_ref_result=text_ref.replaceAll(r._2,r._1)
+      }
+    })
     //替换
-    val bi: String = text_ref.replaceAll("~","-")
-    bi.replaceAll("：",":")
+
+
+    if(text_ref_result.contains(":")&&text_ref_result.contains("-")){
     //分开数据 去掉：
-    val qieg: Array[String] = bi.split("-")
+    val qieg: Array[String] = text_ref_result.split("-")
     val qiebi1: Array[String] = qieg(0).split(":")
     val qiebi2: Array[String] = qieg(1).split(":")
     val q1=qiebi1(0).toDouble/qiebi1(1).toDouble
     val q2=qiebi2(0).toDouble/qiebi2(1).toDouble
-    q1+"-"+q2
-
+      q1+"-"+q2
+    }else{
+     text_ref_result
+    }
   }
 
 

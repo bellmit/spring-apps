@@ -12,9 +12,9 @@ object getBeiShu {
 
 
 
-     val d: Double =
-    getBeiShu(78.9, "")
-    println(d)
+//     val d: Double =
+//    getBeiShu(78.9, filter("1.2:1-2.4:1"))
+//    println(d)
   }
   def filterChaobiao(yourString: String) = {
     val regx = new Regex(
@@ -30,6 +30,20 @@ object getBeiShu {
     }
     max
   }
+  def filter(text_ref:String)={
+    //替换
+    val bi: String = text_ref.replaceAll("~","-")
+    bi.replaceAll("：",":")
+    //分开数据 去掉：
+    val qieg: Array[String] = bi.split("-")
+    val qiebi1: Array[String] = qieg(0).split(":")
+    val qiebi2: Array[String] = qieg(1).split(":")
+    val q1=qiebi1(0).toDouble/qiebi1(1).toDouble
+    val q2=qiebi2(0).toDouble/qiebi2(1).toDouble
+    q1+"-"+q2
+
+  }
+
 
 
   //参数描述:第一个你传递的值Double类型比如10,第二个是你传递的取值范围比如0.9-100

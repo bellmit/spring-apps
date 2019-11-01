@@ -1079,9 +1079,9 @@ object ClassiFication {
       rs_builder.append("0_")
     }
     if(flag.equals("0")){
-      rs_builder.append("1_")
-    }else{
       rs_builder.append("0_")
+    }else{
+      rs_builder.append("1_")
     }
     if(rsString.contains("3")){
       rs_builder.append("1_")

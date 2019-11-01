@@ -49,7 +49,7 @@ public class UserReport {
     private RedisUtil redisUtil;
     @Autowired
     private DataEtlJdbcService dataEtlJdbcService;
-
+    //tes
     private final static String HBASENAME = "DATAETL:RPT_IND";
     private final static String HBASENAME1 = "DATAETL:RPT_B";
     private static final Logger logger = LoggerFactory.getLogger(UserReport.class);

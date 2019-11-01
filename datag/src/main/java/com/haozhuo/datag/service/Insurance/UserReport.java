@@ -132,6 +132,8 @@ public class UserReport {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
         String day = esService.getlastday(rptid);
+        String getlabel = esService.getLabelsByReportId(rptid);
+
         if (JavaUtils.isEmpty(day)){
             msg.setCode("300");
             msg.setMsg("没有此报告id");
@@ -188,10 +190,40 @@ public class UserReport {
             logger.info("redis中不存在此缓存id数据，开始查询hbase");
             InsuranceMap insuranceMap = UserRep(rptid);
             String s = ClassiFication.result(singleNormTag, insuranceMap);
-            System.out.println(s);
+            int [] arr = new int[4];
+            //System.out.println(s);
+            //s1 = 1_1_1_1
+            //s2 = 1_0_1_1
             String s1 = ClassiFication.fourRs();
-            System.out.println(s1);
-            redisUtil.set(rptid, s1,3600);
+            String fication2 = ClassiFication.getFication2(getlabel);
+            String[] split1 = s1.split("_");
+            String[] split = fication2.split("_");
+            for (int i = 0 ;i<split1.length;i++){
+                if (i==1){
+                    arr[i]=Integer.parseInt(split[i]);
+                }else {
+                    if (split[i].equals("1")&&split[i].equals("1")){
+                        arr[i]=1;
+                    }else {
+                        arr[i]=0;
+                    }
+                }
+            }
+
+            StringBuffer str5 = new StringBuffer();
+            for (int i = 0;i<arr.length;i++) {
+                if (i==3){
+                    str5.append(arr[i]);
+                }else {
+                    str5.append(arr[i]+"_");
+                }
+            }
+
+            String  s2= str5.toString();
+
+            System.out.println(s2);
+            redisUtil.set(rptid, s2,3600);
+
             logger.info("缓存添加完成");
             if (label.equals("label")){
                 Msg msg1 = getMsg(s1, label,age);
@@ -297,6 +329,38 @@ public class UserReport {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }*/
+
+    /*public static void main(String[] args) {
+        String s1 = "1_0_1_1";
+        String fication2 = "1_1_0_1";
+        String[] split1 = s1.split("_");
+        String[] split = fication2.split("_");
+        int [] arr = new int[4];
+        for (int i = 0 ;i<split1.length;i++){
+            if (i==1){
+                arr[i]=Integer.parseInt(split[i]);
+            }else {
+                if (split[i].equals("1")&&split1[i].equals("1")){
+                    arr[i]=1;
+                }else {
+                    arr[i]=0;
+                }
+            }
+        }
+
+        StringBuffer str5 = new StringBuffer();
+        for (int i = 0;i<arr.length;i++) {
+            if (i==3){
+                str5.append(arr[i]);
+            }else {
+                str5.append(arr[i]+"_");
+            }
+        }
+
+        String  s2= str5.toString();
+
+        System.out.println(s2);
     }*/
 }
 

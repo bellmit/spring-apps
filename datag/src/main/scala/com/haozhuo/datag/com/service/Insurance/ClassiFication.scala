@@ -1025,7 +1025,75 @@ object ClassiFication {
 //    println(builder.toString())
     builder.toString()
   }
-  def getFication2(Labels:String)={
-     ""
+  def getFication2(labels:String)={
+    val labels_Array: Array[String] = labels.split(",")
+    //分类
+    import   scala.collection.mutable._
+
+    //甲状腺的labels
+    var jzxLabels=new ArrayBuffer[String]
+
+
+
+    //返回的结果字符串
+    //肝返回1，甲状腺返回2，高血压返回3，糖尿病返回4,其它异常返回5,不存在此异常返回0
+
+    var rs = new StringBuilder()
+    labels_Array.foreach(label=>{
+      val v: StringBuilder = ClassiFication.classFication(label)
+      rs.append(v)
+
+      //甲状腺分类获取
+      ClassiFication.MatchJZXLabel.foreach(regex => {
+
+        if (label.matches(regex.toString)) {
+          //          println("我匹配了"+label)
+          jzxLabels.append(label)
+        }
+
+      })
+
+    })
+    //rs是一个等待判断项
+
+    var flag="1"
+    //推送甲状腺判断
+    jzxLabels.foreach(label=>{
+      val rs: String = MatchJzx.panduan(label)
+      if(rs.contains("0")){
+        flag="0"
+      }
+    })
+
+    //肝返回1，甲状腺返回2，高血压返回3，糖尿病返回4,其它异常返回5,不存在此异常返回0
+    //根据的甲状腺的flag来判断是否推送甲状腺
+    //1.肝,2.甲状腺,3,高血压,4糖尿病,添加顺序也是一样的
+
+    val rsString: String = rs.toString()
+
+    val rs_builder = new StringBuilder()
+
+    if(rsString.contains("1")){
+      rs_builder.append("1_")
+    }else{
+      rs_builder.append("0_")
+    }
+    if(flag.equals("0")){
+      rs_builder.append("1_")
+    }else{
+      rs_builder.append("0_")
+    }
+    if(rsString.contains("3")){
+      rs_builder.append("1_")
+    }else{
+      rs_builder.append("0_")
+    }
+    if(rsString.contains("4")){
+      rs_builder.append("1_")
+    }else{
+      rs_builder.append("0_")
+    }
+
+    rs_builder.substring(0,rs_builder.length-1).toString()
   }
 }

@@ -157,7 +157,7 @@ public class UserReport {
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn)  ;
                 return msg;
-            } else if (fication.contains("j1")&&age<=60) {//甲
+            } else if (fication.contains("3")&&split[1].equals("1")&&age<=60) {//甲
                     msg.setCode("200");
                     msg.setMsg("查询成功");
                     fourIn.setAbnormal(1);
@@ -192,10 +192,11 @@ public class UserReport {
             String s = ClassiFication.result(singleNormTag, insuranceMap);
             int [] arr = new int[4];
             //System.out.println(s);
-            //s1 = 1_1_1_1
+            //s1 = 1_1_1_1e
             //s2 = 1_0_1_1
             String s1 = ClassiFication.fourRs();
             String fication2 = ClassiFication.getFication2(getlabel);
+
             String[] split1 = s1.split("_");
             String[] split = fication2.split("_");
             for (int i = 0 ;i<split1.length;i++){
@@ -220,8 +221,8 @@ public class UserReport {
             }
 
             String  s2= str5.toString();
+            System.out.println(s+","+s1+","+fication2+","+s2);
 
-            System.out.println(s2);
             redisUtil.set(rptid, s2,3600);
 
             logger.info("缓存添加完成");
@@ -243,7 +244,7 @@ public class UserReport {
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (s.contains("j")&&age<=60) {
+            } else if (s.contains("j")&&arr[1]==1&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
@@ -264,11 +265,18 @@ public class UserReport {
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
                 return msg;
+            }else {
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(0);
+                fourIn.setLabel(0);
+                msg.setFourIn(fourIn);
+                return msg;
             }
         }
 
 
-        return msg;
+
     }
 
     public Msg getMsg(String data, String label,Integer age) {

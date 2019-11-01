@@ -6,7 +6,6 @@ import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.*;
-import com.haozhuo.datag.service.RedisService;
 import io.swagger.annotations.ApiOperation;
 import org.apache.hadoop.hbase.client.Scan;
 import org.slf4j.Logger;
@@ -17,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.List;
-import java.util.Map;
 
 @RequestMapping(value = "/report")
 @RestController
@@ -97,14 +94,12 @@ public class ReportController {
 
     @PostMapping(value = "/push")
     @ApiOperation(value = "推送")
-    public Msg PushInsuranceForpost(@RequestParam(value = "rptid") String rptid,
-                                    @RequestParam(value = "label") String label,
-                                    @RequestParam(value = "age") Integer age) throws UnsupportedEncodingException {
+    public Msg PushInsuranceForpost(@RequestBody PushBody pushBody) throws UnsupportedEncodingException {
 
 
         //Utf8 utf8 = new Utf8();
         //String s = utf8.convertPercent(label);
-        return userReport.Push(rptid, label,age);
+        return userReport.Push(pushBody.getRptid(), pushBody.getLabel(),pushBody.getAge());
     }
 
     @GetMapping(value = "/push")

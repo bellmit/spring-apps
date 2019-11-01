@@ -1060,10 +1060,12 @@ object ClassiFication {
     //不推送甲状腺判断
     jzxLabels.foreach(label=>{
       val rs: String = MatchJzx.panduan(label)
+
       if(rs.contains("0")){
         flag="0"
       }
     })
+
 
     //肝返回1，甲状腺返回2，高血压返回3，糖尿病返回4,其它异常返回5,不存在此异常返回0
     //根据的甲状腺的flag来判断是否推送甲状腺
@@ -1078,7 +1080,7 @@ object ClassiFication {
     }else{
       rs_builder.append("0_")
     }
-    if(flag.equals("1")){
+    if(flag.equals("0")){
       rs_builder.append("0_")
     }else{
       //查看甲状腺是否为有病,有病推

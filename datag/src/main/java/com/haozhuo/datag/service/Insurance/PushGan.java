@@ -57,7 +57,7 @@ public class PushGan {
                 "血小板，血小板、血小板总数(PLT)、血小板计数、血小板总数(五分类)(PLT)、血小板计数（PLT)血小板数目(PLT)、血小板计数（PLT）、血小板计数[PLT]、血小板计数.、血小板计数(TLT)、血小板计数（PLC）、血小板[PLT]、血小板(PLT)、血小板.";
         /* InsuranceMap insuranceMap = userReport.UserRep(rptid);*/
         Map<String, String> valueMap = insuranceMap.getValueMap();
-        Map<String, String> textRefMap = insuranceMap.getTextRefMap();
+        Map<String, String> refMap = insuranceMap.getTextRefMap();
         Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
         String rsval = insuranceMap.getRsval();
         String nonum = MatchGan.nonum(rsval);
@@ -78,7 +78,7 @@ public class PushGan {
         for (String a : valueMap.keySet()) {
             String flagid = flagIdMap.get(a);
             String s1 = valueMap.get(a);
-            String ref = textRefMap.get(a);
+            String ref = refMap.get(a);
             String[] key = a.split(",");
             if (s1.contains("弃")||s1.contains("查")){
                 continue;
@@ -130,8 +130,8 @@ public class PushGan {
 
                     }else {
                         double v = Double.parseDouble(trim);
-                        double beiShu = getBeiShu.getBeiShu(v, ref);
-                        getBeiShu.getBeiShu(v, ref);
+                        String filter = getBeiShu.filter(ref);
+                        double beiShu = (double) getBeiShu.getBeiShu(v, filter);
                         if (beiShu != v) {
                             if (beiShu > 10) {
                                 rs = "0";
@@ -149,7 +149,8 @@ public class PushGan {
 
                 } else {
                     double v = Double.parseDouble(Pattern.compile(REGEX).matcher(s1).replaceAll("").trim());
-                    double beiShu = getBeiShu.getBeiShu(v, ref);
+                    String filter = getBeiShu.filter(ref);
+                    double beiShu = (double) getBeiShu.getBeiShu(v, filter);
                     if (beiShu != v) {
                         if (beiShu > 10) {
                             rs = "0";
@@ -183,7 +184,8 @@ public class PushGan {
 
                     } else {
                         double v = Double.parseDouble(trim);
-                        double beiShu = getBeiShu.getBeiShu(v, ref);
+                        String filter = getBeiShu.filter(ref);
+                        double beiShu = (double) getBeiShu.getBeiShu(v, filter);
                         if (beiShu != v) {
                             if (beiShu > 10) {
                                 rs = "0";

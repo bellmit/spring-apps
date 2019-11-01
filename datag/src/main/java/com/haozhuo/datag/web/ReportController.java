@@ -100,7 +100,7 @@ public class ReportController {
     public Msg PushInsuranceForpost(@RequestParam(value = "rptid") String rptid,
                                     @RequestParam(value = "label") String label,
                                     @RequestParam(value = "age") Integer age) throws UnsupportedEncodingException {
-        //System.out.println();
+        //System.out.println();//
 
         //Utf8 utf8 = new Utf8();
         //String s = utf8.convertPercent(label);

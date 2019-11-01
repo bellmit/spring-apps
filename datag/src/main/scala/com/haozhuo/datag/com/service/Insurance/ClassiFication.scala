@@ -1057,7 +1057,7 @@ object ClassiFication {
     //rs是一个等待判断项
 
     var flag="1"
-    //推送甲状腺判断
+    //不推送甲状腺判断
     jzxLabels.foreach(label=>{
       val rs: String = MatchJzx.panduan(label)
       if(rs.contains("0")){
@@ -1078,10 +1078,16 @@ object ClassiFication {
     }else{
       rs_builder.append("0_")
     }
-    if(flag.equals("0")){
-      rs_builder.append("1_")
-    }else{
+    if(flag.equals("1")){
       rs_builder.append("0_")
+    }else{
+      //查看甲状腺是否为有病,有病推
+      if(rsString.contains("2")){
+        rs_builder.append("1_")
+      }else{
+        rs_builder.append("0_")
+      }
+
     }
     if(rsString.contains("3")){
       rs_builder.append("1_")

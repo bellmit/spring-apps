@@ -1,9 +1,6 @@
 package com.haozhuo.datag.web;
 
-import com.haozhuo.datag.common.RedisUtil;
-import com.haozhuo.datag.common.ResultCodeBase;
-import com.haozhuo.datag.common.StringUtil;
-import com.haozhuo.datag.common.TipConstBase;
+import com.haozhuo.datag.common.*;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.EsService;
@@ -84,11 +81,11 @@ public class ReportController {
 
     @GetMapping(value = "/weibao/{rptid}")
     @ApiOperation(value = "微保")
-    public ResponseEntity<WeiBaoM> Weibao(@PathVariable(value = "rptid") String rptid)  {
+    public ResponseEntity<WeiBaoM> Weibao(@PathVariable(value = "rptid") String rptid) {
         Msg1 rep1 = weiBao.getRep1(rptid);
 
 
-        return  new ResponseEntity<>(rep1.getCode()==0 ? ResultCodeBase.CODE_SUCCESS :rep1.getCode(),StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 :rep1.getMsg() ,rep1.getWeiBaoM());
+        return new ResponseEntity<>(rep1.getCode() == 0 ? ResultCodeBase.CODE_SUCCESS : rep1.getCode(), StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 : rep1.getMsg(), rep1.getWeiBaoM());
     }
 
     @GetMapping(value = "/weibao")
@@ -101,49 +98,52 @@ public class ReportController {
     @PostMapping(value = "/push")
     @ApiOperation(value = "推送")
     public Msg PushInsuranceForpost(@RequestParam(value = "rptid") String rptid,
-                                @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
-<<<<<<< HEAD
-        //System.out.println(URLDecoder.decode(label,"utf-8"));
-        return userReport.Push(rptid,URLDecoder.decode(label,"utf-8"));
-=======
+                                    @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
         //System.out.println();
 
         //Utf8 utf8 = new Utf8();
         //String s = utf8.convertPercent(label);
-        return userReport.Push(rptid,label);
+        return userReport.Push(rptid, label);
     }
 
     @GetMapping(value = "/push")
     @ApiOperation(value = "推送")
     public Msg PushInsuranceForget(@RequestParam(value = "rptid") String rptid,
-                             @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
+                                   @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
         //System.out.println();
 
         Utf8 utf8 = new Utf8();
         String s = utf8.convertPercent(label);
-        return userReport.Push(rptid,URLDecoder.decode(s, "utf8"));
->>>>>>> origin/master
+        return userReport.Push(rptid, URLDecoder.decode(s, "utf8"));
     }
 
     @GetMapping(value = "/push1")
     @ApiOperation(value = "报告查询")
-    public InsuranceMap PushInsurance(@RequestParam(value = "rptid") String rptid)  {
+    public InsuranceMap PushInsurance(@RequestParam(value = "rptid") String rptid) {
 
 
         return userReport.UserRep(rptid);
     }
 
-      @GetMapping(value = "/haskey")
-        public InsuranceMap haskey(@RequestParam(value = "listname") String listname ,
-                                   @RequestParam(value = "rptid") String rptid ){
-          String day = esService.getlastday(rptid);
-          String substring = day.substring(0, 10);
-          String rowkey = substring + "_" + rptid ;
-          String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
-          Scan scan = new Scan();
-          scan.setStartRow(rowkey.getBytes());
-          scan.setStopRow(endrowkey.getBytes());
-           return userReport.getRep(scan,listname);
-        }
+    @GetMapping(value = "/pushtest")
+    @ApiOperation(value = "测试")
+    public void test() throws IOException {
+
+
+        userReport.test();
+    }
+
+    @GetMapping(value = "/haskey")
+    public InsuranceMap haskey(@RequestParam(value = "listname") String listname,
+                               @RequestParam(value = "rptid") String rptid) {
+        String day = esService.getlastday(rptid);
+        String substring = day.substring(0, 10);
+        String rowkey = substring + "_" + rptid;
+        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
+        Scan scan = new Scan();
+        scan.setStartRow(rowkey.getBytes());
+        scan.setStopRow(endrowkey.getBytes());
+        return userReport.getRep(scan, listname);
+    }
 
 }

@@ -119,6 +119,9 @@ public class PushGaoxueya {
             String[] split = a.split(",");
             boolean a1 = str.contains(split[1]);
             String s1 = valueMap.get(a);
+            if (s1.contains("弃")||s1.contains("查")){
+                continue;
+            }
             if (a1==true){
                 String s = flagIdMap.get(a);
                 int i = Integer.parseInt(s);

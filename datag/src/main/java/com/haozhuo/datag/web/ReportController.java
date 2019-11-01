@@ -98,23 +98,25 @@ public class ReportController {
     @PostMapping(value = "/push")
     @ApiOperation(value = "推送")
     public Msg PushInsuranceForpost(@RequestParam(value = "rptid") String rptid,
-                                    @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
+                                    @RequestParam(value = "label") String label,
+                                    @RequestParam(value = "age") Integer age) throws UnsupportedEncodingException {
         //System.out.println();
 
         //Utf8 utf8 = new Utf8();
         //String s = utf8.convertPercent(label);
-        return userReport.Push(rptid, label);
+        return userReport.Push(rptid, label,age);
     }
 
     @GetMapping(value = "/push")
     @ApiOperation(value = "推送")
     public Msg PushInsuranceForget(@RequestParam(value = "rptid") String rptid,
-                                   @RequestParam(value = "label") String label) throws UnsupportedEncodingException {
+                                   @RequestParam(value = "label") String label,
+                                   @RequestParam(value = "age") Integer age) throws UnsupportedEncodingException {
         //System.out.println();
 
         Utf8 utf8 = new Utf8();
         String s = utf8.convertPercent(label);
-        return userReport.Push(rptid, URLDecoder.decode(s, "utf8"));
+        return userReport.Push(rptid, URLDecoder.decode(s, "utf8"),age);
     }
 
     @GetMapping(value = "/push1")
@@ -125,6 +127,7 @@ public class ReportController {
         return userReport.UserRep(rptid);
     }
 
+/*
     @GetMapping(value = "/pushtest")
     @ApiOperation(value = "测试")
     public void test() throws IOException {
@@ -132,6 +135,7 @@ public class ReportController {
 
         userReport.test();
     }
+*/
 
     @GetMapping(value = "/haskey")
     public InsuranceMap haskey(@RequestParam(value = "listname") String listname,

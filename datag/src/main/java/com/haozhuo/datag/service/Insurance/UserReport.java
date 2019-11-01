@@ -128,7 +128,7 @@ public class UserReport {
         return insuranceMap;
     }
 
-    public Msg Push(String rptid, String label) {
+    public Msg Push(String rptid, String label,Integer age) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
         String day = esService.getlastday(rptid);
@@ -145,31 +145,31 @@ public class UserReport {
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
             if (label.equals("label")){
-                Msg msg1 = getMsg(s, label);
+                Msg msg1 = getMsg(s, label,age);
                 return msg1;
             }
-            if (fication.contains("4") && split[0].equals("1")) {//肝
+            if (fication.contains("4") && split[0].equals("1")&&age<=60) {//肝
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn)  ;
                 return msg;
-            } else if (fication.contains("j1")) {//甲
+            } else if (fication.contains("j1")&&age<=60) {//甲
                     msg.setCode("200");
                     msg.setMsg("查询成功");
                     fourIn.setAbnormal(1);
                     fourIn.setLabel(2);
                     msg.setFourIn(fourIn);
                     return msg;
-            } else if (fication.contains("2") && split[2].equals("1")) {//高
+            } else if (fication.contains("2") && split[2].equals("1")&&age<=55) {//高
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (fication.contains("1") && split[3].equals("1")) {//糖
+            } else if (fication.contains("1") && split[3].equals("1")&&age<=55) {//糖
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
@@ -191,10 +191,10 @@ public class UserReport {
             System.out.println(s);
             String s1 = ClassiFication.fourRs();
             System.out.println(s1);
-            //redisUtil.set(rptid, s1,3600);
+            redisUtil.set(rptid, s1,3600);
             logger.info("缓存添加完成");
             if (label.equals("label")){
-                Msg msg1 = getMsg(s1, label);
+                Msg msg1 = getMsg(s1, label,age);
                 return msg1;
             }
             if (s.contains("0")) {
@@ -204,28 +204,28 @@ public class UserReport {
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (s.contains("g")) {
+            } else if (s.contains("g")&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (s.contains("j")) {
+            } else if (s.contains("j")&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (s.contains("t")) {
+            } else if (s.contains("t")&&age<=55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
                 return msg;
-            } else if (s.contains("x")) {
+            } else if (s.contains("x")&&age<=55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
@@ -239,29 +239,29 @@ public class UserReport {
         return msg;
     }
 
-    public Msg getMsg(String data, String label) {
+    public Msg getMsg(String data, String label,Integer age) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
         String[] split = data.split("_");
 
         if (label.equals("label")) {
             fourIn.setAbnormal(2);
-            if (split[0].equals("1")) {
+            if (split[0].equals("1")&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-            } else if (split[1].equals("1")) {
+            } else if (split[1].equals("1")&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
-            } else if (split[2].equals("1")) {
+            } else if (split[2].equals("1")&&age<=55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-            } else if (split[3].equals("1")) {
+            } else if (split[3].equals("1")&&age<=55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(3);
@@ -276,7 +276,7 @@ public class UserReport {
         return msg;
     }
 
-    public void test() throws IOException {
+   /* public void test() throws IOException {
         String rptid = null;
         String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\1000.txt";
         FileReader reader = null;
@@ -297,7 +297,7 @@ public class UserReport {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 }
 
 

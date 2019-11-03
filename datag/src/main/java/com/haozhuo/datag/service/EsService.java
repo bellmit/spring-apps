@@ -166,7 +166,7 @@ public class EsService {
                 .setQuery(matchQuery("healthReportId", reportId.trim()));
         logger.debug(srb.toString());
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
-        System.out.println(stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString());
+        //System.out.println(stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString());
         return stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString();
 
     }

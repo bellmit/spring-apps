@@ -221,9 +221,9 @@ public class UserReport {
             }
 
             String  s2= str5.toString();
-            System.out.println(s+","+s1+","+fication2+","+s2);
+            //System.out.println(s+","+s1+","+fication2+","+s2);
 
-           // redisUtil.set(rptid, s2,3600);
+            redisUtil.set(rptid, s2,3600);
 
             logger.info("缓存添加完成");
             if (label.equals("label")){

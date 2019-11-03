@@ -107,7 +107,7 @@ public class PushGan {
                 }
             }
 
-            if (a.contains("血红蛋白") || a.contains("Hb")) {
+            if (a.contains("血红蛋白") || a.contains("Hb")||a.contains("糖")) {
                 String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
                 if (trim.equals("")||a.contains("平均")||a.contains("M")) {
 

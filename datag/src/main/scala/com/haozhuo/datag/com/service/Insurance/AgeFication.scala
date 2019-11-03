@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat
 import java.util
 import java.util.Date
 
-import com.haozhuo.datag.common.persto_java.connect
+
 
 object AgeFication {
 

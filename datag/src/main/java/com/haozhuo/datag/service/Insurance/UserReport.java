@@ -133,7 +133,7 @@ public class UserReport {
         FourIn fourIn = new FourIn();
         String day = esService.getlastday(rptid);
         String getlabel = esService.getLabelsByReportId(rptid);
-
+        int [] arr = new int[4];
         if (JavaUtils.isEmpty(day)){
             msg.setCode("300");
             msg.setMsg("没有此报告id");
@@ -147,7 +147,7 @@ public class UserReport {
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
             if (label.equals("label")){
-                Msg msg1 = getMsg(s, label,age);
+                Msg msg1 = getMsg(label,age,arr);
                 return msg1;
             }
             if (fication.contains("4") && split[0].equals("1")&&age<=60) {//肝
@@ -190,7 +190,7 @@ public class UserReport {
             logger.info("redis中不存在此缓存id数据，开始查询hbase");
             InsuranceMap insuranceMap = UserRep(rptid);
             String s = ClassiFication.result(singleNormTag, insuranceMap);
-            int [] arr = new int[4];
+
             //System.out.println(s);
             //s1 = 1_1_1_1e
             //s2 = 1_0_1_1
@@ -203,7 +203,7 @@ public class UserReport {
                 if (i==1){
                     arr[i]=Integer.parseInt(split[i]);
                 }else {
-                    if (split[i].equals("1")&&split[i].equals("1")){
+                    if (split[i].equals("1")&&split1[i].equals("1")){
                         arr[i]=1;
                     }else {
                         arr[i]=0;
@@ -223,11 +223,11 @@ public class UserReport {
             String  s2= str5.toString();
             System.out.println(s+","+s1+","+fication2+","+s2);
 
-            redisUtil.set(rptid, s2,3600);
+           // redisUtil.set(rptid, s2,3600);
 
             logger.info("缓存添加完成");
             if (label.equals("label")){
-                Msg msg1 = getMsg(s1, label,age);
+                Msg msg1 = getMsg( label,age,arr);
                 return msg1;
             }
             if (s.contains("0")) {
@@ -279,29 +279,29 @@ public class UserReport {
 
     }
 
-    public Msg getMsg(String data, String label,Integer age) {
+    public Msg getMsg( String label,Integer age,int [] arr) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
-        String[] split = data.split("_");
+
 
         if (label.equals("label")) {
             fourIn.setAbnormal(2);
-            if (split[0].equals("1")&&age<=60) {
+            if (arr[0]==1&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-            } else if (split[1].equals("1")&&age<=60) {
+            } else if (arr[1]==1&&age<=60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
-            } else if (split[2].equals("1")&&age<=55) {
+            } else if (arr[2]==1&&age<=55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-            } else if (split[3].equals("1")&&age<=55) {
+            } else if (arr[3]==1&&age<=55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(3);

@@ -109,7 +109,7 @@ public class PushGan {
 
             if (a.contains("血红蛋白") || a.contains("Hb")) {
                 String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
-                if (trim.equals("")) {
+                if (trim.equals("")||a.contains("平均")||a.contains("M")) {
 
                 } else {
                     double v = Double.parseDouble(trim);
@@ -208,7 +208,7 @@ public class PushGan {
         }else {
             double v = Double.parseDouble(trim);
         }*/
-        //System.out.println("肝："+rsv);
+        System.out.println("肝："+rsv);
         return rs;
     }
 

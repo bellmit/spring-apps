@@ -146,6 +146,9 @@ public class UserReport {
             System.out.println(fication);
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
+            for (int i = 0;i<arr.length;i++) {
+                arr[i]=Integer.parseInt(split[i]);
+            }
             if (label.equals("label")){
                 Msg msg1 = getMsg(label,age,arr);
                 return msg1;
@@ -221,7 +224,7 @@ public class UserReport {
             }
 
             String  s2= str5.toString();
-            //System.out.println(s+","+s1+","+fication2+","+s2);
+            System.out.println(s+","+s1+","+fication2+","+s2);
 
             redisUtil.set(rptid, s2,3600);
 

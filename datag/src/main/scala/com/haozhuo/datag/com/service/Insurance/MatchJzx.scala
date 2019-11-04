@@ -3,7 +3,7 @@ package com.haozhuo.datag.com.service.Insurance
 object MatchJzx {
   //甲状腺:众安不推送关键词 正则集合
   val ZAjzx = Array(
-    (".*甲状腺.{0,10}结节.*"),
+    (".*甲状.{0,2}腺.{0,10}结节.*"),
     (".*甲状腺.{0,3}腺瘤.*"),
     (".*甲状腺.{0,10}钙化.*"),
     (".*毒性.*甲状腺肿.*"),

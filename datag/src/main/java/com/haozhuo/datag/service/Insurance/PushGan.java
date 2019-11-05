@@ -208,7 +208,7 @@ public class PushGan {
         }else {
             double v = Double.parseDouble(trim);
         }*/
-        System.out.println("肝："+rsv);
+        //System.out.println("肝："+rsv);
         return rs;
     }
 

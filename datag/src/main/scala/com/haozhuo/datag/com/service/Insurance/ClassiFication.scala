@@ -710,10 +710,6 @@ object ClassiFication {
     ("^(?=.*天门冬氨酸氨基转移酶|.*天冬氨酸氨基转移酶|.*门冬氨酸氨基转移酶).*$"),
     ("^(?=.*尿素氮)(?!.*肌酐).*$"),
     ("^(?=.*尿蛋白).*$"),
-    (".*(Q波异常|异常Q波).*"),
-    (".*(ST段).*"),
-    ("(.*T波.*)"),
-    ("^.*心肌梗塞.*"),
     ("^(?=.*胆汁酸).*$"),
     ("^(?=.*戊)(?=.*肝).*$"),
     ("^(球蛋白){1}|(?=.*血清球蛋白|.*球蛋白测定).*|(?=.*球蛋白)(?=.*GL).*$"),
@@ -888,6 +884,9 @@ object ClassiFication {
     /*val gan = new PushGan(InsuranceMap)
         val rs: String = gan.PushGan(insuranceMap)*/
 //    println(fication("糖尿病")+"哈哈")
+    println(getFication2("心电图Q波异常"))
+    println(fication("戊型肝炎病毒抗体阳性"))
+
   }
 
   var gan_rs: String=""

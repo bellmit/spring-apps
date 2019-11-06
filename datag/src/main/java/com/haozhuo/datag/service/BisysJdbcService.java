@@ -62,21 +62,28 @@ public class BisysJdbcService {
     private final static String managerQuestion = "select date, question_num, pay_amount, share_num, collect_num,thank_num ,circusee_num,circusee_amount, " +
             "time_out_num, question_closely_num from manage_question_all where date >= ? and date <=?";
 
-    private final static String healthCheckQuerySql = "select 'App' as src ,`date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
-            "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
-            "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
-            "from (  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount," +
-            "refund_success_amount from ops_service_transaction x where x.facilitator like '%美年%'  and `date` >=  ? and `date` <= ? " +
-            "union select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
-            "from ops_service_transaction x where x.facilitator like '%美兆%'  and `date` >= ? and `date` <= ?) total group by `date`" +
-            "union " +
-            "select '微信' as src, `date`,order_num,pay_order_num, pay_order_amount, refund_win_num, refund_win_amount, pay_use_num,pay_profit_amount, " +
-            "refund_success_amount from daily_service_transaction_wechat where `date` >= ? and `date` <= ?" +
-            "union " +
-            "select '58到家' as src, `date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
-            "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
-            "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
-            "from ops_service_transaction x where x.facilitator ='58到家项目'  and `date` >= ? and `date` <= ? group by `date` ";
+    private final static String healthCheckQuerySql = "select DATE_FORMAT(date, '%Y-%m') as date,'App' as src , sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
+            "            sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
+            "            sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
+            "            from " +
+            "            (  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount " +
+            "            from ops_service_transaction x where x.facilitator like '%美年%' " +
+            "            union " +
+            "            select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
+            "            from ops_service_transaction x " +
+            "            where x.facilitator like '%美兆%'  ) total where DATE_FORMAT(date, '%Y-%m') >= '2016-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01'group by DATE_FORMAT(date, '%Y-%m')" +
+            "            union " +
+            "            select DATE_FORMAT(date, '%Y-%m') as date1,'微信' as src,sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
+            "            sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
+            "            sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
+            "            from daily_service_transaction_wechat " +
+            "            where DATE_FORMAT(date, '%Y-%m') >= '2016-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01' group by DATE_FORMAT(date, '%Y-%m')" +
+            "            union " +
+            "            select DATE_FORMAT(date, '%Y-%m') as date,'58到家' as src, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount," +
+            "             sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, " +
+            "             sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
+            "             from ops_service_transaction x " +
+            "             where x.facilitator ='58到家项目'  and DATE_FORMAT(date, '%Y-%m') >= '2015-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01' group by DATE_FORMAT(date, '%Y-%m')";
 
     private final static String healthCheckQueryTotalSql = "select '总计' as src ,`date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
@@ -90,37 +97,39 @@ public class BisysJdbcService {
             "union select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
             "from ops_service_transaction x where x.facilitator like '%美兆%'  and `date` >= ? and `date` <= ?) total group by `date`";
     private final static String healthCheckQuerySqlbymohth = "select DATE_FORMAT(date, '%Y-%m') as date,'App' as src , sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
-            "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
-            "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
-            "from " +
-            "(  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount " +
-            "from ops_service_transaction x where x.facilitator like '%美年%'  and DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ?" +
-            "union " +
-            "select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
-            "from ops_service_transaction x " +
-            "where x.facilitator like '%美兆%'  and DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ?) total group by DATE_FORMAT(date, '%Y-%m')" +
-            "union " +
-            "select DATE_FORMAT(date, '%Y-%m') as date,'微信' as src,order_num,pay_order_num, pay_order_amount, refund_win_num, refund_win_amount, pay_use_num,pay_profit_amount, refund_success_amount " +
-            "from daily_service_transaction_wechat " +
-            "where DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ? group by DATE_FORMAT(date, '%Y-%m')" +
-            "union " +
-            "select DATE_FORMAT(date, '%Y-%m') as date,'58到家' as src, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount," +
-            " sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, " +
-            " sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
-            " from ops_service_transaction x " +
-            " where x.facilitator ='58到家项目'  and DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ? group by `date` ";
+            "            sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
+            "            sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
+            "            from " +
+            "            (  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount " +
+            "            from ops_service_transaction x where x.facilitator like '%美年%' " +
+            "            union " +
+            "            select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
+            "            from ops_service_transaction x " +
+            "            where x.facilitator like '%美兆%'  ) total where DATE_FORMAT(date, '%Y-%m') >= '2016-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01'group by DATE_FORMAT(date, '%Y-%m')" +
+            "            union " +
+            "            select DATE_FORMAT(date, '%Y-%m') as date1,'微信' as src,sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
+            "            sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
+            "            sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
+            "            from daily_service_transaction_wechat " +
+            "            where DATE_FORMAT(date, '%Y-%m') >= '2016-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01' group by DATE_FORMAT(date, '%Y-%m')" +
+            "            union " +
+            "            select DATE_FORMAT(date, '%Y-%m') as date,'58到家' as src, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount," +
+            "             sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, " +
+            "             sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
+            "             from ops_service_transaction x " +
+            "             where x.facilitator ='58到家项目'  and DATE_FORMAT(date, '%Y-%m') >= '2015-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01' group by DATE_FORMAT(date, '%Y-%m') ";
 
     private final static String healthCheckQueryTotalSqlbymonth =
-            "select  DATE_FORMAT(date, '%Y-%m') as date, '总计' as src , sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount \n" +
+            "select  DATE_FORMAT(date, '%Y-%m') as date, '总计' as src , sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
                     "from" +
-                    "(select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount \n" +
+                    "(select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount " +
                     "from ops_service_transaction " +
                     "where facilitator like '%美年%' " +
                     "union " +
-                    "select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount \n" +
+                    "select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount " +
                     "from daily_service_transaction_wechat " +
                     "union " +
-                    "select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount \n" +
+                    "select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount,refund_success_amount " +
                     "from ops_service_transaction x " +
                     "where x.facilitator ='58到家项目' " +
                     "union " +

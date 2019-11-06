@@ -105,19 +105,19 @@ public class BisysJdbcService {
             "            union " +
             "            select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
             "            from ops_service_transaction x " +
-            "            where x.facilitator like '%美兆%'  ) total where DATE_FORMAT(date, '%Y-%m') >= '2016-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01'group by DATE_FORMAT(date, '%Y-%m')" +
+            "            where x.facilitator like '%美兆%'  ) total where DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ?group by DATE_FORMAT(date, '%Y-%m')" +
             "            union " +
             "            select DATE_FORMAT(date, '%Y-%m') as date1,'微信' as src,sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "            sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
             "            sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
             "            from daily_service_transaction_wechat " +
-            "            where DATE_FORMAT(date, '%Y-%m') >= '2016-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01' group by DATE_FORMAT(date, '%Y-%m')" +
+            "            where DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <=? group by DATE_FORMAT(date, '%Y-%m')" +
             "            union " +
             "            select DATE_FORMAT(date, '%Y-%m') as date,'58到家' as src, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount," +
             "             sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, " +
             "             sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount  " +
             "             from ops_service_transaction x " +
-            "             where x.facilitator ='58到家项目'  and DATE_FORMAT(date, '%Y-%m') >= '2015-01' and DATE_FORMAT(date, '%Y-%m') <= '2019-01' group by DATE_FORMAT(date, '%Y-%m') ";
+            "             where x.facilitator ='58到家项目'  and DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ? group by DATE_FORMAT(date, '%Y-%m') ";
 
     private final static String healthCheckQueryTotalSqlbymonth =
             "select  DATE_FORMAT(date, '%Y-%m') as date, '总计' as src , sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
@@ -686,7 +686,7 @@ public class BisysJdbcService {
                         }
                 );
             }else {
-                list = bisysDB.query( healthCheckQuerySqlbymohth, new Object[]{date, endDate, date, endDate, date, endDate, date, endDate},
+                list = bisysDB.query( healthCheckQuerySqlbymohth, new Object[]{date, endDate, date, endDate, date, endDate},
                         (resultSet, i) -> {
                             HealthCheck healthCheck = new HealthCheck();
                             healthCheck.setSrc(resultSet.getString("src"));

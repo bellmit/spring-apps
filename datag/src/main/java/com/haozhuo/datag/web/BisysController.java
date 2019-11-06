@@ -120,6 +120,18 @@ public class BisysController {
         return bisysJdbcService.getHealthCheck(isTotal, date, endDate);
     }
 
+    @GetMapping("/dailyReport/tjz/healthCheckbymonth")
+    @ApiOperation(value = "体检渠道数据", notes = healthCheckNotes)
+    public Object getHealthCheckbymonth(
+            @RequestParam(value = "isTotal", defaultValue = "false") boolean isTotal,
+            @RequestParam(value = "date") String date,
+            @RequestParam(value = "endDate", defaultValue = "null") String endDate
+    ) {
+        if ("null".equals(endDate))
+            endDate = date;
+        return bisysJdbcService.getHealthCheckbymonth(isTotal, date, endDate);
+    }
+
     @PostMapping("/dailyReport/tjz/add/HealthCheckFromWeChat")
     @ApiOperation(value = "添加体检渠道统计(微信)", notes = "{\"date\": \"2019-10-10\", \"orderNum\": 0, \"payOrderNum\": 10, \"payOrderAmount\": 0, \"refundWinNum\": 0, \"refundWinAmount\": 0, \"payUseNum\": 10, \"payProfitAmount\": 10,\"refundSuccessAmount\": 0,\"upload_time\":\"2019-01-01 11:11:11\", \"operate_account\":\"123\"}  ;  " + healthCheckNotes)
 //    public Object addHealthCheckFromWeChat(@RequestBody HealthCheck healthCheck) {

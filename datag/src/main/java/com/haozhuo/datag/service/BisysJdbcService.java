@@ -2,6 +2,7 @@ package com.haozhuo.datag.service;
 
 
 import com.haozhuo.datag.common.JavaUtils;
+import com.haozhuo.datag.model.HBStore;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.util.SqlDate;
 import org.slf4j.Logger;
@@ -830,6 +831,30 @@ public class BisysJdbcService {
 
         }
         System.out.println(count);
+    }
+    /**
+     * 根据传入的page和size获取门店信息
+     *
+     * */
+    public List<HBStore> getHBStorefoByPage(int pageNo, int pageSize){
+        List<HBStore> list = null;
+        String sql = String.format("select DISTINCT `name` ,address,phone from hubei_factory limit  ?, ?");
+        int from = (pageNo - 1) * pageSize;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = bisysDB.query(sql, new Object[]{from, pageSize},
+                    (resultSet, i) -> {
+                        HBStore hbStore = new HBStore();
+                        hbStore.setName(resultSet.getString("name"));
+                        hbStore.setAddress(resultSet.getString("address"));
+                        hbStore.setPhone(resultSet.getString("phone"));
+                        return hbStore;
+                    }
+            );
+        } catch (Exception ex) {
+            logger.error("getPageRecord", ex);
+        }
+        return list;
     }
 
 

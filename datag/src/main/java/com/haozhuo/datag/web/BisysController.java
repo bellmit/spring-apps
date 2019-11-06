@@ -304,6 +304,15 @@ public class BisysController {
         return bisysJdbcService.getClick(click);
     }*/
 
+    @CrossOrigin(origins = "*")
+    @GetMapping("/hb/store")
+    @ApiOperation(value = "获取湖北省所有门店", notes = uploadInfoNotes)
+    public Object getfoPageSize(@RequestParam(value = "pageNo") int pageNo,
+                                @RequestParam(value = "pageSize") int pageSize
+    ) {
+        return bisysJdbcService.getHBStorefoByPage(pageNo, pageSize);
+    }
+
 }
 
 

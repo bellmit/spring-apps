@@ -143,7 +143,7 @@ public class UserReport {
         if (redisUtil.hasKey(rptid)) {
             logger.info("redis中存在此缓存id数据，开始查询");
             String fication = ClassiFication.fication(singleNormTag);
-            System.out.println(fication);
+            //System.out.println(fication);
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
             for (int i = 0;i<arr.length;i++) {
@@ -151,6 +151,7 @@ public class UserReport {
             }
             if (label.equals("label")){
                 Msg msg1 = getMsg(label,age,arr);
+                logger.info("rptid:"+rptid+",Code:"+msg1.getCode()+",Msg:"+msg1.getMsg()+",Abnormal:"+msg1.getFourIn().getAbnormal()+",Label:"+msg1.getFourIn().getLabel());
                 return msg1;
             }
             if (fication.contains("4") && split[0].equals("1")&&age<=60) {//肝
@@ -158,7 +159,8 @@ public class UserReport {
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
-                msg.setFourIn(fourIn)  ;
+                msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else if (fication.contains("3")&&split[1].equals("1")&&age<=60) {//甲
                     msg.setCode("200");
@@ -166,6 +168,7 @@ public class UserReport {
                     fourIn.setAbnormal(1);
                     fourIn.setLabel(2);
                     msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                     return msg;
             } else if (fication.contains("2") && split[2].equals("1")&&age<=55) {//高
                 msg.setCode("200");
@@ -173,6 +176,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else if (fication.contains("1") && split[3].equals("1")&&age<=55) {//糖
                 msg.setCode("200");
@@ -180,6 +184,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else {
                 msg.setCode("200");
@@ -187,6 +192,7 @@ public class UserReport {
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             }
         } else {
@@ -224,13 +230,14 @@ public class UserReport {
             }
 
             String  s2= str5.toString();
-            System.out.println(s+","+s1+","+fication2+","+s2);
+            //System.out.println(s+","+s1+","+fication2+","+s2);
 
             redisUtil.set(rptid, s2,3600);
 
             logger.info("缓存添加完成");
             if (label.equals("label")){
                 Msg msg1 = getMsg( label,age,arr);
+                logger.info("rptid:"+rptid+",Code:"+msg1.getCode()+",Msg:"+msg1.getMsg()+",Abnormal:"+msg1.getFourIn().getAbnormal()+",Label:"+msg1.getFourIn().getLabel());
                 return msg1;
             }
             if (s.contains("0")) {
@@ -239,6 +246,7 @@ public class UserReport {
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else if (s.contains("g")&&age<=60) {
                 msg.setCode("200");
@@ -246,6 +254,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else if (s.contains("j")&&arr[1]==1&&age<=60) {
                 msg.setCode("200");
@@ -253,6 +262,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else if (s.contains("t")&&age<=55) {
                 msg.setCode("200");
@@ -260,6 +270,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             } else if (s.contains("x")&&age<=55) {
                 msg.setCode("200");
@@ -267,6 +278,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             }else {
                 msg.setCode("200");
@@ -274,6 +286,7 @@ public class UserReport {
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
+                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
                 return msg;
             }
         }
@@ -315,6 +328,7 @@ public class UserReport {
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
             }
+
         }
         return msg;
     }

@@ -3,6 +3,7 @@ package com.haozhuo.datag.service;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Tuple;
 import com.haozhuo.datag.model.*;
+import com.haozhuo.datag.model.crm.HealthyClub;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
 import com.haozhuo.datag.util.SqlSplit;
 import org.slf4j.Logger;
@@ -393,6 +394,36 @@ public class DataEtlJdbcService {
             });
             return forumList;
         }
+    }
+    /**
+     * 根据infoId获取Title、image
+     */
+    public List<HealthyClub> getTitleAndImageByInfoId(String infoId) {
+        // String str2 = StringUtils.join(infoId, ",");
+        // Map<String, Map<String, String>> map = null;
+        List<HealthyClub> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            String sql = "select information_id, title,image from article4 where information_id in ("+infoId+")";
+            System.out.println("1："+sql);
+
+            list =dataetlDB.query(sql,
+                    (resultSet, i) -> {
+                        HealthyClub healthyClub = new HealthyClub(
+
+                                resultSet.getInt("information_id"),
+                                resultSet.getString("title"),
+                                resultSet.getString("image")
+                        );
+                        System.out.println("2："+sql);
+                        return healthyClub;
+                    }
+            );
+        } catch (Exception ex) {
+            System.out.println(ex);
+            logger.error("getOpsMallOrder error", ex);
+        }
+        return list;
     }
 
 }

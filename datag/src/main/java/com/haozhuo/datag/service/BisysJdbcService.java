@@ -98,11 +98,11 @@ public class BisysJdbcService {
             "union " +
             "select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount " +
             "from ops_service_transaction x " +
-            "where x.facilitator like '%美兆%'  and DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ?) total group by DATE_FORMAT(date, '%Y%m')" +
+            "where x.facilitator like '%美兆%'  and DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ?) total group by DATE_FORMAT(date, '%Y-%m')" +
             "union " +
             "select DATE_FORMAT(date, '%Y-%m') as date,'微信' as src,order_num,pay_order_num, pay_order_amount, refund_win_num, refund_win_amount, pay_use_num,pay_profit_amount, refund_success_amount " +
             "from daily_service_transaction_wechat " +
-            "where DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ? group by DATE_FORMAT(date, '%Y%m')" +
+            "where DATE_FORMAT(date, '%Y-%m') >= ? and DATE_FORMAT(date, '%Y-%m') <= ? group by DATE_FORMAT(date, '%Y-%m')" +
             "union " +
             "select DATE_FORMAT(date, '%Y-%m') as date,'58到家' as src, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, sum(pay_order_amount) as pay_order_amount," +
             " sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , sum(pay_use_num) as pay_use_num, " +
@@ -124,7 +124,7 @@ public class BisysJdbcService {
                     "from ops_service_transaction x " +
                     "where x.facilitator ='58到家项目' " +
                     "union " +
-                    "select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount from ops_service_transaction x where x.facilitator like '%美兆%'  )a where  DATE_FORMAT(date, '%Y-%m')>=? and  DATE_FORMAT(date, '%Y-%m')<=? group by DATE_FORMAT(date, '%Y%m')";
+                    "select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount from ops_service_transaction x where x.facilitator like '%美兆%'  )a where  DATE_FORMAT(date, '%Y-%m')>=? and  DATE_FORMAT(date, '%Y-%m')<=? group by DATE_FORMAT(date, '%Y-%m')";
     public long getProdRiskEvaluation() {
         long pv = 0;
         try {

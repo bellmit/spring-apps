@@ -5,6 +5,7 @@ import com.haozhuo.datag.model.AbnormalParam;
 import com.haozhuo.datag.model.GoodsSearchParams;
 import com.haozhuo.datag.model.PrefUpdateMsg;
 import com.haozhuo.datag.model.SkuIdGoodsIds;
+import com.haozhuo.datag.model.crm.HealthyClub;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
 import io.swagger.annotations.ApiOperation;
@@ -594,5 +595,14 @@ public class RcmdController {
     public Object getSingleNormTag(
             @RequestParam (value = "abnormal") String abnormal) {
         return dataetlJdbcService.getSingleNormTag(abnormal);
+    }
+
+
+    @ApiOperation(value = "根据文章id得到题目和图片")
+    @GetMapping(value = "/infoId/{infoId}")
+    public List<HealthyClub> getTitleAndImage(@PathVariable(value = "infoId") String infoId) {
+
+        long beginTime = System.currentTimeMillis();
+        return dataetlJdbcService.getTitleAndImageByInfoId(infoId);
     }
 }

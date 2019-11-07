@@ -122,6 +122,14 @@ public class ReportController {
         return userReport.UserRep(rptid);
     }
 
+    @GetMapping(value = "/pushall")
+    @ApiOperation(value = "推送甲肝保险")
+    public ResponseEntity pushall(@RequestParam(value = "rptid") String rptid) {
+
+
+        return userReport.GetInsurance(rptid);
+    }
+
 /*
     @GetMapping(value = "/pushtest")
     @ApiOperation(value = "测试")

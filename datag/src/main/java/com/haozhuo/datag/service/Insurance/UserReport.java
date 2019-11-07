@@ -4,6 +4,8 @@ import com.haozhuo.datag.com.service.Insurance.ClassiFication;
 import com.haozhuo.datag.com.service.Insurance.MatchJzx;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.RedisUtil;
+import com.haozhuo.datag.model.ResponseEntity;
+import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.report.FourIn;
 import com.haozhuo.datag.model.report.InsuranceMap;
 import com.haozhuo.datag.model.report.Msg;
@@ -53,13 +55,14 @@ public class UserReport {
     private final static String HBASENAME = "DATAETL:RPT_IND";
     private final static String HBASENAME1 = "DATAETL:RPT_B";
     private static final Logger logger = LoggerFactory.getLogger(UserReport.class);
+
     public InsuranceMap UserRep(String rptid) {
         String day = esService.getlastday(rptid);
         String substring = day.substring(0, 10);
         String rowkey = substring + "_" + rptid;
         String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
         //String rowkey ="2018-04-28_7292025";
-       // String endrowkey ="2018-04-28_7292026";
+        // String endrowkey ="2018-04-28_7292026";
         Scan scan = new Scan();
         scan.setStartRow(rowkey.getBytes());
         scan.setStopRow(endrowkey.getBytes());
@@ -71,7 +74,7 @@ public class UserReport {
             String rowkey1 = newDate1 + "_" + rptid;
             String endrowkey1 = newDate1 + "_" + (Integer.parseInt(rptid) + 1);
             //String rowkey1 ="2018-04-28_7292025";
-           // String endrowkey1 ="2018-04-28_7292026";
+            // String endrowkey1 ="2018-04-28_7292026";
             scan1.setStartRow(rowkey1.getBytes());
             scan1.setStopRow(endrowkey1.getBytes());
             InsuranceMap rep1 = getRep(scan1, HBASENAME);
@@ -128,13 +131,13 @@ public class UserReport {
         return insuranceMap;
     }
 
-    public Msg Push(String rptid, String label,Integer age) {
+    public Msg Push(String rptid, String label, Integer age) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
         String day = esService.getlastday(rptid);
         String getlabel = esService.getLabelsByReportId(rptid);
-        int [] arr = new int[4];
-        if (JavaUtils.isEmpty(day)){
+        int[] arr = new int[4];
+        if (JavaUtils.isEmpty(day)) {
             msg.setCode("300");
             msg.setMsg("没有此报告id");
             return msg;
@@ -146,53 +149,53 @@ public class UserReport {
             //System.out.println(fication);
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
-            for (int i = 0;i<arr.length;i++) {
-                arr[i]=Integer.parseInt(split[i]);
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = Integer.parseInt(split[i]);
             }
-            if (label.equals("label")){
-                Msg msg1 = getMsg(label,age,arr);
-                logger.info("rptid:"+rptid+",Code:"+msg1.getCode()+",Msg:"+msg1.getMsg()+",Abnormal:"+msg1.getFourIn().getAbnormal()+",Label:"+msg1.getFourIn().getLabel());
+            if (label.equals("label")) {
+                Msg msg1 = getMsg(label, age, arr);
+                logger.info("rptid:" + rptid + ",Code:" + msg1.getCode() + ",Msg:" + msg1.getMsg() + ",Abnormal:" + msg1.getFourIn().getAbnormal() + ",Label:" + msg1.getFourIn().getLabel());
                 return msg1;
             }
-            if (fication.contains("4") && split[0].equals("1")&&age<=60) {//肝
+            if (fication.contains("4") && split[0].equals("1") && age <= 60) {//肝
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            } else if (fication.contains("3")&&split[1].equals("1")&&age<=60) {//甲
-                    msg.setCode("200");
-                    msg.setMsg("查询成功");
-                    fourIn.setAbnormal(1);
-                    fourIn.setLabel(2);
-                    msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
-                    return msg;
-            } else if (fication.contains("2") && split[2].equals("1")&&age<=55) {//高
+            } else if (fication.contains("3") && split[1].equals("1") && age <= 60) {//甲
+                msg.setCode("200");
+                msg.setMsg("查询成功");
+                fourIn.setAbnormal(1);
+                fourIn.setLabel(2);
+                msg.setFourIn(fourIn);
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                return msg;
+            } else if (fication.contains("2") && split[2].equals("1") && age <= 55) {//高
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            } else if (fication.contains("1") && split[3].equals("1")&&age<=55) {//糖
+            } else if (fication.contains("1") && split[3].equals("1") && age <= 55) {//糖
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
             } else {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(0);
-                fourIn.setLabel(0);
+                fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
             }
         } else {
@@ -208,116 +211,115 @@ public class UserReport {
 
             String[] split1 = s1.split("_");
             String[] split = fication2.split("_");
-            for (int i = 0 ;i<split1.length;i++){
-                if (i==1){
-                    arr[i]=Integer.parseInt(split[i]);
-                }else {
-                    if (split[i].equals("1")&&split1[i].equals("1")){
-                        arr[i]=1;
-                    }else {
-                        arr[i]=0;
+            for (int i = 0; i < split1.length; i++) {
+                if (i == 1) {
+                    arr[i] = Integer.parseInt(split[i]);
+                } else {
+                    if (split[i].equals("1") && split1[i].equals("1")) {
+                        arr[i] = 1;
+                    } else {
+                        arr[i] = 0;
                     }
                 }
             }
 
             StringBuffer str5 = new StringBuffer();
-            for (int i = 0;i<arr.length;i++) {
-                if (i==3){
+            for (int i = 0; i < arr.length; i++) {
+                if (i == 3) {
                     str5.append(arr[i]);
-                }else {
-                    str5.append(arr[i]+"_");
+                } else {
+                    str5.append(arr[i] + "_");
                 }
             }
 
-            String  s2= str5.toString();
+            String s2 = str5.toString();
             //System.out.println(s+","+s1+","+fication2+","+s2);
 
-            redisUtil.set(rptid, s2,3600);
+            redisUtil.set(rptid, s2, 3600);
 
             logger.info("缓存添加完成");
-            if (label.equals("label")){
-                Msg msg1 = getMsg( label,age,arr);
-                logger.info("rptid:"+rptid+",Code:"+msg1.getCode()+",Msg:"+msg1.getMsg()+",Abnormal:"+msg1.getFourIn().getAbnormal()+",Label:"+msg1.getFourIn().getLabel());
+            if (label.equals("label")) {
+                Msg msg1 = getMsg(label, age, arr);
+                logger.info("rptid:" + rptid + ",Code:" + msg1.getCode() + ",Msg:" + msg1.getMsg() + ",Abnormal:" + msg1.getFourIn().getAbnormal() + ",Label:" + msg1.getFourIn().getLabel());
                 return msg1;
             }
             if (s.contains("0")) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(0);
-                fourIn.setLabel(0);
+                fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            } else if (s.contains("g")&&age<=60) {
+            } else if (s.contains("g") && age <= 60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            } else if (s.contains("j")&&arr[1]==1&&age<=60) {
+            } else if (s.contains("j") && arr[1] == 1 && age <= 60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            } else if (s.contains("t")&&age<=55) {
+            } else if (s.contains("t") && age <= 55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            } else if (s.contains("x")&&age<=55) {
+            } else if (s.contains("x") && age <= 55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
-            }else {
+            } else {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:"+rptid+",Code:"+msg.getCode()+",Msg:"+msg.getMsg()+",Abnormal:"+msg.getFourIn().getAbnormal()+"Label:"+msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
                 return msg;
             }
         }
 
 
-
     }
 
-    public Msg getMsg( String label,Integer age,int [] arr) {
+    public Msg getMsg(String label, Integer age, int[] arr) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
 
 
         if (label.equals("label")) {
             fourIn.setAbnormal(2);
-            if (arr[0]==1&&age<=60) {
+            if (arr[0] == 1 && age <= 60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-            } else if (arr[1]==1&&age<=60) {
+            } else if (arr[1] == 1 && age <= 60) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
-            } else if (arr[2]==1&&age<=55) {
+            } else if (arr[2] == 1 && age <= 55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-            } else if (arr[3]==1&&age<=55) {
+            } else if (arr[3] == 1 && age <= 55) {
                 msg.setCode("200");
                 msg.setMsg("查询成功");
                 fourIn.setLabel(3);
@@ -333,60 +335,96 @@ public class UserReport {
         return msg;
     }
 
-   /* public void test() throws IOException {
-        String rptid = null;
-        String pathname = "D:\\workspace\\new\\spring-apps\\datag\\src\\main\\excel\\1000.txt";
-        FileReader reader = null;
-        try {
-            reader = new FileReader(pathname);
-            BufferedReader br = new BufferedReader(reader);
-            String line;
-            int i = 1;
-            while ((line = br.readLine()) != null) {
-                // 一次读入一行数据
-                rptid = line;
-                System.out.println(rptid + "," + i);
-                i++;
-                Push(rptid,"label");
+    public ResponseEntity GetInsurance(String rptid) {
+        Msg msg = new Msg();
+        FourIn fourIn = new FourIn();
+        String rs = "";
+        StringBuffer sb = new StringBuffer(rs);
+        int[] arr = new int[4];
+        if (redisUtil.hasKey(rptid)) {
+            String s = redisUtil.get(rptid).toString();
+            String[] split = s.split("_");
+            if (Integer.parseInt(split[0]) == 1) {
+                sb.append("1");
+            }
+            if (Integer.parseInt(split[1]) == 1) {
+                sb.append("2");
             }
 
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }*/
+       /*     msg.setCode("200");
+            msg.setMsg("查询成功");
+            fourIn.setAbnormal(3);
+            if (Integer.parseInt(split[0]) == 0 && Integer.parseInt(split[1]) == 0) {
+                fourIn.setLabel("0");
+            } else {
+                fourIn.setLabel(sb.toString());
+            }
 
-    /*public static void main(String[] args) {
-        String s1 = "1_0_1_1";
-        String fication2 = "1_1_0_1";
-        String[] split1 = s1.split("_");
-        String[] split = fication2.split("_");
-        int [] arr = new int[4];
-        for (int i = 0 ;i<split1.length;i++){
-            if (i==1){
-                arr[i]=Integer.parseInt(split[i]);
-            }else {
-                if (split[i].equals("1")&&split1[i].equals("1")){
-                    arr[i]=1;
-                }else {
-                    arr[i]=0;
+            msg.setFourIn(fourIn);
+            return msg;*/
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),split[0].equals("0")  && split[1].equals("0")? "0": sb.toString());
+        } else {
+
+            String label = esService.getLabelsByReportId(rptid);
+            InsuranceMap insuranceMap = UserRep(rptid);
+            String s = new PushGan().PushGan(insuranceMap);
+            String s1 = new PushGaoxueya().pushGaoxueya(insuranceMap);
+            String s2 = new PushTangniaobing().Pushtangniaobing(insuranceMap);
+            String fourrs = s + "_" + "1_" + s1 + "_" + s2;
+            String[] split = fourrs.split("_");
+            //4ge fenlei
+            String fication2 = ClassiFication.getFication2(label);
+            String[] split1 = fication2.split("_");
+
+            for (int i = 0; i < split1.length; i++) {
+                if (i == 1) {
+                    arr[i] = Integer.parseInt(split1[i]);
+                } else {
+                    if (split[i].equals("1") && split1[i].equals("1")) {
+                        arr[i] = 1;
+                    } else {
+                        arr[i] = 0;
+                    }
                 }
             }
-        }
 
-        StringBuffer str5 = new StringBuffer();
-        for (int i = 0;i<arr.length;i++) {
-            if (i==3){
-                str5.append(arr[i]);
-            }else {
-                str5.append(arr[i]+"_");
+            StringBuffer str6 = new StringBuffer();
+            for (int i = 0; i < arr.length; i++) {
+                if (i == 3) {
+                    str6.append(arr[i]);
+                } else {
+                    str6.append(arr[i] + "_");
+                }
             }
+
+            String s3 = str6.toString();
+            redisUtil.set(rptid, s3, 3600);
+            if (arr[0] == 1) {
+                sb.append("1");
+            }
+            if (arr[1] == 1) {
+                sb.append("2");
+            }
+            String s4 = sb.toString();
+
+           /* msg.setCode("200");
+            msg.setMsg("查询成功");
+            fourIn.setAbnormal(3);
+            if (arr[0] == 0 && arr[1] == 0) {
+                fourIn.setLabel("0");
+            } else {
+                fourIn.setLabel(s4);
+            }
+
+            msg.setFourIn(fourIn);*/
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),arr[0] == 0 && arr[1] == 0? "0": s4);
         }
 
-        String  s2= str5.toString();
 
-        System.out.println(s2);
-    }*/
+    }
+
+
 }
 
 

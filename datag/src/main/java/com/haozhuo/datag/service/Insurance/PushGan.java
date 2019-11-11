@@ -17,7 +17,7 @@ public class PushGan {
 
     public String PushGan(InsuranceMap insuranceMap) {
         String rs = "1";
-        String rsv = "";
+        String rsv = "无";
         String REGEX = "[^0-9.]";
         String str = "肝纤维化PC-III，肝纤维化PC-III、PCIII，" +
                 "肝纤维化LN，肝纤维化LN、血清层粘连蛋白测定(LN)、血清层粘连蛋白测定、血清层粘连蛋白（LN）、层粘连蛋白定量、LN(层粘连蛋白)、层粘连蛋白LN、层粘蛋白，" +
@@ -209,7 +209,7 @@ public class PushGan {
             double v = Double.parseDouble(trim);
         }*/
         //System.out.println("肝："+rsv);
-        return rs;
+        return rs+"_"+rsv;
     }
 
 

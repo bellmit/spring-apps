@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public class PushTangniaobing {
     public String Pushtangniaobing(InsuranceMap insuranceMap) {
-        String rsa= "";
+        String rsa= "无";
         String rs = "1";
         String REGEX = "[^0-9.]";
         Map<String, String> valueMap = insuranceMap.getValueMap();
@@ -166,6 +166,6 @@ public class PushTangniaobing {
 
        // System.out.println("糖尿病："+rsa);
 
-        return rs;
+        return rs+"_"+rsa;
     }
 }

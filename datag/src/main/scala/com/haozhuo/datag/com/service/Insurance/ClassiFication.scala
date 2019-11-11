@@ -1,5 +1,6 @@
 package com.haozhuo.datag.com.service.Insurance
 
+
 import com.haozhuo.datag.common.RedisUtil
 import com.haozhuo.datag.model.report.InsuranceMap
 import com.haozhuo.datag.service.Insurance.{PushGan, PushGaoxueya, PushTangniaobing}
@@ -889,11 +890,12 @@ object ClassiFication {
 
   }
 
-  var gan_rs: String=""
+
   var jzx_rs: String=""
-  var gaoxueya_rs: String=""
-  var xuetang_rs: String=""
-  def getInsurancePush(label: String, insuranceMap: InsuranceMap) = {
+
+
+  def getInsurancePush(label: String, insuranceMap: InsuranceMap,gan_rs: String,gaoxueya_rs:String,xuetang_rs:String) = {
+
     import scala.collection.mutable._
     /*
       肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
@@ -901,16 +903,16 @@ object ClassiFication {
 
     val labelResult: String = classFication(label).toString()
     val rs_Push = new StringBuilder
-    val gan = new PushGan()
-    gan_rs= gan.PushGan(insuranceMap)
+    //val gan = new PushGan()
+    //gan_rs= gan.PushGan(insuranceMap)
     jzx_rs= MatchJzx.panduan(label)
     if(jzx_rs.contains("0")){
       jzx_rs="0"
     }
-    val gaoxueya = new PushGaoxueya()
-    gaoxueya_rs= gaoxueya.pushGaoxueya(insuranceMap)
-    val gaoxuetang = new PushTangniaobing()
-    xuetang_rs= gaoxuetang.Pushtangniaobing(insuranceMap)
+   // val gaoxueya = new PushGaoxueya()
+    //gaoxueya_rs= gaoxueya.pushGaoxueya(insuranceMap)
+   // val gaoxuetang = new PushTangniaobing()
+    //xuetang_rs= gaoxuetang.Pushtangniaobing(insuranceMap)
    /* val reds = new RedisUtil()
     reds.set("sd","das")*/
     //肝判断
@@ -991,8 +993,8 @@ object ClassiFication {
   /*
   肝n,肝p,甲状腺n,甲状腺p,高血压n,高血压p,糖n,糖p,其它异常,不存在此异常
  */
-  def result(label: String, insuranceMap: InsuranceMap) = {
-    val rsString: String = getInsurancePush(label, insuranceMap)
+  def result(label: String, insuranceMap: InsuranceMap,gan_rs: String,gaoxueya_rs:String,xuetang_rs:String) = {
+    val rsString: String = getInsurancePush(label, insuranceMap,gan_rs: String,gaoxueya_rs:String,xuetang_rs:String)
 //    println(rsString)
     var rsValue: String = "-1"
     //肝优先级最高，肝如果在推送，那么忽视所有情况
@@ -1015,7 +1017,9 @@ object ClassiFication {
 
   //1.label 2.分类=》糖尿病，血压 3.缓存(1,0,1,0) 4.推1
 
-
+  var gan_rs: String =gan_rs
+  var gaoxueya_rs: String =gaoxueya_rs
+  var xuetang_rs: String =xuetang_rs
 
   //返回结果gan_rs _ rs _ rs_status _ xutang_rs
   def fourRs(): String ={

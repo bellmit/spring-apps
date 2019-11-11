@@ -8,7 +8,7 @@ public class PushGaoxueya {
     public String pushGaoxueya(InsuranceMap insuranceMap){
         /* InsuranceMap insuranceMap = userReport.UserRep(rptid);*/
         String rs = "1";
-        String rsa = "";
+        String rsa = "无";
         Map<String, String> valueMap = insuranceMap.getValueMap();
         Map<String, String> textRefMap = insuranceMap.getTextRefMap();
         Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
@@ -151,6 +151,6 @@ public class PushGaoxueya {
             }
         }
         //System.out.println("高血压："+rsa);
-        return rs;
+        return rs+"_"+rsa;
     }
 }

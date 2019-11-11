@@ -154,7 +154,7 @@ public class UserReport {
             }
             if (label.equals("label")) {
                 Msg msg1 = getMsg(label, age, arr);
-                logger.info("rptid:" + rptid + ",Code:" + msg1.getCode() + ",Msg:" + msg1.getMsg() + ",Abnormal:" + msg1.getFourIn().getAbnormal() + ",Label:" + msg1.getFourIn().getLabel());
+               // logger.info("rptid:" + rptid + ",Code:" + msg1.getCode() + ",Msg:" + msg1.getMsg() + ",Abnormal:" + msg1.getFourIn().getAbnormal() + ",Label:" + msg1.getFourIn().getLabel());
                 return msg1;
             }
             if (fication.contains("4") && split[0].equals("1") && age <= 60) {//肝
@@ -163,7 +163,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+
                 return msg;
             } else if (fication.contains("3") && split[1].equals("1") && age <= 60) {//甲
                 msg.setCode("200");
@@ -171,7 +171,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+
                 return msg;
             } else if (fication.contains("2") && split[2].equals("1") && age <= 55) {//高
                 msg.setCode("200");
@@ -179,7 +179,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+
                 return msg;
             } else if (fication.contains("1") && split[3].equals("1") && age <= 55) {//糖
                 msg.setCode("200");
@@ -187,7 +187,7 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+
                 return msg;
             } else {
                 msg.setCode("200");
@@ -195,18 +195,25 @@ public class UserReport {
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+
                 return msg;
             }
         } else {
             logger.info("redis中不存在此缓存id数据，开始查询hbase");
             InsuranceMap insuranceMap = UserRep(rptid);
-            String s = ClassiFication.result(singleNormTag, insuranceMap);
+            String gan = new PushGan().PushGan(insuranceMap);
+            String gao = new PushGaoxueya().pushGaoxueya(insuranceMap);
+            String tang = new PushTangniaobing().Pushtangniaobing(insuranceMap);
+
+            String[] gans = gan.split("_");
+            String[] gaos = gao.split("_");
+            String[] tangs = tang.split("_");
+            String s = ClassiFication.result(singleNormTag, insuranceMap,gans[0],gaos[0],tangs[0]);
 
             //System.out.println(s);
             //s1 = 1_1_1_1e
             //s2 = 1_0_1_1
-            String s1 = ClassiFication.fourRs();
+            String s1 = gans[0]+"_"+"1"+"_"+gaos[0]+"_"+tangs[0];
             String fication2 = ClassiFication.getFication2(getlabel);
 
             String[] split1 = s1.split("_");
@@ -240,7 +247,12 @@ public class UserReport {
             logger.info("缓存添加完成");
             if (label.equals("label")) {
                 Msg msg1 = getMsg(label, age, arr);
-                logger.info("rptid:" + rptid + ",Code:" + msg1.getCode() + ",Msg:" + msg1.getMsg() + ",Abnormal:" + msg1.getFourIn().getAbnormal() + ",Label:" + msg1.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +"\n"+
+                        "该用户所有的label:"+getlabel +"\n"
+                +"该用户所有label所对应能推的分类结论："+fication2+"\n"
+                +"该用户体检报告结论:"+s1+"\n"
+                +"体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
+                
                 return msg1;
             }
             if (s.contains("0")) {
@@ -249,7 +261,11 @@ public class UserReport {
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +
+                        "该用户所有的label:"+getlabel
+                +"，该用户所有label所对应能推的分类结论："+fication2
+                +"，该用户体检报告结论:"+s1
+                +"，体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
                 return msg;
             } else if (s.contains("g") && age <= 60) {
                 msg.setCode("200");
@@ -257,7 +273,11 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(1);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +
+                        "该用户所有的label:"+getlabel
+                +"，该用户所有label所对应能推的分类结论："+fication2
+                +"，该用户体检报告结论:"+s1
+                +"，体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
                 return msg;
             } else if (s.contains("j") && arr[1] == 1 && age <= 60) {
                 msg.setCode("200");
@@ -265,7 +285,11 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(2);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +
+                        "该用户所有的label:"+getlabel
+                +"，该用户所有label所对应能推的分类结论："+fication2
+                +"，该用户体检报告结论:"+s1
+                +"，体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
                 return msg;
             } else if (s.contains("t") && age <= 55) {
                 msg.setCode("200");
@@ -273,7 +297,11 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(3);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +
+                        "该用户所有的label:"+getlabel
+                +"，该用户所有label所对应能推的分类结论："+fication2
+                +"，该用户体检报告结论:"+s1
+                +"，体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
                 return msg;
             } else if (s.contains("x") && age <= 55) {
                 msg.setCode("200");
@@ -281,7 +309,11 @@ public class UserReport {
                 fourIn.setAbnormal(1);
                 fourIn.setLabel(4);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +
+                        "该用户所有的label:"+getlabel
+                +"，该用户所有label所对应能推的分类结论："+fication2
+                +"，该用户体检报告结论:"+s1
+                +"，体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
                 return msg;
             } else {
                 msg.setCode("200");
@@ -289,7 +321,11 @@ public class UserReport {
                 fourIn.setAbnormal(0);
                 fourIn.setLabel(0);
                 msg.setFourIn(fourIn);
-                logger.info("rptid:" + rptid + ",Code:" + msg.getCode() + ",Msg:" + msg.getMsg() + ",Abnormal:" + msg.getFourIn().getAbnormal() + "Label:" + msg.getFourIn().getLabel());
+                logger.info("rptid:" + rptid +
+                        "该用户所有的label:"+getlabel
+                +"，该用户所有label所对应能推的分类结论："+fication2
+                +"，该用户体检报告结论:"+s1
+                +"，体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
                 return msg;
             }
         }
@@ -410,18 +446,7 @@ public class UserReport {
             if (arr[1]==1&&arr[0]==1){
                 s4="3";
             }
-           // String s4 = sb.toString();
 
-           /* msg.setCode("200");
-            msg.setMsg("查询成功");
-            fourIn.setAbnormal(3);
-            if (arr[0] == 0 && arr[1] == 0) {
-                fourIn.setLabel("0");
-            } else {
-                fourIn.setLabel(s4);
-            }
-
-            msg.setFourIn(fourIn);*/
             return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),arr[0] == 0 && arr[1] == 0? "0": s4);
         }
 

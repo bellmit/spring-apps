@@ -400,13 +400,17 @@ public class UserReport {
 
             String s3 = str6.toString();
             redisUtil.set(rptid, s3, 3600);
-            if (arr[0] == 1) {
-                sb.append("1");
+            String s4 = "";
+            if (arr[0] == 1&&arr[1]==0) {
+                s4="1";
             }
-            if (arr[1] == 1) {
-                sb.append("2");
+            if (arr[1] == 1&&arr[0]==0) {
+                s4="2";
             }
-            String s4 = sb.toString();
+            if (arr[1]==1&&arr[0]==1){
+                s4="3";
+            }
+           // String s4 = sb.toString();
 
            /* msg.setCode("200");
             msg.setMsg("查询成功");

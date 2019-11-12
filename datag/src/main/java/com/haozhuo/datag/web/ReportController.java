@@ -124,10 +124,11 @@ public class ReportController {
 
     @GetMapping(value = "/pushall")
     @ApiOperation(value = "推送甲肝保险")
-    public ResponseEntity pushall(@RequestParam(value = "rptid") String rptid) {
+    public ResponseEntity pushall(@RequestParam(value = "rptid") String rptid,
+                                  @RequestParam(value = "age") int age) {
 
 
-        return userReport.GetInsurance(rptid);
+        return userReport.GetInsurance(rptid,age);
     }
 
 /*

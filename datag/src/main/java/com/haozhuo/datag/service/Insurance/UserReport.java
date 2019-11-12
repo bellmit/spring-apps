@@ -371,7 +371,7 @@ public class UserReport {
         return msg;
     }
 
-    public ResponseEntity GetInsurance(String rptid) {
+    public ResponseEntity GetInsurance(String rptid,int age) {
         Msg msg = new Msg();
         FourIn fourIn = new FourIn();
         String rs = "";
@@ -380,10 +380,10 @@ public class UserReport {
         if (redisUtil.hasKey(rptid)) {
             String s = redisUtil.get(rptid).toString();
             String[] split = s.split("_");
-            if (Integer.parseInt(split[0]) == 1) {
+            if (Integer.parseInt(split[0]) == 1&&age<=60) {
                 sb.append("1");
             }
-            if (Integer.parseInt(split[1]) == 1) {
+            if (Integer.parseInt(split[1]) == 1&&age<=60) {
                 sb.append("2");
             }
 
@@ -437,13 +437,13 @@ public class UserReport {
             String s3 = str6.toString();
             redisUtil.set(rptid, s3, 3600);
             String s4 = "";
-            if (arr[0] == 1&&arr[1]==0) {
+            if (arr[0] == 1&&arr[1]==0&&age<=60) {
                 s4="1";
             }
-            if (arr[1] == 1&&arr[0]==0) {
+            if (arr[1] == 1&&arr[0]==0&&age<=60) {
                 s4="2";
             }
-            if (arr[1]==1&&arr[0]==1){
+            if (arr[1]==1&&arr[0]==1&&age<=60){
                 s4="3";
             }
 

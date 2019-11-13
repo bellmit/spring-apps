@@ -313,6 +313,8 @@ public class BisysController {
         return bisysJdbcService.getHBStorefoByPage(pageNo, pageSize);
     }
 
+
+
 }
 
 

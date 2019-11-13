@@ -3,6 +3,7 @@ package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.HBStore;
+import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.util.SqlDate;
 import org.slf4j.Logger;
@@ -859,6 +860,44 @@ public class BisysJdbcService {
             logger.error("getPageRecord", ex);
         }
         return list;
+    }
+
+    public List<YshInfo> getInfo(int a){
+        List<YshInfo> list = new ArrayList<>();
+        Random rand = new Random();
+        String r = "";
+        for(int i=1; i<=a; i++) {
+            System.out.println(rand.nextInt(119304) + 1);
+            r = r + (rand.nextInt(119304) + 1)+",";
+            if (i==a){
+                r=r+r + (rand.nextInt(119304) + 1);
+            }
+        }
+        String sql = "SELECT information_id FROM `article4_id` where id In("+r+")";
+        System.out.println(sql);
+        list = bisysDB.query(sql, new Object[]{},
+                (resultSet, i) -> {
+                    YshInfo yshInfo = new YshInfo();
+                    yshInfo.setId(resultSet.getString("information_id"));
+
+                    return yshInfo;
+                }
+        );
+        return list;
+    }
+
+    public static void main(String[] args) {
+        String r = "";
+        Random rand = new Random();
+        for(int i=1; i<=10; i++) {
+            System.out.println(rand.nextInt(119304) + 1);
+            r = r + (rand.nextInt(119304) + 1)+",";
+            if (i==10){
+                r=r+r + (rand.nextInt(119304) + 1);
+            }
+        }
+        String sql = "SELECT information_id FROM `article4_id` where id In("+r+")";
+        System.out.println(sql);
     }
 
 

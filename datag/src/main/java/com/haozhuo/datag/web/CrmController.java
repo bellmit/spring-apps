@@ -1,6 +1,8 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.crm.UserIdTagsId;
+import com.haozhuo.datag.service.BisysJdbcService;
 import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import io.swagger.annotations.ApiOperation;
@@ -23,6 +25,8 @@ public class CrmController {
     private EsService esService;
     @Autowired
     private DataEtlJdbcService dataetlJdbcService;
+    @Autowired
+    private BisysJdbcService bisysJdbcService;
 
     @GetMapping("/portrait/{userIds}")
     @ApiOperation(value = "根据userIds返回用户画像", notes = "多个userId使用逗号隔开")
@@ -72,6 +76,12 @@ public class CrmController {
         long count = esService.getCountByPortraitTagIds(tagIds);
         logger.info("/portrait/getCountByPortraitTagIds  cost: {}ms", System.currentTimeMillis() - beginTime);
         return count;
+    }
+
+    @GetMapping("/infoid")
+    public List<YshInfo> getinfoid(@RequestParam(value = "a", defaultValue = "15")int a){
+
+        return bisysJdbcService.getInfo(a);
     }
 
 }

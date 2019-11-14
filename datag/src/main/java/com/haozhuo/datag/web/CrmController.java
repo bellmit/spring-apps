@@ -1,6 +1,8 @@
 package com.haozhuo.datag.web;
 
-import com.haozhuo.datag.model.YshInfo;
+import com.haozhuo.datag.model.ResponseEntity;
+import com.haozhuo.datag.model.Xin.YshInfo;
+
 import com.haozhuo.datag.model.crm.UserIdTagsId;
 import com.haozhuo.datag.service.BisysJdbcService;
 import com.haozhuo.datag.service.DataEtlJdbcService;
@@ -78,10 +80,25 @@ public class CrmController {
         return count;
     }
 
-    @GetMapping("/infoid")
+   @GetMapping("/infoid")
     public List<YshInfo> getinfoid(@RequestParam(value = "a", defaultValue = "15")int a){
 
         return bisysJdbcService.getInfo(a);
     }
+    @GetMapping("/infoid1")
+    public ResponseEntity getinfoid1(
+            @RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+            @RequestParam(value = " pageSize", defaultValue = "5")int pageSize
 
+    ){
+        return bisysJdbcService.getInfo1(pageNum, pageSize);
+    }
+
+
+   /* @GetMapping("/ttest")
+    public List<YshInfo> getInfos(@RequestParam(value = "pageN") int pageN,
+                                  @RequestParam(value = "pageS") int pageS
+    ){
+        return bisysJdbcService.getInfos(pageN,pageS);
+    }*/
 }

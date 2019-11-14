@@ -3,7 +3,9 @@ package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.HBStore;
-import com.haozhuo.datag.model.YshInfo;
+import com.haozhuo.datag.model.ResponseEntity;
+import com.haozhuo.datag.model.ResponseEnum;
+import com.haozhuo.datag.model.Xin.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.util.SqlDate;
 import org.slf4j.Logger;
@@ -845,6 +847,8 @@ public class BisysJdbcService {
         List<HBStore> list = null;
         String sql = String.format("select DISTINCT `name` ,address,phone from hubei_factory limit  ?, ?");
         int from = (pageNo - 1) * pageSize;
+
+
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(sql, new Object[]{from, pageSize},
@@ -862,7 +866,29 @@ public class BisysJdbcService {
         return list;
     }
 
-    public List<YshInfo> getInfo(int a){
+ /*   //分页
+    public List<YshInfo> getInfos(int pageN,int pageS){
+        List<YshInfo> list = null;
+        String sql = String.format("select information_id from article4_id limit ?,?");
+        int from = (pageN -1) * pageS;
+        try{
+            list = bisysDB.query(sql,new Object[]{from,pageS},
+                    (resultSet ,i)->{
+                     YshInfo yshInfo = new YshInfo();
+                     yshInfo.setId(resultSet.getString("information_id"));
+                     return yshInfo;
+                    }
+
+                    );
+
+        }catch(Exception ex){}
+        System.out.println(sql);
+        return list;
+
+    }
+    */
+
+    public List<YshInfo> getInfo(int a ){
         List<YshInfo> list = new ArrayList<>();
         Random rand = new Random();
         String r = "";
@@ -886,10 +912,42 @@ public class BisysJdbcService {
         return list;
     }
 
+
+    public ResponseEntity getInfo1(int pageNum , int pageSize ){
+
+        List<YshInfo> list1 = new ArrayList<>();
+        Random rand = new Random();
+        String r1 = "";
+        for(int i=1; i< pageSize; i++) {
+            System.out.println(rand.nextInt(119304) + 1);
+            r1 = r1 + (rand.nextInt(119304) + 1)+",";
+            if(i==pageSize-1) {
+                r1=r1+ (rand.nextInt(119304) + 1);
+            }
+        }
+        String sql = "SELECT information_id FROM `article4_id` where id In("+r1+")";
+        System.out.println(sql);
+        System.out.println(r1.length());
+        list1 = bisysDB.query(sql, new Object[]{},
+                (resultSet, i) -> {
+                    YshInfo yshInfo1 = new YshInfo();
+                    yshInfo1.setId(resultSet.getString("information_id"));
+
+                    return yshInfo1;
+                }
+        );
+        Object [] a = new Object[pageSize];
+        for (int i =0;i<pageSize;i++){
+            a[i] = list1.get(i).getId();
+        }
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),a);
+
+    }
+
     public static void main(String[] args) {
         String r = "";
         Random rand = new Random();
-        for(int i=1; i<=10; i++) {
+        for(int i=1; i<=5; i++) {
             System.out.println(rand.nextInt(119304) + 1);
             r = r + (rand.nextInt(119304) + 1)+",";
             if (i==10){

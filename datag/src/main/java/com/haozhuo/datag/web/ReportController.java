@@ -4,6 +4,7 @@ import com.haozhuo.datag.common.*;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.EsService;
+import com.haozhuo.datag.service.GetUserInfo;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.*;
 import io.swagger.annotations.ApiOperation;
@@ -86,10 +87,10 @@ public class ReportController {
     }
 
     @GetMapping(value = "/weibao")
-    @ApiOperation(value = "微保")
-    public void Weibao() throws IOException {
+    @ApiOperation(value = "测试")
+    public void test() throws IOException {
 
-        weiBao.test();
+        userReport.test();
     }
 
     @PostMapping(value = "/push")

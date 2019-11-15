@@ -4,6 +4,7 @@ import com.haozhuo.datag.com.service.Insurance.ClassiFication;
 import com.haozhuo.datag.com.service.Insurance.MatchJzx;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.RedisUtil;
+import com.haozhuo.datag.common.StringUtil;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.report.FourIn;
@@ -25,10 +26,7 @@ import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
 import scala.collection.mutable.StringBuilder;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -36,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.haozhuo.datag.com.service.Insurance.ClassiFication.result;
 
@@ -58,6 +57,10 @@ public class UserReport {
 
     public InsuranceMap UserRep(String rptid) {
         String day = esService.getlastday(rptid);
+        if (StringUtil.isEmpty(day)) {
+            InsuranceMap map = new InsuranceMap();
+            return new InsuranceMap();
+        }
         String substring = day.substring(0, 10);
         String rowkey = substring + "_" + rptid;
         String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
@@ -66,7 +69,9 @@ public class UserReport {
         Scan scan = new Scan();
         scan.setStartRow(rowkey.getBytes());
         scan.setStopRow(endrowkey.getBytes());
+
         InsuranceMap rep = getRep(scan, HBASENAME1);
+
         if (rep.getList1().size() == 0) {
             LocalDate date = LocalDate.parse(substring);
             LocalDate newDate1 = date.plus(-1, ChronoUnit.DAYS);
@@ -252,7 +257,7 @@ public class UserReport {
                 +"该用户所有label所对应能推的分类结论："+fication2+"\n"
                 +"该用户体检报告结论:"+s1+"\n"
                 +"体检报告对应的原因："+"肝："+gans[1]+"，高："+gaos[1]+"，糖："+tangs[1]);
-                
+
                 return msg1;
             }
             if (s.contains("0")) {
@@ -451,6 +456,104 @@ public class UserReport {
         }
 
 
+    }
+
+    public void test() throws IOException {
+        String pathname = "D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\sexRptId.txt";
+        FileReader reader = null;
+        File file =new File("D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\e.txt");
+        Writer out =new FileWriter(file);
+        String REGEX = "[^0-9.]";
+        String rs = "";
+
+        try {
+            reader = new FileReader(pathname);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            while ((line = br.readLine()) != null) {
+                // 一次读入一行数据
+                boolean bool = true;
+                String[] s = line.split(",");
+                String label = esService.getLabelsByReportId(s[2]);
+
+                InsuranceMap insuranceMap = UserRep(s[2]);
+                Map<String, String> valueMap = insuranceMap.getValueMap();
+                Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
+                if (Integer.parseInt(s[3])<60&&valueMap.size()>0&&flagIdMap.size()>0){
+                    for (String a : valueMap.keySet()){
+                        String s1 = valueMap.get(a);
+                        String s2 = flagIdMap.get(a);
+                        if (s1.contains("弃")||s1.contains("查")){
+
+                            continue;
+                        }
+
+                        if (a.contains("舒张压")){
+                            double v = Double.parseDouble(s1);
+                            if (v>100){
+                                rs= rs+v;
+                                bool=false;
+                               // System.out.println(rs);
+                                continue;
+                            }
+                        }
+
+                        if(a.contains("收缩压")){
+                            double v = Double.parseDouble(s1);
+                            if (v>160){
+                                rs= rs+v;
+                                bool=false;
+                               // System.out.println(rs);
+                                continue;
+                            }
+                        }
+                        if (a.contains("乙肝")||a.contains("甲肝")||a.contains("戊肝")||a.contains("HIV")){
+                            int i = Integer.parseInt(s2);
+                            if (i>1){
+                                rs= rs+a;
+                                bool=false;
+                               // System.out.println(rs);
+                                continue;
+                            }
+                        }
+                        if (a.contains("血糖") || a.contains("空腹血糖") || a.contains("平均血糖") || a.contains("血液葡萄糖") || a.contains("血清葡萄糖") || a.contains("葡萄糖") || a.contains("快速血糖")) {
+                            String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
+                            if (trim.equals("")) {
+
+                            } else {
+                                double v = Double.parseDouble(trim);
+                                if (v > 6.1) {
+                                    bool=false;
+                                    rs= rs+v;
+                                 //   System.out.println(rs);
+                                  continue;
+                                }
+                            }
+
+                        }
+                        if (label.contains("甲状腺结节")||label.contains("心脏")||label.contains("肾功能不全")){
+                            rs= rs+label;
+                            bool=false;
+                           // System.out.println(rs);
+                            continue;
+                        }
+
+                    }
+
+                }
+                if (bool){
+                    out.write(line+"\n");
+                    out.flush();
+                }
+
+            }
+            reader.close();
+            out.close();
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
 

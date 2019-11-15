@@ -559,7 +559,35 @@ public class UserReport {
         }
     }
 
+    public void test1() throws IOException {
+        String pathname = "D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\rs1.txt";
+        FileReader reader = null;
+        File file =new File("D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\result3.txt");
+        Writer out =new FileWriter(file);
+        try {
+            reader = new FileReader(pathname);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            while ((line = br.readLine()) != null) {
+                // 一次读入一行数据
+                String[] s = line.split(",");
+                String label = esService.getLabelsByReportId(s[2]);
+                List list = new ArrayList();
+                if (s[0].equals("女")&&Integer.parseInt(s[3])>18&&Integer.parseInt(s[3])<60){
+                    if (label.contains("乳腺增生")||label.contains("乳腺小叶增生")||label.contains("子宫肌瘤")||label.contains("子宫囊肿")){
+                        out.write(line+"\n");
+                    }
+                }
 
+            }
+            reader.close();
+            out.close();
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 }
 
 

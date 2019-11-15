@@ -5,7 +5,7 @@ import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.HBStore;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.ResponseEnum;
-import com.haozhuo.datag.model.Xin.YshInfo;
+import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.util.SqlDate;
 import org.slf4j.Logger;
@@ -65,7 +65,7 @@ public class BisysJdbcService {
     private final static String managerQuestion = "select date, question_num, pay_amount, share_num, collect_num,thank_num ,circusee_num,circusee_amount, " +
             "time_out_num, question_closely_num from manage_question_all where date >= ? and date <=?";
 
-     private final static String healthCheckQuerySql = "select 'App' as src ,`date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
+    private final static String healthCheckQuerySql = "select 'App' as src ,`date`, sum(order_num) as order_num, sum(pay_order_num) as pay_order_num, " +
             "sum(pay_order_amount) as pay_order_amount, sum(refund_win_num) as refund_win_num, sum(refund_win_amount) as refund_win_amount , " +
             "sum(pay_use_num) as pay_use_num, sum(pay_profit_amount) as pay_profit_amount, sum(refund_success_amount) as refund_success_amount " +
             "from (  select `date`,order_num, pay_order_num , pay_order_amount, refund_win_num,refund_win_amount,pay_use_num,pay_profit_amount," +
@@ -132,6 +132,7 @@ public class BisysJdbcService {
                     "where x.facilitator ='58到家项目' " +
                     "union " +
                     "select  `date`,order_num,  pay_order_num,pay_order_amount,refund_win_num, refund_win_amount , pay_use_num,  pay_profit_amount,refund_success_amount from ops_service_transaction x where x.facilitator like '%美兆%'  )a where  DATE_FORMAT(date, '%Y-%m')>=? and  DATE_FORMAT(date, '%Y-%m')<=? group by DATE_FORMAT(date, '%Y-%m')";
+
     public long getProdRiskEvaluation() {
         long pv = 0;
         try {
@@ -666,8 +667,8 @@ public class BisysJdbcService {
         List<HealthCheck> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            if (isTotal){
-                list = bisysDB.query( healthCheckQueryTotalSqlbymonth, new Object[]{ date, endDate},
+            if (isTotal) {
+                list = bisysDB.query(healthCheckQueryTotalSqlbymonth, new Object[]{date, endDate},
                         (resultSet, i) -> {
                             HealthCheck healthCheck = new HealthCheck();
                             healthCheck.setSrc(resultSet.getString("src"));
@@ -683,8 +684,8 @@ public class BisysJdbcService {
                             return healthCheck;
                         }
                 );
-            }else {
-                list = bisysDB.query( healthCheckQuerySqlbymohth, new Object[]{date, endDate, date, endDate, date, endDate},
+            } else {
+                list = bisysDB.query(healthCheckQuerySqlbymohth, new Object[]{date, endDate, date, endDate, date, endDate},
                         (resultSet, i) -> {
                             HealthCheck healthCheck = new HealthCheck();
                             healthCheck.setSrc(resultSet.getString("src"));
@@ -839,16 +840,14 @@ public class BisysJdbcService {
         }
         System.out.println(count);
     }
+
     /**
      * 根据传入的page和size获取门店信息
-     *
-     * */
-    public List<HBStore> getHBStorefoByPage(int pageNo, int pageSize){
+     */
+    public List<HBStore> getHBStorefoByPage(int pageNo, int pageSize) {
         List<HBStore> list = null;
         String sql = String.format("select DISTINCT `name` ,address,phone from hubei_factory limit  ?, ?");
         int from = (pageNo - 1) * pageSize;
-
-
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = bisysDB.query(sql, new Object[]{from, pageSize},
@@ -866,40 +865,19 @@ public class BisysJdbcService {
         return list;
     }
 
- /*   //分页
-    public List<YshInfo> getInfos(int pageN,int pageS){
-        List<YshInfo> list = null;
-        String sql = String.format("select information_id from article4_id limit ?,?");
-        int from = (pageN -1) * pageS;
-        try{
-            list = bisysDB.query(sql,new Object[]{from,pageS},
-                    (resultSet ,i)->{
-                     YshInfo yshInfo = new YshInfo();
-                     yshInfo.setId(resultSet.getString("information_id"));
-                     return yshInfo;
-                    }
-
-                    );
-
-        }catch(Exception ex){}
-        System.out.println(sql);
-        return list;
-
-    }
-    */
-
-    public List<YshInfo> getInfo(int a ){
+    public ResponseEntity getInfo(int a) {
         List<YshInfo> list = new ArrayList<>();
+        String[] arr = new String[a];
         Random rand = new Random();
         String r = "";
-        for(int i=1; i<=a; i++) {
-            System.out.println(rand.nextInt(119304) + 1);
-            r = r + (rand.nextInt(119304) + 1)+",";
-            if (i==a){
-                r=r+r + (rand.nextInt(119304) + 1);
+        for (int i = 1; i <= a; i++) {
+            // System.out.println(rand.nextInt(119304) + 1);
+            r = r + (rand.nextInt(119304) + 1) + ",";
+            if (i == a) {
+                r = r + r + (rand.nextInt(119304) + 1);
             }
         }
-        String sql = "SELECT information_id FROM `article4_id` where id In("+r+")";
+        String sql = "SELECT information_id FROM `article4_id` where id In(" + r + ")";
         System.out.println(sql);
         list = bisysDB.query(sql, new Object[]{},
                 (resultSet, i) -> {
@@ -909,23 +887,25 @@ public class BisysJdbcService {
                     return yshInfo;
                 }
         );
-        return list;
+
+        for (int i = 0; i < a; i++) {
+            arr[i] = list.get(i).getId();
+        }
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), arr);
     }
 
-
-    public ResponseEntity getInfo1(int pageNum , int pageSize ){
-
+    public ResponseEntity getInfo1(int pageNum, int pageSize) {
         List<YshInfo> list1 = new ArrayList<>();
         Random rand = new Random();
         String r1 = "";
-        for(int i=1; i< pageSize; i++) {
+        for (int i = 1; i < pageSize; i++) {
             System.out.println(rand.nextInt(119304) + 1);
-            r1 = r1 + (rand.nextInt(119304) + 1)+",";
-            if(i==pageSize-1) {
-                r1=r1+ (rand.nextInt(119304) + 1);
+            r1 = r1 + (rand.nextInt(119304) + 1) + ",";
+            if (i == pageSize - 1) {
+                r1 = r1 + (rand.nextInt(119304) + 1);
             }
         }
-        String sql = "SELECT information_id FROM `article4_id` where id In("+r1+")";
+        String sql = "SELECT information_id FROM `article4_id` where id In(" + r1 + ")";
         System.out.println(sql);
         System.out.println(r1.length());
         list1 = bisysDB.query(sql, new Object[]{},
@@ -936,27 +916,10 @@ public class BisysJdbcService {
                     return yshInfo1;
                 }
         );
-        Object [] a = new Object[pageSize];
-        for (int i =0;i<pageSize;i++){
+        String[] a = new String[pageSize];
+        for (int i = 0; i < pageSize; i++) {
             a[i] = list1.get(i).getId();
         }
-        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),a);
-
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), a);
     }
-
-    public static void main(String[] args) {
-        String r = "";
-        Random rand = new Random();
-        for(int i=1; i<=5; i++) {
-            System.out.println(rand.nextInt(119304) + 1);
-            r = r + (rand.nextInt(119304) + 1)+",";
-            if (i==10){
-                r=r+r + (rand.nextInt(119304) + 1);
-            }
-        }
-        String sql = "SELECT information_id FROM `article4_id` where id In("+r+")";
-        System.out.println(sql);
-    }
-
-
 }

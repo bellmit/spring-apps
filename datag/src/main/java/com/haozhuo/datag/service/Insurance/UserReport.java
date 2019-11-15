@@ -479,7 +479,7 @@ public class UserReport {
                 InsuranceMap insuranceMap = UserRep(s[2]);
                 Map<String, String> valueMap = insuranceMap.getValueMap();
                 Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
-                if (Integer.parseInt(s[3])<60&&valueMap.size()>0&&flagIdMap.size()>0){
+                if (Integer.parseInt(s[3])<60){
                     for (String a : valueMap.keySet()){
                         String s1 = valueMap.get(a);
                         String s2 = flagIdMap.get(a);

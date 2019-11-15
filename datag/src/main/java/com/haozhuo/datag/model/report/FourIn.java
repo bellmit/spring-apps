@@ -8,4 +8,5 @@ import lombok.Setter;
 public class FourIn {
     private int abnormal;
     private int label;
+
 }

@@ -475,82 +475,85 @@ public class UserReport {
                 boolean bool = true;
                 String[] s = line.split(",");
                 String label = esService.getLabelsByReportId(s[2]);
+                if (StringUtil.isEmpty(label)) {
 
-                InsuranceMap insuranceMap = UserRep(s[2]);
-                Map<String, String> valueMap = insuranceMap.getValueMap();
-                Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
-                if (Integer.parseInt(s[3])<60){
-                    for (String a : valueMap.keySet()){
-                        String s1 = valueMap.get(a);
-                        String s2 = flagIdMap.get(a);
-                        if (s1.contains("弃")||s1.contains("查")){
+                } else {
 
-                            continue;
-                        }
 
-                        if (a.contains("舒张压")){
-                            double v = Double.parseDouble(s1);
-                            if (v>100){
-                                rs= rs+v;
-                                bool=false;
-                               // System.out.println(rs);
+                    InsuranceMap insuranceMap = UserRep(s[2]);
+                    Map<String, String> valueMap = insuranceMap.getValueMap();
+                    Map<String, String> flagIdMap = insuranceMap.getFlagIdMap();
+                    if (Integer.parseInt(s[3]) < 60) {
+                        for (String a : valueMap.keySet()) {
+                            String s1 = valueMap.get(a);
+                            String s2 = flagIdMap.get(a);
+                            if (s1.contains("弃") || s1.contains("查")) {
+
                                 continue;
                             }
-                        }
 
-                        if(a.contains("收缩压")){
-                            double v = Double.parseDouble(s1);
-                            if (v>160){
-                                rs= rs+v;
-                                bool=false;
-                               // System.out.println(rs);
-                                continue;
-                            }
-                        }
-                        if (a.contains("乙肝")||a.contains("甲肝")||a.contains("戊肝")||a.contains("HIV")){
-                            int i = Integer.parseInt(s2);
-                            if (i>1){
-                                rs= rs+a;
-                                bool=false;
-                               // System.out.println(rs);
-                                continue;
-                            }
-                        }
-                        if (a.contains("血糖") || a.contains("空腹血糖") || a.contains("平均血糖") || a.contains("血液葡萄糖") || a.contains("血清葡萄糖") || a.contains("葡萄糖") || a.contains("快速血糖")) {
-                            String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
-                            if (trim.equals("")) {
-
-                            } else {
-                                double v = Double.parseDouble(trim);
-                                if (v > 6.1) {
-                                    bool=false;
-                                    rs= rs+v;
-                                 //   System.out.println(rs);
-                                  continue;
+                            if (a.contains("舒张压")) {
+                                double v = Double.parseDouble(s1);
+                                if (v > 100) {
+                                    rs = rs + v;
+                                    bool = false;
+                                    // System.out.println(rs);
+                                    continue;
                                 }
                             }
 
-                        }
-                        if (label.contains("甲状腺结节")||label.contains("心脏")||label.contains("肾功能不全")){
-                            rs= rs+label;
-                            bool=false;
-                           // System.out.println(rs);
-                            continue;
-                        }
+                            if (a.contains("收缩压")) {
+                                double v = Double.parseDouble(s1);
+                                if (v > 160) {
+                                    rs = rs + v;
+                                    bool = false;
+                                    // System.out.println(rs);
+                                    continue;
+                                }
+                            }
+                            if (a.contains("乙肝") || a.contains("甲肝") || a.contains("戊肝") || a.contains("HIV")) {
+                                int i = Integer.parseInt(s2);
+                                if (i > 1) {
+                                    rs = rs + a;
+                                    bool = false;
+                                    // System.out.println(rs);
+                                    continue;
+                                }
+                            }
+                            if (a.contains("血糖") || a.contains("空腹血糖") || a.contains("平均血糖") || a.contains("血液葡萄糖") || a.contains("血清葡萄糖") || a.contains("葡萄糖") || a.contains("快速血糖")) {
+                                String trim = Pattern.compile(REGEX).matcher(s1).replaceAll("").trim();
+                                if (trim.equals("")) {
 
+                                } else {
+                                    double v = Double.parseDouble(trim);
+                                    if (v > 6.1) {
+                                        bool = false;
+                                        rs = rs + v;
+                                        //   System.out.println(rs);
+                                        continue;
+                                    }
+                                }
+
+                            }
+                            if (label.contains("甲状腺结节") || label.contains("心脏") || label.contains("肾功能不全")) {
+                                rs = rs + label;
+                                bool = false;
+                                // System.out.println(rs);
+                                continue;
+                            }
+                        }
+                        if (bool) {
+                            out.write(line + "\n");
+                            out.flush();
+                        }
                     }
 
                 }
-                if (bool){
-                    out.write(line+"\n");
-                    out.flush();
-                }
+
 
             }
             reader.close();
             out.close();
-
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

@@ -1,7 +1,6 @@
 package com.haozhuo.datag.service.Insurance;
 
 import com.haozhuo.datag.com.service.Insurance.ClassiFication;
-import com.haozhuo.datag.com.service.Insurance.MatchJzx;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.RedisUtil;
 import com.haozhuo.datag.common.StringUtil;
@@ -10,33 +9,25 @@ import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.report.FourIn;
 import com.haozhuo.datag.model.report.InsuranceMap;
 import com.haozhuo.datag.model.report.Msg;
-import com.haozhuo.datag.model.report.Msg1;
 import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.EsService;
-import com.haozhuo.datag.service.RedisService;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.elasticsearch.client.transport.TransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.hadoop.hbase.HbaseTemplate;
 import org.springframework.stereotype.Component;
-import scala.collection.mutable.StringBuilder;
 
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
-
-import static com.haozhuo.datag.com.service.Insurance.ClassiFication.result;
 
 @Component
 public class UserReport {
@@ -560,9 +551,10 @@ public class UserReport {
     }
 
     public void test1() throws IOException {
-        String pathname = "D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\rs1.txt";
+        String pathname = "D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\id.txt";
         FileReader reader = null;
-        File file =new File("D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\result3.txt");
+
+        File file =new File("D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\rs.txt");
         Writer out =new FileWriter(file);
         try {
             reader = new FileReader(pathname);
@@ -570,15 +562,29 @@ public class UserReport {
             String line;
             while ((line = br.readLine()) != null) {
                 // 一次读入一行数据
-                String[] s = line.split(",");
-                String label = esService.getLabelsByReportId(s[2]);
+                //String[] s = line.split(",");
+                String label = esService.getLabelsByReportId(line);
                 List list = new ArrayList();
-                if (s[0].equals("女")&&Integer.parseInt(s[3])>18&&Integer.parseInt(s[3])<60){
+                int i = 1;
+                    String s1 = "";
                     if (label.contains("乳腺增生")||label.contains("乳腺小叶增生")||label.contains("子宫肌瘤")||label.contains("子宫囊肿")){
-                        out.write(line+"\n");
+                        if (label.contains("乳腺增生")){
+                            s1=s1+"乳腺增生,";
+                        }
+                        if (label.contains("乳腺小叶增生")){
+                            s1=s1+"乳腺小叶增生,";
+                        }
+                        if (label.contains("子宫肌瘤")){
+                            s1=s1+"子宫肌瘤,";
+                        }
+                        if (label.contains("子宫囊肿")){
+                            s1=s1+"子宫囊肿,";
+                        }
+                        out.write(line+","+s1+"\n");
+                        out.flush();
                     }
-                }
 
+                System.out.println(i);
             }
             reader.close();
             out.close();
@@ -587,6 +593,170 @@ public class UserReport {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public void test2() throws IOException {
+        String pathname = "D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\id.txt";
+        FileReader reader = null;
+
+        File file =new File("D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\rs1.txt");
+        Writer out =new FileWriter(file);
+        try {
+            reader = new FileReader(pathname);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            while ((line = br.readLine()) != null) {
+                // 一次读入一行数据
+               // String[] s = line.split(",");
+                String label = esService.getLabelsByReportId(line);
+                List list = new ArrayList();
+                int i = 1;
+                String s1 = "";
+                if (label.contains("白带清洁度")||label.contains("宫颈刮片巴式Ⅲ")||label.contains("宫颈刮片巴式Ⅳ")||label.contains("宫颈刮片巴式Ⅴ")||label.contains("类风湿因子增高")){
+
+
+
+                }else{
+                    out.write(line+"\n");
+                    out.flush();
+                }
+
+                System.out.println(i+"\n");
+            }
+            reader.close();
+            out.close();
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void test3() throws IOException {
+        String pathname = "D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\hbase.txt";
+        FileReader reader = null;
+
+      // File file =new File("D:\\workspace\\spring-apps\\datag\\src\\main\\excel\\hbase.txt");
+        //Writer out =new FileWriter(file);
+        try {
+            reader = new FileReader(pathname);
+            BufferedReader br = new BufferedReader(reader);
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] split = line.split("\\|\\|");
+                byte[] bytes = Bytes.toBytes(split[2].replaceAll("&&","\n"));
+                hbaseTemplate.put(HBASENAME,split[0],split[1],split[1],bytes);
+
+              //  System.out.println(split[0]+"_"+split[1]+","+split[2]);
+               /* Map<String,String> map = new HashMap<>();
+                int i1 = Integer.parseInt(split[1]) + 1;
+                String stoprow = split[0]+"_"+i1;
+                Scan scan = new Scan();
+                scan.setStartRow(line.getBytes());
+                scan.setStopRow(stoprow.getBytes());
+                HbaseModel h = new HbaseModel();
+                List<HbaseModel> list = new ArrayList<>();*/
+              /*  hbaseTemplate.find(HBASENAME, scan, (Result result, int i) -> {
+
+                    Cell[] cells = result.rawCells();
+                    for (Cell cell : cells) {
+
+                        String key = new String(CellUtil.cloneQualifier(cell));
+                        String value = new String(CellUtil.cloneValue(cell));
+                        String rowName = new String(CellUtil.cloneRow(cell));
+                        String[] rownmaes = rowName.split("_");
+                        String s = value.replaceAll("\n", "&&");
+                        out.write(rowName+"||"+key+"||"+s+"\n");
+                        //out.write("{\"rowkey\":\""+rowName+"\",\"key\":\""+key+"\",\"value\":\""+value+"\"}"+"\n");
+                        out.flush();
+                    }
+                    return list;
+                });*/
+
+
+
+            }
+            reader.close();
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getrowkey(String rptid) {
+        InsuranceMap insuranceMap = new InsuranceMap();
+        String rs = "";
+        String day = esService.getlastday(rptid);
+String size = "";
+        String substring = day.substring(0, 10);
+        String rowkey = substring + "_" + rptid;
+        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
+        List list = new ArrayList();
+        LocalDate date = LocalDate.parse(substring);
+        LocalDate newDate1 = date.plus(-1, ChronoUnit.DAYS);
+        int a = 0;
+        String labelsByReportId = esService.getLabelsByReportId(rptid);
+        String[] split = labelsByReportId.split(",");
+        String[] label ={"肺部罗音","肺陈旧性病灶","肺大泡","肺动脉瓣反流","肺动脉高压","肺动脉增宽","肺功能限制","肺间质性改变","肺结核",
+        "肺门影增大","肺内钙化灶","肺内硬结灶","肺气肿","肺通气功能异常","肺纹理增多","肺纤维灶","肺炎","肺肿块影","肺转移瘤","横膈抬高","呼吸音减弱"
+        ,"胸腔积液"};
+        Set<String> same = new HashSet<>();  //用来存放两个数组中相同的元素
+        Set<String> temp = new HashSet<>();  //用来存放数组a中的元素
+
+        for (int i = 0; i < split.length; i++) {
+            temp.add(split[i]);   //把数组a中的元素放到Set中，可以去除重复的元素
+        }
+
+        for (int j = 0; j < label.length; j++) {
+            //把数组b中的元素添加到temp中
+            //如果temp中已存在相同的元素，则temp.add（b[j]）返回false
+            if(!temp.add(label[j]))
+                same.add(label[j]);
+        }
+
+        if (same.size()!=0){
+            size="1";
+        }else {
+            size = "0";
+        }
+
+
+        while (list.size()!=0){
+            if(a==1){
+                rowkey = newDate1 + "_" + rptid;
+                endrowkey = newDate1 + "_" + (Integer.parseInt(rptid) + 1);
+            }else if(a>1){
+                date = LocalDate.parse(substring);
+                newDate1 = date.plus(-1, ChronoUnit.DAYS);
+                rowkey = newDate1 + "_" + rptid;
+                endrowkey = newDate1 + "_" + (Integer.parseInt(rptid) + 1);
+            }
+            StringBuffer sb = new StringBuffer(rs);
+            Scan scan = new Scan();
+            scan.setStartRow(rowkey.getBytes());
+            scan.setStopRow(endrowkey.getBytes());
+            hbaseTemplate.find(HBASENAME1, scan, (Result result, int i) -> {
+                Cell[] cells = result.rawCells();
+                for (Cell cell : cells) {
+                    String key = new String(CellUtil.cloneQualifier(cell));
+                    String value = new String(CellUtil.cloneValue(cell));
+                    String rowName = new String(CellUtil.cloneRow(cell));
+                    String[] rownmaes = rowName.split("_");
+                    if (key.equals("rpt_id")) {
+                        list.add(value);
+                    }
+                }
+                return list;
+            });
+
+            a++;
+            if (a>=5){
+                return "找不到";
+            }
+        }
+
+        return rowkey+","+endrowkey+","+size;
     }
 }
 

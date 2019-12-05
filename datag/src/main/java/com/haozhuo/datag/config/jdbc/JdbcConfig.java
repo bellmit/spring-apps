@@ -52,6 +52,10 @@ public class JdbcConfig {
         return bisysDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
+    /**
+     *
+     * @return
+     */
     @Bean(name = "yjkMallJdbc")
     public JdbcTemplate yjkMallJdbcTemplate() {
         return new JdbcTemplate(yjkMallDataSource());
@@ -67,5 +71,26 @@ public class JdbcConfig {
     @ConfigurationProperties("spring.datasource.yjk-mall")
     public DataSource yjkMallDataSource() {
         return yjkMallDataSourceProperties().initializeDataSourceBuilder().build();
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Bean(name = "whhaozhuoJdbc")
+    public JdbcTemplate whhaozhuoJdbcTemplate() {
+        return new JdbcTemplate(wuhanhaozhuoDataSource());
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.whhaozhuo")
+    public DataSourceProperties whhaozhuoDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.whhaozhuo")
+    public DataSource wuhanhaozhuoDataSource() {
+        return whhaozhuoDataSourceProperties().initializeDataSourceBuilder().build();
     }
 }

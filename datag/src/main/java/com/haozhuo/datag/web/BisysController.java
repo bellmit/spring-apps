@@ -2,6 +2,7 @@ package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.common.ResultCodeBase;
 import com.haozhuo.datag.common.TipConstBase;
+import com.haozhuo.datag.model.HBStore;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.service.BisysJdbcService;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * Created by Lucius on 9/3/18.
@@ -312,6 +314,40 @@ public class BisysController {
     ) {
         return bisysJdbcService.getHBStorefoByPage(pageNo, pageSize);
     }
+
+    @GetMapping("/msj/regiest")
+    @ApiOperation(value = "获取码上检app数据")
+    public List<MsjData> getmsjData(
+                                    @RequestParam(value = "date") String date,
+                                    @RequestParam(value = "enddate") String enddate
+    ) {
+/*        String sys = "1";
+        if(system.equals("1")){
+            sys = "iOS";
+        }else if (system.equals("2")){
+            sys= "android";
+        }*/
+        return bisysJdbcService.getMsjData(date, enddate);
+    }
+
+    @GetMapping("/msj/liucun")
+    @ApiOperation(value = "获取码上检app留存率")
+    public List<MsjLiucun> getmsjLiucun(
+                                    @RequestParam(value = "date") String date,
+                                    @RequestParam(value = "enddate") String enddate
+    ) {
+        return bisysJdbcService.getMsjLiucun(date, enddate);
+    }
+
+    @GetMapping("/msj/download")
+    @ApiOperation(value = "获取码上检app下载数据")
+    public List<MsjDownload> getmsjDownload(
+            @RequestParam(value = "date") String date,
+            @RequestParam(value = "enddate") String enddate
+    ) {
+        return bisysJdbcService.getMsjDownload(date, enddate);
+    }
+
 
 
 

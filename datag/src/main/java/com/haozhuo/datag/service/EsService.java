@@ -18,6 +18,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.*;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
@@ -222,6 +223,15 @@ public class EsService {
                 .source(index).get();
         response.getDeleted();
     }
+
+    public void deleteIdByQuery1(String index, String id) {
+        BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
+                .filter(QueryBuilders.termQuery("healthReportId", id))
+                .source(index).get();
+        response.getDeleted();
+    }
+
+
 
 
     //------------------- portrait start -----------------------------

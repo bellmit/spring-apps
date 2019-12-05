@@ -35,6 +35,10 @@ public class BisysJdbcService {
     @Qualifier("bisysJdbc") //选择jdbc连接池
     private JdbcTemplate bisysDB;
 
+    @Autowired
+    @Qualifier("whhaozhuoJdbc")
+    private JdbcTemplate whDB;
+
     private final static String dailyYouAppQuerySQL = "select `date`, os, download_users, total_download_users, active_users," +
             "start_num from daily_app where date >=? and date <= ? " +
             " union select `date`, 0 as os, sum(download_users) as download_users, " +
@@ -921,5 +925,76 @@ public class BisysJdbcService {
             a[i] = list1.get(i).getId();
         }
         return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), a);
+    }
+
+    /**
+     * 码上检app业务报表
+     */
+    private static final String GetMsjDate = "SELECT * FROM `jyk_regiest` where date>=? and date<=? ";
+
+    public List<MsjData> getMsjData(String date, String endDate) {
+        List<MsjData> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = whDB.query(GetMsjDate, new Object[]{date, endDate},
+                    (resultSet, i) ->{
+                        MsjData msjData = new MsjData();
+                        msjData.setDate(resultSet.getString("date"));
+                        msjData.setRegist(resultSet.getInt("regiest"));
+                        msjData.setCountregist(resultSet.getInt("count"));
+                        msjData.setDownloadrate(resultSet.getInt("zhucelv"));
+                        msjData.setActive(resultSet.getString("active"));
+                        return msjData;
+                    }
+
+            );
+        } catch (Exception ex) {
+            logger.error("getAccessData error", ex);
+        }
+        return list;
+    }
+
+    private static final String GetMsjLiucun = "SELECT * FROM `jyk_liucun` where date>=? and date<=? ";
+    public List<MsjLiucun> getMsjLiucun(String date, String endDate) {
+        List<MsjLiucun> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = whDB.query(GetMsjLiucun, new Object[]{ date, endDate},
+                    (resultSet, i) ->{
+                        MsjLiucun msjLiucun = new MsjLiucun();
+                        msjLiucun.setDate(resultSet.getString("date"));
+                        msjLiucun.setCiri(resultSet.getString("ciri"));
+                        msjLiucun.setSanri(resultSet.getString("sanri"));
+                        msjLiucun.setQiri(resultSet.getString("qiri"));
+                        return msjLiucun;
+                    }
+
+            );
+        } catch (Exception ex) {
+            logger.error("GetMsjLiucun error", ex);
+        }
+        return list;
+    }
+
+    private static final String GetMsjDownload = "SELECT * FROM `jyk_download` where date>=? and date<=? ";
+    public List<MsjDownload> getMsjDownload(String date, String endDate) {
+        List<MsjDownload> list = null;
+        try {
+            //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+            list = whDB.query(GetMsjDownload, new Object[]{ date, endDate},
+                    (resultSet, i) ->{
+                        MsjDownload msjDownload = new MsjDownload();
+                        msjDownload.setDate(resultSet.getString("date"));
+                        msjDownload.setDownload(resultSet.getString("download"));
+                        msjDownload.setCount(resultSet.getString("count"));
+                        msjDownload.setSystem(resultSet.getString("system"));
+                        return msjDownload;
+                    }
+
+            );
+        } catch (Exception ex) {
+            logger.error("GetMsjLiucun error", ex);
+        }
+        return list;
     }
 }

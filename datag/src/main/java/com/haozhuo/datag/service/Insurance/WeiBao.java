@@ -61,8 +61,8 @@ public class WeiBao {
         String REGEX = "[^0-9.]";
         List list1 = new ArrayList();
         String substring = day.substring(0, 10);
-        String rowkey = substring + ("_" + rptid + "_");
-        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1) + "_";
+        String rowkey = substring + ("_" + rptid );
+        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1) ;
         Map<String, String> map = new HashMap<>();//value
         Map<String, String> map1 = new HashMap<>();//text_ref
         Map<String, String> map2 = new HashMap<>();//rs_flag_id

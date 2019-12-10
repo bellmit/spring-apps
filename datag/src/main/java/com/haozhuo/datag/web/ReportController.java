@@ -25,15 +25,9 @@ public class ReportController {
     @Autowired
     private HbaseService hbaseService;
     @Autowired
-    private Hongkang hongkang;
-    @Autowired
-    private Mayi mayi;
-    @Autowired
     private WeiBao weiBao;
     @Autowired
     private UserReport userReport;
-    @Autowired
-    private PushGan pushGan;
     @Autowired
     private EsService esService;
 
@@ -90,7 +84,7 @@ public class ReportController {
     @ApiOperation(value = "测试")
     public void test() throws IOException {
 
-        userReport.test();
+        userReport.test3();
     }
 
     @PostMapping(value = "/push")
@@ -143,16 +137,10 @@ public class ReportController {
 */
 
     @GetMapping(value = "/haskey")
-    public InsuranceMap haskey(@RequestParam(value = "listname") String listname,
+    public String haskey(
                                @RequestParam(value = "rptid") String rptid) {
-        String day = esService.getlastday(rptid);
-        String substring = day.substring(0, 10);
-        String rowkey = substring + "_" + rptid;
-        String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
-        Scan scan = new Scan();
-        scan.setStartRow(rowkey.getBytes());
-        scan.setStopRow(endrowkey.getBytes());
-        return userReport.getRep(scan, listname);
+
+        return userReport.getrowkey(rptid);
     }
 
 }

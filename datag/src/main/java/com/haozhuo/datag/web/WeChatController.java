@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping(value = "/wx")
 @RestController
@@ -73,12 +74,7 @@ public class WeChatController {
         return weChatService.getUserCumulateList(begindate, enddate);
     }
 
-    @GetMapping("/hbase")
-    @ApiOperation(value = "保险报告")
-    public RepAbnormal getrpt(@RequestParam(value="idcard") String idcard){
 
-        return hbaseService.getAbnormalValue(idcard);
-    }
 
     @GetMapping("/es")
     public int test(@RequestParam(value="rpt_id")String rpt_id){
@@ -90,12 +86,7 @@ public class WeChatController {
         }
     }
 
-    @GetMapping("/test")
-    @ApiOperation(value = "测试excel")
-    public void test1() throws IOException {
 
-       hbaseService.test();
-    }
 
     @GetMapping("/test1")
     @ApiOperation(value = "测试es")

@@ -942,8 +942,8 @@ public class BisysJdbcService {
                         msjData.setDate(resultSet.getString("date"));
                         msjData.setRegist(resultSet.getInt("regiest"));
                         msjData.setCountregist(resultSet.getInt("count"));
-                        msjData.setDownloadrate(resultSet.getInt("zhucelv"));
-                        msjData.setActive(resultSet.getString("active"));
+                        msjData.setDownloadrate(resultSet.getDouble("zhucelv"));
+                        msjData.setActive(resultSet.getInt("active"));
                         return msjData;
                     }
 
@@ -976,12 +976,12 @@ public class BisysJdbcService {
         return list;
     }
 
-    private static final String GetMsjDownload = "SELECT * FROM `jyk_download` where date>=? and date<=? ";
+    private static final String GetMsjDowload = "SELECT * FROM `jyk_dowload` where date>=? and date<=? ";
     public List<MsjDownload> getMsjDownload(String date, String endDate) {
         List<MsjDownload> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = whDB.query(GetMsjDownload, new Object[]{ date, endDate},
+            list = whDB.query(GetMsjDowload, new Object[]{ date, endDate},
                     (resultSet, i) ->{
                         MsjDownload msjDownload = new MsjDownload();
                         msjDownload.setDate(resultSet.getString("date"));
@@ -990,7 +990,6 @@ public class BisysJdbcService {
                         msjDownload.setSystem(resultSet.getString("system"));
                         return msjDownload;
                     }
-
             );
         } catch (Exception ex) {
             logger.error("GetMsjLiucun error", ex);

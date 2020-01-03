@@ -80,7 +80,7 @@ public class HbaseService {
         return set;
     }
 
-    public List<Body> getBody(List list1, String sex) {
+    public static List<Body> getBody(List list1, String sex) {
         List<Body> list = new ArrayList<>();
         if (sex.equals("男"))
             list1.remove("妇科");
@@ -143,7 +143,15 @@ public class HbaseService {
           return list;
     }
 
-
+    public static void main(String[] args) {
+        List list = new ArrayList();
+        list.add("肿瘤标志物");
+        list.add("肿瘤标志物");
+        List<Body> body = getBody(list,"女");
+        for (int i = 0;i<body.size();i++){
+            System.out.println(body.get(i).getItem()+","+body.get(i).getFlag());
+        }
+    }
 }
 
 

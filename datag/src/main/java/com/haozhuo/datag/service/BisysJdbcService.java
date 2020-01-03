@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -338,6 +339,25 @@ public class BisysJdbcService {
         } catch (Exception ex) {
             logger.error("getOpsMallOrder error", ex);
         }
+        return list;
+    }
+
+    public List<OpsMallOrder> getDeapReportDate(int typeId, String date, String endDate) {
+        List<OpsMallOrder> list = null;
+        list = bisysDB.query("select date,report_num,banner_num,one_click_num,one_order_num from manage_depth_stat where date>=? and date<=?", new Object[]{date, endDate},
+                (resultSet, i) -> {
+                    OpsMallOrder mallOrder = new OpsMallOrder(
+                            typeId,
+                            resultSet.getString("date"),
+                            resultSet.getInt("report_num"),
+                            resultSet.getDouble("banner_num"),
+                            resultSet.getInt("one_click_num"),
+                            resultSet.getDouble("one_order_num"),
+                            0, 0, 0, 0
+                    );
+                    return mallOrder;
+                }
+        );
         return list;
     }
 
@@ -937,7 +957,7 @@ public class BisysJdbcService {
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
             list = whDB.query(GetMsjDate, new Object[]{date, endDate},
-                    (resultSet, i) ->{
+                    (resultSet, i) -> {
                         MsjData msjData = new MsjData();
                         msjData.setDate(resultSet.getString("date"));
                         msjData.setRegist(resultSet.getInt("regiest"));
@@ -955,12 +975,13 @@ public class BisysJdbcService {
     }
 
     private static final String GetMsjLiucun = "SELECT * FROM `jyk_liucun` where date>=? and date<=? ";
+
     public List<MsjLiucun> getMsjLiucun(String date, String endDate) {
         List<MsjLiucun> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = whDB.query(GetMsjLiucun, new Object[]{ date, endDate},
-                    (resultSet, i) ->{
+            list = whDB.query(GetMsjLiucun, new Object[]{date, endDate},
+                    (resultSet, i) -> {
                         MsjLiucun msjLiucun = new MsjLiucun();
                         msjLiucun.setDate(resultSet.getString("date"));
                         msjLiucun.setCiri(resultSet.getString("ciri"));
@@ -977,12 +998,13 @@ public class BisysJdbcService {
     }
 
     private static final String GetMsjDowload = "SELECT * FROM `jyk_dowload` where date>=? and date<=? ";
+
     public List<MsjDownload> getMsjDownload(String date, String endDate) {
         List<MsjDownload> list = null;
         try {
             //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
-            list = whDB.query(GetMsjDowload, new Object[]{ date, endDate},
-                    (resultSet, i) ->{
+            list = whDB.query(GetMsjDowload, new Object[]{date, endDate},
+                    (resultSet, i) -> {
                         MsjDownload msjDownload = new MsjDownload();
                         msjDownload.setDate(resultSet.getString("date"));
                         msjDownload.setDownload(resultSet.getString("download"));
@@ -995,5 +1017,37 @@ public class BisysJdbcService {
             logger.error("GetMsjLiucun error", ex);
         }
         return list;
+    }
+
+    private static final String GetPhoneNum = "SELECT * FROM content_fei_register where date = ?";
+
+    public String[] getPhoneNum() {
+        String day = day(); // 前一天日期
+        List<PhoneNum> list = null;
+        list = bisysDB.query(GetPhoneNum, new Object[]{day},
+                (resultSet, i) -> {
+                    PhoneNum phoneNum = new PhoneNum();
+                    phoneNum.setPhonenum(resultSet.getString("phone_number"));
+                    return phoneNum;
+                }
+        );
+
+        String phone[] = new String[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            phone[i] = list.get(i).getPhonenum();
+        }
+        return phone;
+    }
+
+    public String day() {
+        Date date = new Date();//获取当前时间    
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.DATE, -1);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String format = dateFormat.format(calendar.getTime());
+        System.out.println(format);
+
+        return format;
     }
 }

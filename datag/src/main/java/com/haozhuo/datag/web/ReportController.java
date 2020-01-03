@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.List;
 
 @RequestMapping(value = "/report")
 @RestController
@@ -141,6 +142,12 @@ public class ReportController {
                                @RequestParam(value = "rptid") String rptid) {
 
         return userReport.getrowkey(rptid);
+    }
+
+    @GetMapping(value = "/comport")
+    public List<ReVO> getday( @RequestParam(value = "rptid") String rptid){
+
+        return esService.query1(rptid);
     }
 
 }

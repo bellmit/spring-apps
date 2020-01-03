@@ -71,7 +71,12 @@ public class BisysController {
             return bisysJdbcService.getQuestion(id,date,endDate);
         }else if(id==15){
             return weChatService.getWechatDate(id,date,endDate);
-        }else {
+        }else if(id==16){
+            return weChatService.getMsjWechatDate(id,date,endDate);
+        }else if(id==4){
+            return bisysJdbcService.getDeapReportDate(id,date,endDate);
+        }
+        else {
             return bisysJdbcService.getOpsMallOrder(id, date, endDate);
         }
     }
@@ -349,8 +354,12 @@ public class BisysController {
     }
 
 
+    @GetMapping("/phonenum")
+    public String[] getPhoneNum(){
+        String[] phoneNum = bisysJdbcService.getPhoneNum();
 
-
+        return phoneNum;
+    }
 }
 
 

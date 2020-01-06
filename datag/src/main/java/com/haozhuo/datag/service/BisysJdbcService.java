@@ -942,8 +942,8 @@ public class BisysJdbcService {
                         msjData.setDate(resultSet.getString("date"));
                         msjData.setRegist(resultSet.getInt("regiest"));
                         msjData.setCountregist(resultSet.getInt("count"));
-                        msjData.setDownloadrate(resultSet.getInt("zhucelv"));
-                        msjData.setActive(resultSet.getString("active"));
+                        msjData.setDownloadrate(resultSet.getDouble("zhucelv"));
+                        msjData.setActive(resultSet.getInt("active"));
                         return msjData;
                     }
 

@@ -50,11 +50,44 @@ public class WeChatService {
     private final static String dailyMallOrderInputUpdateSQL =
             "INSERT INTO `wechat_data` (`date`, `cumulate_user`, `new_user`, `cancel_user`, `saoma`, `num`) VALUES (?,?,?,?,?,?)";
 
-    private final static String getWechatData = "select * from wechat_data a  where a.`date`>= ? and a.`date` <= ? ";
+    private final static String getWechatData = "select * from wechat_msj a  where a.`date`>= ? and a.`date` <= ? ";
 
     /**
      * 查询wechat_data数据
      */
+    public List<MsjWechatDate> getMsjWechatDate(int typeId, String date, String endDate) {
+        List<MsjWechatDate> list = null;
+        String sql = getWechatData;
+        // String sql1 =  managerQuestion;
+        Object[] params = new Object[]{date, endDate};
+
+        //  Object[] params = new Object[]{date, endDate, OpsMallOrder.getGenre(typeId)};
+        //当数据库中返回的数据为0条时，即查找不到这个用户时，这里会报错
+        list = bisysDB.query(sql, params,
+                (resultSet, i) -> {
+                    MsjWechatDate MsjWechatDate = new MsjWechatDate(
+                            resultSet.getString("date"),
+                            resultSet.getInt("cumulate_user"),
+                            resultSet.getInt("new_user"),
+                            resultSet.getInt("cancel_user"),
+                            resultSet.getInt("saoma"),
+                            resultSet.getInt("num")
+                    );
+                    DecimalFormat df = new DecimalFormat("0.00");
+                    int a = MsjWechatDate.getNewuser();
+                    int b = MsjWechatDate.getSaoma();
+                    int c = MsjWechatDate.getNum();
+                    int d = MsjWechatDate.getCumulateuser();
+                    String s = df.format((float) a / b * 100);
+                    String t = df.format((float) c / d * 100);
+                    MsjWechatDate.setGuanzhurate(s + "%");
+                    MsjWechatDate.setDownloadrate(t + "%");
+                    return MsjWechatDate;
+                }
+        );
+        return list;
+    }
+
     public List<WeChatDate> getWechatDate(int typeId, String date, String endDate) {
         List<WeChatDate> list = null;
         String sql = getWechatData;

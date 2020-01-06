@@ -9,6 +9,7 @@ import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.report.FourIn;
 import com.haozhuo.datag.model.report.InsuranceMap;
 import com.haozhuo.datag.model.report.Msg;
+import com.haozhuo.datag.model.report.ReVO;
 import com.haozhuo.datag.service.DataEtlJdbcService;
 import com.haozhuo.datag.service.EsService;
 import org.apache.hadoop.hbase.Cell;
@@ -687,8 +688,13 @@ public class UserReport {
     public String getrowkey(String rptid) {
         InsuranceMap insuranceMap = new InsuranceMap();
         String rs = "";
-        String day = esService.getlastday(rptid);
-String size = "";
+        //String day = esService.getlastday(rptid);
+        List<ReVO> reVOS = esService.query1(rptid);
+        if (reVOS.size()==0){
+            return "找不到";
+        }
+        String day = reVOS.get(0).getRpt_create_date();
+        String size = "";
         String substring = day.substring(0, 10);
         String rowkey = substring + "_" + rptid;
         String endrowkey = substring + "_" + (Integer.parseInt(rptid) + 1);
@@ -722,7 +728,7 @@ String size = "";
         }
 
 
-        while (list.size()!=0){
+        while (list.size()==0){
             if(a==1){
                 rowkey = newDate1 + "_" + rptid;
                 endrowkey = newDate1 + "_" + (Integer.parseInt(rptid) + 1);

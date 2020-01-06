@@ -585,11 +585,11 @@ public class EsService {
         return stream(searchHits).map(x -> x.getSourceAsMap().get("lastUpdateTime")).findFirst().orElse("").toString();
     }
 
-    public List<ReVO> query1(String idcard) {
+    public List<ReVO> query1(String rptid) {
         //条件查询
 
-        SearchResponse searchResponse = client.prepareSearch("tmp_stu_es_index1")
-                .setQuery(matchQuery("id_card", idcard)).get();
+        SearchResponse searchResponse = client.prepareSearch("reportlabel")
+                .setQuery(matchQuery("healthReportId", rptid)).get();
         //打印查询结果
         SearchHits searchHits = searchResponse.getHits();
         System.out.println("查询的结果有" + searchHits.getTotalHits() + "条");
@@ -599,10 +599,10 @@ public class EsService {
 
         for (SearchHit hit : hits1) {
             ReVO reVO = new ReVO();
-            list.add(hit.getSourceAsMap().get("rpt_id"));
-            reVO.setRpt_id(hit.getSourceAsMap().get("rpt_id").toString());
-            reVO.setChk_date(hit.getSourceAsMap().get("chk_date").toString());
-            reVO.setRpt_create_date(hit.getSourceAsMap().get("rpt_create_date").toString());
+            list.add(hit.getSourceAsMap().get("healthReportId"));
+            reVO.setRpt_id(hit.getSourceAsMap().get("healthReportId").toString());
+            reVO.setChk_date(hit.getSourceAsMap().get("checkDate").toString());
+            reVO.setRpt_create_date(hit.getSourceAsMap().get("lastUpdateTime").toString());
             reVOS.add(reVO);
         }
         Collections.sort(reVOS, new Comparator<ReVO>() {
@@ -611,7 +611,7 @@ public class EsService {
                 // 返回值为int类型，大于0表示正序，小于0表示逆序
                 if (o1.getChk_date() == "")
                     return 1;
-                return o1.getChk_date().compareTo(o2.getChk_date());
+                return o1.getRpt_create_date().compareTo(o2.getRpt_create_date());
             }
         });
 

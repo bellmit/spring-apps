@@ -40,9 +40,7 @@ public class TableSynController {
 
     @Value("${app.biz.admin-password:321}")
     private String adminPassword;
-
-
-/**
+    /**
      * 对应原来developer-api项目中的InsertEntityController中的
      */
 
@@ -86,6 +84,39 @@ public class TableSynController {
             SimpleArticle simpleArticle = getSimpleArticle(article);
             redisService.setKeywordsOfArticleInRedis(simpleArticle);
             dataetlJdbcService.updateKeywordsOfArticle(simpleArticle);
+        } else {
+            esService.deleteArticle(article.getInformationId());
+            // already deleted in the redis!
+        }
+        logger.info("POST /article  id:{}  cost:{} ms", article.getInformationId(), System.currentTimeMillis() - beginTime);
+        return "success!";
+    }
+
+    /**
+     *
+     * @param article 只更新redis
+     * @return
+     */
+    @PostMapping("/articleredis")
+    @ApiOperation(value = "资讯更新接口")
+    public Object updateArticleForredis(@RequestBody Article article) {
+
+        article.setUpdateTime(JavaUtils.getCurrent());
+        long beginTime = System.currentTimeMillis();
+        if (article.getStatus() != 1) { //只有2种状态1和0。1表示发布，0表示删除。如果传入的是其他的状态，表示删除，设置为0
+            article.setStatus(0);
+        }
+        article.setUpdateTime(JavaUtils.getCurrent());
+
+        // must delete first!
+        redisService.deleteKeywordsOfArticleInRedis(String.valueOf(article.getInformationId()));
+
+        //dataetlJdbcService.updateArticle(article);
+        if (article.getStatus() == 1) { //只有状态是1的才认为是发布的文章。其他一切状态都认为是删除
+            esService.updateArticle(article);
+            SimpleArticle simpleArticle = getSimpleArticle(article);
+            redisService.setKeywordsOfArticleInRedis(simpleArticle);
+            //dataetlJdbcService.updateKeywordsOfArticle(simpleArticle);
         } else {
             esService.deleteArticle(article.getInformationId());
             // already deleted in the redis!

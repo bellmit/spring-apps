@@ -57,7 +57,7 @@ public class WeChatController {
 
         return weChatService.getAccess_token();
     }*/
-
+//
     @PostMapping("/wechat/getusersummary")
     public List<GetUserSummary> getUserSummary(@RequestParam(value = "date") String begindate,
                                                @RequestParam(value = "endDate") String enddate) {

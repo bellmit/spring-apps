@@ -73,7 +73,7 @@ public class WeChatController {
 
         return weChatService.getUserCumulateList(begindate, enddate);
     }
-
+  //
 
  //
     @GetMapping("/es")

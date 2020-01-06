@@ -53,7 +53,7 @@ spring:
       password: yjkdatag
       maximum-pool-size: 15
     bisys:
-      url: jdbc:mysql://192.168.1.201:3306/bisys?characterEncoding=utf-8
+      url: jdbc:mysql://192.168.1.162:3306/bisys?characterEncoding=utf-8
       username: datag
       password: yjkdatag
       maximum-pool-size: 15
@@ -62,16 +62,21 @@ spring:
       username: root
       password: mysql4hz@2015
       maximum-pool-size: 1
+    whhaozhuo:
+      url: jdbc:mysql://192.168.1.162:3306/whhaozhuo?characterEncoding=utf-8
+      username: datag
+      password: yjkdatag
+      maximum-pool-size: 1
   kafka:
     bootstrap-servers: 192.168.1.153:9092
   data:
     elasticsearch:
-      cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300
-      cluster-name: hz-es-cluster1
+      cluster-nodes: es1:9300,es2:9300,es3:9300
+      cluster-name: hz-datag-es
 
 hbase:
   zookeeper:
-    quorum: namenode
+    quorum: datanode01,datanode02,datanode03
     port:  2181
   rpc:
     timeout: 1800000

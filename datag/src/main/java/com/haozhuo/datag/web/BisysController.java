@@ -360,6 +360,12 @@ public class BisysController {
 
         return phoneNum;
     }
+
+    @GetMapping("/getVirus")
+    public List getvirus(){
+
+        return bisysJdbcService.getVirus();
+    }
 }
 
 

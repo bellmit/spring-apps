@@ -1,6 +1,9 @@
 package com.haozhuo.datag.service;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.model.HBStore;
 import com.haozhuo.datag.model.ResponseEntity;
@@ -8,6 +11,8 @@ import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.util.SqlDate;
+import org.apache.avro.data.Json;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1019,6 +1024,22 @@ public class BisysJdbcService {
         return list;
     }
 
+    public List getVirus() {
+        List list = new ArrayList();
+        Virus virus = new Virus();
+         whDB.query("Select * from fight2feiyan order by now_time desc limit 1", (resultSet, i) -> {
+            virus.setCity_case(resultSet.getString("city_case"));
+            return virus;
+        });
+
+        JSONArray array = JSONArray.parseArray(virus.getCity_case());
+        for (int i = 0;i<array.size();i++){
+            list.add(array.getJSONObject(i));
+        }
+
+        return list;
+    }
+
     private static final String GetPhoneNum = "SELECT * FROM content_fei_register where date = ?";
 
     public String[] getPhoneNum() {
@@ -1047,7 +1068,6 @@ public class BisysJdbcService {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String format = dateFormat.format(calendar.getTime());
         System.out.println(format);
-
         return format;
     }
 }

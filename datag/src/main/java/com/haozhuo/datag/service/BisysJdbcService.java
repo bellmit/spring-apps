@@ -1,7 +1,6 @@
 package com.haozhuo.datag.service;
 
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.haozhuo.datag.common.JavaUtils;
@@ -10,9 +9,11 @@ import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
+import com.haozhuo.datag.model.bisys.virus.Citys;
+import com.haozhuo.datag.model.bisys.virus.Virus;
+import com.haozhuo.datag.model.bisys.virus.VirusData;
+import com.haozhuo.datag.model.bisys.virus.VirusJson;
 import com.haozhuo.datag.util.SqlDate;
-import org.apache.avro.data.Json;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -1027,15 +1027,44 @@ public class BisysJdbcService {
     public List getVirus() {
         List list = new ArrayList();
         Virus virus = new Virus();
+        VirusData virusData = new VirusData();
          whDB.query("Select * from fight2feiyan order by now_time desc limit 1", (resultSet, i) -> {
-            virus.setCity_case(resultSet.getString("city_case"));
+            virus.setCity_group(resultSet.getString("city_case"));
+            virus.setForeign(resultSet.getString("foreign"));
+            virusData.setConfirm(resultSet.getInt("confirm"));
+            virusData.setSuspect(resultSet.getInt("suspect"));
+            virusData.setHeal(resultSet.getInt("cure"));
+            virusData.setDead(resultSet.getInt("deadcount"));
             return virus;
         });
 
-        JSONArray array = JSONArray.parseArray(virus.getCity_case());
+        JSONArray array = JSONArray.parseArray(virus.getCity_group());
         for (int i = 0;i<array.size();i++){
+/*            VirusJson virusJson = new VirusJson();
+            virusJson.setProvince(array.getJSONObject(i).getString("name"));
+           JSONArray array2 = JSONArray.parseArray(array.getJSONObject(i).getString("children"));
+            Citys citys = new Citys();
+            String a [] = new String[array2.size()];
+            for (int j = 0;j<array2.size();j++){
+                citys.setConfirm(array2.getJSONObject(j).getInteger("confirm"));
+                citys.setHeal(array2.getJSONObject(j).getInteger("heal"));
+                citys.setDead(array2.getJSONObject(j).getInteger("dead"));
+                citys.setSuspect(array2.getJSONObject(j).getInteger("suspect"));
+                a[j]=citys;
+            }
+            virusJson.setCitys(a);
+            virusJson.setConfirm(array.getJSONObject(i).getInteger("confirm"));
+            virusJson.setSuspect(array.getJSONObject(i).getInteger("suspect"));
+            virusJson.setDead(array.getJSONObject(i).getInteger("dead"));
+            virusJson.setHeal(array.getJSONObject(i).getInteger("heal"));*/
             list.add(array.getJSONObject(i));
         }
+
+        JSONObject array1 = JSONObject.parseObject(virus.getForeign());
+        virusData.setProvince("中国");
+
+        list.add(virusData);
+        list.add(array1);
 
         return list;
     }

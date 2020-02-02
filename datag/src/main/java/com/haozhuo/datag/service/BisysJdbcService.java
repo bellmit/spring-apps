@@ -1066,6 +1066,7 @@ public class BisysJdbcService {
         list.add(virusData);
         list.add(array1);
 
+
         return list;
     }
 

@@ -1,5 +1,6 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.service.Virus.GetVirusGraph;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -7,13 +8,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RequestMapping(value = "/feiyan")
 @RestController
 public class FeiyanGrophController {
 
-
+    @Autowired
+    GetVirusGraph getVirusGraph;
 
     @Autowired
     @Qualifier("whhaozhuoJdbc")
@@ -34,5 +40,19 @@ public class FeiyanGrophController {
 
 
         return aCase;
+    }
+
+    @GetMapping("/linechart")
+    public List getGraph(@RequestParam(value = "id") int id){
+        if (id ==1){
+            return getVirusGraph.getFirstGraph();
+        }else if(id ==2){
+            return getVirusGraph.getSecondGraph();
+        }else if(id ==3){
+            return getVirusGraph.getThridGraph();
+        }else {
+            return getVirusGraph.getThridGraph();
+        }
+
     }
 }

@@ -50,14 +50,18 @@ public class GetVirusGraph {
 
     public List<VirusThree> getThridGraph(){
         List<VirusThree> list = new ArrayList();
-        String sql = "select nowtime,contry_confirm_today,contry_suspect_today,contry_confirm_total from Ncov_statis";
+        String sql = "select nowtime,hubei_confirm_today,wuhan_confirm_today,hubei_confirm_total,wuhan_confirm_total from Ncov_statis";
         list = whDB.query(sql,(resultSet, i) ->{
             VirusThree virusThree = new VirusThree();
             virusThree.setNowtime(resultSet.getString("nowtime"));
-            virusThree.setCountHubeiComfire(resultSet.getInt("contry_confirm_today"));
-            virusThree.setCountWhComfire(resultSet.getInt("contry_suspect_today"));
-            virusThree.setHubeiNewComfire(resultSet.getInt("contry_confirm_total"));
-            virusThree.setWuhanNewComfir(resultSet.getInt("contry_confirm_total"));
+            virusThree.setCountHubeiComfire(resultSet.getInt("hubei_confirm_total"));
+            virusThree.setCountWhComfire(resultSet.getInt("wuhan_confirm_total"));
+            virusThree.setHubeiNewComfire(resultSet.getInt("hubei_confirm_today"));
+            virusThree.setWuhanNewComfir(resultSet.getInt("wuhan_confirm_today"));
+            System.out.println("湖北新增确诊:"+virusThree.getHubeiNewComfire());
+            System.out.println("wh新增确诊:"+virusThree.getWuhanNewComfir());
+            System.out.println("湖北总确诊:"+virusThree.getCountHubeiComfire());
+            System.out.println("wh总确诊:"+virusThree.getCountWhComfire());
             virusThree.setHbexceptWhNewComfir(virusThree.getHubeiNewComfire()-virusThree.getWuhanNewComfir());
             virusThree.setHbexceptWhCountComfire(virusThree.getCountHubeiComfire()-virusThree.getCountWhComfire());
             return virusThree;

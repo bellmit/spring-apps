@@ -1,5 +1,7 @@
 package com.haozhuo.datag.web;
 
+import com.haozhuo.datag.model.ResponseEntity;
+import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.service.Virus.GetVirusGraph;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,15 +45,19 @@ public class FeiyanGrophController {
     }
 
     @GetMapping("/linechart")
-    public List getGraph(@RequestParam(value = "id") int id){
+    public ResponseEntity getGraph(@RequestParam(value = "id") int id){
         if (id ==1){
-            return getVirusGraph.getFirstGraph();
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getFirstGraph());
         }else if(id ==2){
-            return getVirusGraph.getSecondGraph();
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getSecondGraph());
         }else if(id ==3){
-            return getVirusGraph.getThridGraph();
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getThridGraph());
+        }else if(id ==4){
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getNotWhAll());
+        }else if(id ==11){
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getAllSiWang());
         }else {
-            return getVirusGraph.getThridGraph();
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), "id错误");
         }
 
     }

@@ -2,16 +2,15 @@ package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.ResponseEnum;
+import com.haozhuo.datag.model.bisys.virus.UpdateData;
 import com.haozhuo.datag.service.Virus.GetVirusGraph;
+import com.haozhuo.datag.service.Virus.UpdateVirusData;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,9 @@ public class FeiyanGrophController {
 
     @Autowired
     GetVirusGraph getVirusGraph;
+
+    @Autowired
+    UpdateVirusData updateVirusData;
 
     @Autowired
     @Qualifier("whhaozhuoJdbc")
@@ -68,5 +70,11 @@ public class FeiyanGrophController {
             return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), "id错误");
         }
 
+    }
+
+    @PostMapping
+    public ResponseEntity Update(@RequestBody UpdateData updateData){
+        updateVirusData.UpdateData(updateData);
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), "修改成功");
     }
 }

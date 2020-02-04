@@ -16,6 +16,8 @@ public class GetVirusGraph {
     @Autowired
     @Qualifier("whhaozhuoJdbc")
     private JdbcTemplate whDB;
+
+
     private static final String fourSQL = "select feiHbSum,feiHbNew,time from (\n" +
             "(SELECT (contry_confirm_total-hubei_confirm_total) as feiHbSum,nowtime FROM `Ncov_statis` where nowtime <=?)a inner join \n" +
             "(SELECT (contry_confirm_today-hubei_confirm_today) as feiHbNew,nowtime as time  FROM `Ncov_statis` where nowtime <=?)b on a.nowtime=b.time\n" +

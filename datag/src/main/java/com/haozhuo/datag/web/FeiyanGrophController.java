@@ -54,6 +54,14 @@ public class FeiyanGrophController {
             return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getThridGraph());
         }else if(id ==4){
             return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getNotWhAll());
+        }else if(id ==5){
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getFifthGraph());
+        }else if(id ==6){
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getSixthGraph());
+        }else if(id ==7){
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getSeventhGraph());
+        }else if(id ==8){
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getEighthGraph());
         }else if(id ==11){
             return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), getVirusGraph.getAllSiWang());
         }else {

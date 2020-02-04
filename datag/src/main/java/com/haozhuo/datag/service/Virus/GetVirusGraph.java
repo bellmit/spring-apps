@@ -114,9 +114,9 @@ public class GetVirusGraph {
                 virusSixth.setHbSeverity(virusSixth.getHubeiServer() / virusSixth.getHubeiConfirm() * 1.0);
             }
 
-            if((virusSixth.getNationalConfirm() - virusSixth.getHubeiConfirm())<=0){
+            if ((virusSixth.getNationalConfirm() - virusSixth.getHubeiConfirm()) <= 0) {
                 virusSixth.setExceptHbSeverity(0.0);
-            }else {
+            } else {
                 virusSixth.setExceptHbSeverity((virusSixth.getNationalServer() - virusSixth.getHubeiServer()) / (virusSixth.getNationalConfirm() - virusSixth.getHubeiConfirm()) * 1.0);
 
             }
@@ -210,6 +210,71 @@ public class GetVirusGraph {
         );
 
 
+        return list;
+    }
+
+    private static final String NineSql="select hubei_lv,round((a1-hubei_lv) ,2) as not_hubei_lv,time from (\n" +
+            "(select if(hubei_touch is null or hubei_touch=0,1,hubei_touch) as hubei_touch,hubei_confirm_total/hubei_touch as hubei_lv,nowtime from Ncov_statis where nowtime <=?)a INNER JOIN\n" +
+            "(select if(contry_touch_total is null or contry_touch_total=0,1,contry_touch_total) as contry_touch_total,round(contry_confirm_total/contry_touch_total,2) as a1,nowtime as time from Ncov_statis where nowtime <=?)b on a.nowtime=b.time\n" +
+            ")";
+    public List<VirusNine> getBl(){
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+        //System.out.println(df.format(new Date()));// new Date()为获取当前系统时间
+        String a  = df.format(new Date());
+        String time = a.split(" ")[0];
+        List<VirusNine> list = null;
+        list = whDB.query(NineSql, new Object[]{time,time},
+                (resultSet, i) -> {
+                    VirusNine virusNine = new VirusNine();
+                    virusNine.setHubei_lv(resultSet.getString("hubei_lv"));
+                    virusNine.setNot_hubei_lv(resultSet.getString("not_hubei_lv"));
+                    virusNine.setTime(resultSet.getString("time"));
+                    return virusNine;
+                }
+        );
+        return list;
+    }
+
+    private static final String TweleSQL="select contry_cure_total,contry_confirm_today,nowtime from Ncov_statis where nowtime <=?";
+    public List<VirusTwelve> getNum(){
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+        //System.out.println(df.format(new Date()));// new Date()为获取当前系统时间
+        String a  = df.format(new Date());
+        String time = a.split(" ")[0];
+        List<VirusTwelve> list = null;
+        list = whDB.query(TweleSQL, new Object[]{time},
+                (resultSet, i) -> {
+                    VirusTwelve virusTwelve = new VirusTwelve();
+                    virusTwelve.setContry_cure_total(resultSet.getString("contry_cure_total"));
+                    virusTwelve.setContry_confirm_today(resultSet.getString("contry_confirm_today"));
+                    virusTwelve.setTime(resultSet.getString("nowtime"));
+                    return virusTwelve;
+                }
+        );
+        return list;
+    }
+
+    private static final String ThirteenSql="select contry_lv,hubei_lv,round(contry_lv-hubei_lv) as not_hb_lv,time1 from (\n" +
+            "(select if(contry_confirm_total is null or contry_confirm_total=0,1,contry_confirm_total) as contry_confirm_total ,round(contry_cure_total/contry_confirm_total,2) as contry_lv,nowtime from Ncov_statis where nowtime <=?)a INNER JOIN \n" +
+            "(select if(hubei_confirm_total is null or hubei_confirm_total=0,1,hubei_confirm_total) as hubei_confirm_total,round(hubei_cure_total/hubei_confirm_total,2) as hubei_lv,nowtime as time1 from Ncov_statis where nowtime <=?)b on a.nowtime=b.time1\n" +
+            ")";
+
+    public List<VirusThirteen> getNums(){
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+        //System.out.println(df.format(new Date()));// new Date()为获取当前系统时间
+        String a  = df.format(new Date());
+        String time = a.split(" ")[0];
+        List<VirusThirteen> list = null;
+        list = whDB.query(ThirteenSql, new Object[]{time,time},
+                (resultSet, i) -> {
+                    VirusThirteen virusThirteen = new VirusThirteen();
+                    virusThirteen.setContry_lv(resultSet.getString("contry_lv"));
+                    virusThirteen.setHubei_lv(resultSet.getString("hubei_lv"));
+                    virusThirteen.setNot_hb_lv(resultSet.getString("not_hb_lv"));
+                    virusThirteen.setTime(resultSet.getString("time1"));
+                    return virusThirteen;
+                }
+        );
         return list;
     }
 

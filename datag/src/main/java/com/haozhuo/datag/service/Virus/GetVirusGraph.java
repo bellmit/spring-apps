@@ -219,7 +219,6 @@ public class GetVirusGraph {
             ");";
     public List<VirusNine> getBl(){
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
-        //System.out.println(df.format(new Date()));// new Date()为获取当前系统时间
         String a  = df.format(new Date());
         String time = a.split(" ")[0];
         List<VirusNine> list = null;

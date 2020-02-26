@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,7 +31,7 @@ public class GetVirusGraph {
 
     public List<VirusOne> getFirstGraph() {
         List<VirusOne> list = new ArrayList();
-        String sql = "select nowtime,contry_confirm_today,contry_suspect_today,contry_confirm_total from Ncov_statis";
+        String sql = "select * from (select nowtime,contry_confirm_today,contry_suspect_today,contry_confirm_total from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
 
         list = whDB.query(sql, (resultSet, i) -> {
             VirusOne virusOne = new VirusOne();
@@ -46,7 +47,7 @@ public class GetVirusGraph {
 
     public List<VirusTwo> getSecondGraph() {
         List<VirusTwo> list = new ArrayList();
-        String sql = "select nowtime,wuhan_confirm_today,wuhan_confirm_total from Ncov_statis";
+        String sql = "select * from (select nowtime,wuhan_confirm_today,wuhan_confirm_total from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
 
         list = whDB.query(sql, (resultSet, i) -> {
             VirusTwo virusTwo = new VirusTwo();
@@ -60,7 +61,7 @@ public class GetVirusGraph {
 
     public List<VirusThree> getThridGraph() {
         List<VirusThree> list = new ArrayList();
-        String sql = "select nowtime,hubei_confirm_today,wuhan_confirm_today,hubei_confirm_total,wuhan_confirm_total from Ncov_statis";
+        String sql = "select * from (select nowtime,hubei_confirm_today,wuhan_confirm_today,hubei_confirm_total,wuhan_confirm_total from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
         list = whDB.query(sql, (resultSet, i) -> {
             VirusThree virusThree = new VirusThree();
             virusThree.setNowtime(resultSet.getString("nowtime"));
@@ -79,7 +80,7 @@ public class GetVirusGraph {
 
     public List<VirusFifth> getFifthGraph() {
         List<VirusFifth> list = new ArrayList<>();
-        String sql = "select nowtime,contry_observe_total,contry_observe_today,contry_deobserve_today from Ncov_statis";
+        String sql = "select * from (select nowtime,contry_observe_total,contry_observe_today,contry_deobserve_today from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
         list = whDB.query(sql, (resultSet, i) -> {
             VirusFifth virusFifth = new VirusFifth();
             virusFifth.setNowtime(resultSet.getString("nowtime"));
@@ -93,8 +94,9 @@ public class GetVirusGraph {
     }
 
     public List<VirusSixth> getSixthGraph() {
+        DecimalFormat df = new DecimalFormat("0.00");
         List<VirusSixth> list = new ArrayList<>();
-        String sql = "select nowtime,contry_severe,contry_confirm_total,hubei_severe,hubei_confirm_total from Ncov_statis";
+        String sql = "select * from (select nowtime,contry_severe,contry_confirm_total,hubei_severe,hubei_confirm_total from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
         list = whDB.query(sql, (resultSet, i) -> {
             VirusSixth virusSixth = new VirusSixth();
             virusSixth.setNowtime(resultSet.getString("nowtime"));
@@ -105,21 +107,21 @@ public class GetVirusGraph {
             if (virusSixth.getNationalConfirm() == 0) {
                 virusSixth.setNationalSeverity(0.0);
             } else {
-                virusSixth.setNationalSeverity(virusSixth.getNationalServer() / virusSixth.getNationalConfirm() * 1.0);
+                virusSixth.setNationalSeverity(Double.valueOf(df.format((double)virusSixth.getNationalServer() / (double)virusSixth.getNationalConfirm())));
             }
 
             if (virusSixth.getHubeiConfirm() == 0) {
                 virusSixth.setHbSeverity(0.0);
             } else {
-                virusSixth.setHbSeverity(virusSixth.getHubeiServer() / virusSixth.getHubeiConfirm() * 1.0);
+                virusSixth.setHbSeverity(Double.valueOf(df.format((double)virusSixth.getHubeiServer() / (double)virusSixth.getHubeiConfirm())));
             }
 
             if ((virusSixth.getNationalConfirm() - virusSixth.getHubeiConfirm()) <= 0) {
                 virusSixth.setExceptHbSeverity(0.0);
             } else {
-                virusSixth.setExceptHbSeverity((virusSixth.getNationalServer() - virusSixth.getHubeiServer()) / (virusSixth.getNationalConfirm() - virusSixth.getHubeiConfirm()) * 1.0);
-
+                virusSixth.setExceptHbSeverity(Double.valueOf(df.format((double)(virusSixth.getNationalServer() - virusSixth.getHubeiServer()) / (double)(virusSixth.getNationalConfirm() - virusSixth.getHubeiConfirm()))));
             }
+
             return virusSixth;
         });
 
@@ -127,8 +129,9 @@ public class GetVirusGraph {
     }
 
     public List<VirusSeventh> getSeventhGraph() {
+        DecimalFormat df = new DecimalFormat("0.00");
         List<VirusSeventh> list = new ArrayList<>();
-        String sql = "select nowtime,hubei_severe,hubei_server_h,hubei_confirm_total from Ncov_statis";
+        String sql = "select * from (select nowtime,hubei_severe,hubei_server_h,hubei_confirm_total from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
         list = whDB.query(sql, (resultSet, i) -> {
             VirusSeventh virusSeventh = new VirusSeventh();
             virusSeventh.setNowtime(resultSet.getString("nowtime"));
@@ -138,13 +141,13 @@ public class GetVirusGraph {
             if (virusSeventh.getHbServer() == 0 || (virusSeventh.getHbServer() + virusSeventh.getHbh() == 0)) {
                 virusSeventh.setFirst(0.0);
             } else {
-                virusSeventh.setFirst(virusSeventh.getHbServer() / (virusSeventh.getHbServer() + virusSeventh.getHbh()) * 1.0);
+                virusSeventh.setFirst(Double.valueOf(df.format((double) virusSeventh.getHbServer() / (double)(virusSeventh.getHbServer() + virusSeventh.getHbh()))));
             }
 
             if (virusSeventh.getHbConfirm() == 0) {
                 virusSeventh.setSecond(0.0);
             } else {
-                virusSeventh.setSecond(virusSeventh.getHbh() / virusSeventh.getHbConfirm() * 1.0);
+                virusSeventh.setSecond(Double.valueOf(df.format((double)virusSeventh.getHbh() / (double)virusSeventh.getHbConfirm())));
             }
             return virusSeventh;
         });
@@ -154,7 +157,7 @@ public class GetVirusGraph {
 
     public List<VirusEighth> getEighthGraph() {
         List<VirusEighth> list = new ArrayList<>();
-        String sql = "select nowtime,contry_cure_total,contry_dead_total from Ncov_statis";
+        String sql = "select * from (select nowtime,contry_cure_total,contry_dead_total from Ncov_statis ORDER BY nowtime desc limit 14) aa ORDER BY aa.nowtime";
         list = whDB.query(sql, (resultSet, i) -> {
             VirusEighth virusEighth = new VirusEighth();
             virusEighth.setNowtime(resultSet.getString("nowtime"));
@@ -275,6 +278,13 @@ public class GetVirusGraph {
                 }
         );
         return list;
+    }
+
+    public static void main(String[] args) {
+        int a = 120;
+        int b = 1345;
+        double c = a/b;
+        System.out.println(c);
     }
 
 }

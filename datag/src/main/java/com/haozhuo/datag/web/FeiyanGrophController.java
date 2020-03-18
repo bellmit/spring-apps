@@ -85,8 +85,11 @@ public class FeiyanGrophController {
     }
 
     @GetMapping("/getaux")
-    public ResponseEntity getAux(){
-        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), updateVirusData.getAus());
-
+    public ResponseEntity getAux(@RequestParam(value = "aux") String aux){
+        if (aux.equals("wuhanhaoshuobigdata")) {
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), updateVirusData.getAus());
+        }else {
+            return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), "null");
+        }
     }
 }

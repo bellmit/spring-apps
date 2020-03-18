@@ -36,9 +36,7 @@ public class UpdateVirusData {
             virusAus.setJson(resultSet.getString("json_rs"));
             return virusAus;
         });
-        System.out.println(virusAus.getJson());
         JSONObject jo = JSONObject.parseObject(new String(virusAus.getJson()));
-        System.out.println(jo);
         list.add(jo);
         return list;
     }

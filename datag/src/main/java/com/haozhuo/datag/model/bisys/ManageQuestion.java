@@ -13,26 +13,26 @@ public class ManageQuestion {
 
     String date;
     //发布问题量
-    int questionNum;
+    private int questionNum;
     //已支付金额
-    double payAmount;
+    private double payAmount;
     //分享次数
-    int shareNum;
+    private int shareNum;
     //收藏回答次数
-    int collectNum;
+    private int collectNum;
     //感谢回答次数
-    int thankNum;
+    private int thankNum;
     //围观次数
-    int circuseeNum;
+    private int circuseeNum;
     //围观支付金额
-    double circuseeAmount;
+    private double circuseeAmount;
     //超时退款订单
-    int timeOutNum;
+    private int timeOutNum;
     //追问次数
-    int questionCloselyNum;
+    private int questionCloselyNum;
 
 
-    public ManageQuestion( String date, int questionNum, double payAmount, int shareNum, int collectNum, int thankNum, int circuseeNum, double circuseeAmount, int timeOutNum, int questionCloselyNum) {
+    public ManageQuestion(String date, int questionNum, double payAmount, int shareNum, int collectNum, int thankNum, int circuseeNum, double circuseeAmount, int timeOutNum, int questionCloselyNum) {
         this.date = date;
         this.questionNum = questionNum;
         this.payAmount = payAmount;

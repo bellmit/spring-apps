@@ -11,4 +11,5 @@ public class VirusData {
     private int suspect;
     private int heal;
     private int dead;
+    private String updateTime;
 }

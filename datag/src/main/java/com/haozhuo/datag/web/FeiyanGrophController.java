@@ -83,4 +83,10 @@ public class FeiyanGrophController {
         updateVirusData.UpdateData(updateData);
         return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), "修改成功");
     }
+
+    @GetMapping("/getaux")
+    public ResponseEntity getAux(){
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(), updateVirusData.getAus());
+
+    }
 }

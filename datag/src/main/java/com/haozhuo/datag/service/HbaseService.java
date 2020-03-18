@@ -43,7 +43,7 @@ public class HbaseService {
     @Autowired
     private EsService esService;
     private final static String HBASENAME = "DATAETL:RPT_IND";
-    private final static String HBASENAME1 = "DATAETL:RPT_LABELS";
+    private final static String HBASENAME1 = "DATAETL:RPT";
 
     @Autowired
     private DataEtlJdbcService dataEtlJdbcService;
@@ -128,7 +128,7 @@ public class HbaseService {
 
         scan.setStartRow(srowkey.getBytes());
         scan.setStopRow(endrowkey.getBytes());
-          hbaseTemplate.find(HBASENAME,scan,(Result result, int i)->{
+          hbaseTemplate.find(HBASENAME1,scan,(Result result, int i)->{
             Cell[] cells = result.rawCells();
             for (Cell cell:cells){
                 String key = new String(CellUtil.cloneQualifier(cell));

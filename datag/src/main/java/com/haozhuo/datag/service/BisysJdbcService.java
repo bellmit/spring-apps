@@ -1028,18 +1028,21 @@ public class BisysJdbcService {
         VirusData virusData = new VirusData();
          whDB.query("Select * from fight2feiyan order by now_time desc limit 1", (resultSet, i) -> {
             virus.setCity_group(resultSet.getString("city_case"));
+            virus.setCity_group(virus.getCity_group().replace("XiangGang","Hong Kong"));
+             virus.setCity_group(virus.getCity_group().replace("DiQuDaiQueRen","Region Unconfirmed"));
             virus.setForeign(resultSet.getString("foreign"));
             virusData.setConfirm(resultSet.getInt("confirm"));
             virusData.setSuspect(resultSet.getInt("suspect"));
             virusData.setHeal(resultSet.getInt("cure"));
             virusData.setDead(resultSet.getInt("deadcount"));
+            virusData.setUpdateTime(resultSet.getString("tx_updateTime"));
             return virus;
         });
 
         JSONArray array = JSONArray.parseArray(virus.getCity_group());
         for (int i = 0;i<array.size();i++){
-/*            VirusJson virusJson = new VirusJson();
-            virusJson.setProvince(array.getJSONObject(i).getString("name"));
+/*         VirusJson virusJson = new VirusJson();
+           virusJson.setProvince(array.getJSONObject(i).getString("name"));
            JSONArray array2 = JSONArray.parseArray(array.getJSONObject(i).getString("children"));
             Citys citys = new Citys();
             String a [] = new String[array2.size()];

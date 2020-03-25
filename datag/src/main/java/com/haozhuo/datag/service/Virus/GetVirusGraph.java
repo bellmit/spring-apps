@@ -19,15 +19,15 @@ public class GetVirusGraph {
     private JdbcTemplate whDB;
 
 
-    private static final String fourSQL = "select feiHbSum,feiHbNew,time from (\n" +
+    private static final String fourSQL = "select * from (select feiHbSum,feiHbNew,time from (\n" +
             "(SELECT (contry_confirm_total-hubei_confirm_total) as feiHbSum,nowtime FROM `Ncov_statis` ORDER BY nowtime desc limit 14)a inner join \n" +
             "(SELECT (contry_confirm_today-hubei_confirm_today) as feiHbNew,nowtime as time  FROM `Ncov_statis` ORDER BY nowtime desc limit 14)b on a.nowtime=b.time\n" +
-            ");";
-    private static final String SiWangSQL = "select contry_dead_lv,wuhan_dead_lv,hubei_dead_lv, round((contry_dead_total-hubei_dead_total)/(contry_confirm_total-hubei_confirm_total),3) as not_hubei_lv,time from (\n" +
+            "))c  order by c.time;";
+    private static final String SiWangSQL = "select * from (select contry_dead_lv,wuhan_dead_lv,hubei_dead_lv, round((contry_dead_total-hubei_dead_total)/(contry_confirm_total-hubei_confirm_total),3) as not_hubei_lv,time from (\n" +
             "            (select contry_dead_lv,wuhan_dead_lv,time1,contry_dead_total,contry_confirm_total from (\n" +
             "            (select contry_dead_total,contry_confirm_total,round((contry_dead_total/contry_confirm_total),2) as contry_dead_lv,nowtime from Ncov_statis ORDER BY nowtime desc limit 14)a inner join \n" +
             "            (select round((wuhan_dead_total/wuhan_confirm_total),2) as wuhan_dead_lv,nowtime as time1 from Ncov_statis ORDER BY nowtime desc limit 14)b on a.nowtime =b.time1)) c  inner join \n" +
-            "            (select  hubei_dead_total,hubei_confirm_total,round(( hubei_dead_total/hubei_confirm_total),2) as hubei_dead_lv,nowtime as time  from Ncov_statis ORDER BY nowtime desc limit 14) d on c.time1=d.time);";
+            "            (select  hubei_dead_total,hubei_confirm_total,round(( hubei_dead_total/hubei_confirm_total),2) as hubei_dead_lv,nowtime as time  from Ncov_statis ORDER BY nowtime desc limit 14) d on c.time1=d.time)) f order by f.time;";
 
     public List<VirusOne> getFirstGraph() {
         List<VirusOne> list = new ArrayList();
@@ -201,10 +201,10 @@ public class GetVirusGraph {
         return list;
     }
 
-    private static final String NineSql="select hubei_lv,round((contry_confirm_total-hubei_confirm_total)/(contry_touch_total-hubei_touch) ,2) as not_hubei_lv,time from (\n" +
+    private static final String NineSql="select * from (select hubei_lv,round((contry_confirm_total-hubei_confirm_total)/(contry_touch_total-hubei_touch) ,2) as not_hubei_lv,time from (\n" +
             "(select hubei_confirm_total,hubei_touch,round(hubei_confirm_total/hubei_touch,2) as hubei_lv,nowtime from Ncov_statis ORDER BY nowtime desc limit 14)a INNER JOIN\n" +
             "(select contry_confirm_total,contry_touch_total ,nowtime as time from Ncov_statis ORDER BY nowtime desc limit 14)b on a.nowtime=b.time\n" +
-            ");";
+            "))c order by c.time;";
     public List<VirusNine> getBl(){
         List<VirusNine> list = null;
         list = whDB.query(NineSql, (resultSet, i) -> {
@@ -218,7 +218,7 @@ public class GetVirusGraph {
         return list;
     }
 
-    private static final String TweleSQL="select contry_cure_total,contry_confirm_today,nowtime from Ncov_statis ORDER BY nowtime desc limit 14";
+    private static final String TweleSQL="select * from (select contry_cure_total,contry_confirm_today,nowtime from Ncov_statis ORDER BY nowtime desc limit 14)a order by a.nowtime;";
     public List<VirusTwelve> getNum(){
         List<VirusTwelve> list = null;
         list = whDB.query(TweleSQL, (resultSet, i) -> {
@@ -232,10 +232,10 @@ public class GetVirusGraph {
         return list;
     }
 
-    private static final String ThirteenSql="select contry_lv,hubei_lv,round((contry_cure_total-hubei_cure_total)/(contry_confirm_total-hubei_confirm_total),3) as not_hb_lv,time1 from (\n" +
+    private static final String ThirteenSql="select * from (select contry_lv,hubei_lv,round((contry_cure_total-hubei_cure_total)/(contry_confirm_total-hubei_confirm_total),3) as not_hb_lv,time1 from (\n" +
             "(select contry_cure_total,if(contry_confirm_total is null or contry_confirm_total=0,1,contry_confirm_total) as contry_confirm_total ,round(contry_cure_total/contry_confirm_total,2) as contry_lv,nowtime from Ncov_statis  ORDER BY nowtime desc limit 14)a INNER JOIN \n" +
             "(select hubei_cure_total, if(hubei_confirm_total is null or hubei_confirm_total=0,1,hubei_confirm_total) as hubei_confirm_total,round(hubei_cure_total/hubei_confirm_total,2) as hubei_lv,nowtime as time1 from Ncov_statis  ORDER BY nowtime desc limit 14)b on a.nowtime=b.time1\n" +
-            " );";
+            " ))c order by c.time1;";
 
     public List<VirusThirteen> getNums(){
         List<VirusThirteen> list = null;

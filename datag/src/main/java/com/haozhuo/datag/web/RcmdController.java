@@ -1,10 +1,7 @@
 package com.haozhuo.datag.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.haozhuo.datag.model.AbnormalParam;
-import com.haozhuo.datag.model.GoodsSearchParams;
-import com.haozhuo.datag.model.PrefUpdateMsg;
-import com.haozhuo.datag.model.SkuIdGoodsIds;
+import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.crm.HealthyClub;
 import com.haozhuo.datag.service.*;
 import com.haozhuo.datag.service.biz.InfoRcmdService;
@@ -604,5 +601,12 @@ public class RcmdController {
 
         long beginTime = System.currentTimeMillis();
         return dataetlJdbcService.getTitleAndImageByInfoId(infoId);
+    }
+
+    @ApiOperation(value = "搜索框搜索文章")
+    @GetMapping(value = "/getArticle")
+    public List article(@RequestParam(value = "msg") String msg){
+
+        return esService.getMatchArticle(msg);
     }
 }

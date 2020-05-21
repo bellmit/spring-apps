@@ -603,10 +603,4 @@ public class RcmdController {
         return dataetlJdbcService.getTitleAndImageByInfoId(infoId);
     }
 
-    @ApiOperation(value = "搜索框搜索文章")
-    @GetMapping(value = "/getArticle")
-    public List article(@RequestParam(value = "msg") String msg){
-
-        return esService.getMatchArticle(msg);
-    }
 }

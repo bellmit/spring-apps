@@ -40,7 +40,7 @@ spring:
   redis:
     sentinel:
       master: mymaster
-      nodes: 192.168.1.150:26379,192.168.1.152:26379,192.168.1.153:26379
+      nodes: 192.168.1.150:26379,192.168.1.152:26379
     jedis:
       pool:
         max-idle: 8
@@ -76,7 +76,7 @@ spring:
 
 hbase:
   zookeeper:
-    quorum: datanode01,datanode02,datanode03
+    quorum: 192.168.1.150
     port:  2181
   rpc:
     timeout: 1800000

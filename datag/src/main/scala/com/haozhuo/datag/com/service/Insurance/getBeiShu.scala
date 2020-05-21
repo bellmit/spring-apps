@@ -13,7 +13,7 @@ object getBeiShu {
 
 
      val d: Double =
-    getBeiShu(78.9, filter("1.2:1-2.4:1"))
+    getBeiShu(78.9, filter("≤26"))
     println(d)
   }
   def filterChaobiao(yourString: String) = {
@@ -28,6 +28,7 @@ object getBeiShu {
     while (reg.hasNext) {
       max=reg.next()
     }
+    print("范围："+max)
     max
   }
 
@@ -79,11 +80,10 @@ object getBeiShu {
       val max2: String = filterChaobiao(text_ref)
       val d: Double = rs_val / max2.toDouble
       result = d
-    }else {
+    }else if(text_ref.contains("-")){
       val strings: Array[String] = text_ref.split("-")
       val min: Double = strings(0).toDouble
       val max: Double = strings(1).toDouble
-
       if (min < rs_val && rs_val < max) {
         //println("合理范围")
       } else if (rs_val >= max) {
@@ -93,12 +93,8 @@ object getBeiShu {
         val d: Double = rs_val / min
         result = d
       }
-
-
     }
-
     }//else结束
-
     result
   }
 }

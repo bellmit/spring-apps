@@ -16,7 +16,7 @@ http://192.168.109.3:5555/myapps/hello/greeting
 
 mvn clean -pl datag -am
 
-####是否打入项目的依赖包由scope参数决定
+#### 是否打入项目的依赖包由scope参数决定
 
 ##### compile 
 

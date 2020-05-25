@@ -1,8 +1,15 @@
 package com.haozhuo.datag.com.service.Insurance
+import scala.util.matching.Regex
 
 object getBeiShu {
-
-  import scala.util.matching.Regex
+  // 匹配汉字
+  private val match_unicode = """[\u4e00-\u9fa5]"""
+  private val text_ref_replace_pattern1 = """^(->|>=|〉|>|﹥|＞|≥)"""
+  private val text_ref_replace_pattern2 = """^(-<=|-<|-＜|<=|<|＜|<)"""
+  private val text_ref_replace_pattern3 = """^(-\d)"""
+  private val text_ref_replace_pattern4 = """-<=|-＜=|-<|-≤|-＜|<=|＜=|≤|<|＜|〈|〈"""
+  private val text_ref_replace_pattern5 = """-≤|->|~~|\-\-|~|～|－"""
+  private val text_ref_replace_pattern6 = """(^[0-9]\d*$)|(^[0-9]\d*\.\d*|0\.\d*[1-9]\d*$)"""
 
 
   def main(args: Array[String]): Unit = {
@@ -27,78 +34,42 @@ object getBeiShu {
     }
     flag
   }
-  def text_ref_replace(text_ref1:String)= {
-    var flag:Integer = 0
-    var text_ref_lower:String = ""
-    var text_ref_upper:String = ""
-    var text_ref = text_ref1.replace(" ","")
-    text_ref = text_ref.replace("-<=", "0.00-")
-    text_ref = text_ref.replace("-＜=", "0.00-")
-    text_ref = text_ref.replace("-<", "0.00-")
-    text_ref = text_ref.replace("-＜", "0.00-")
+  /**
+    * 范围清洗
+    * @param textRef1
+    * @return
+    */
 
-    text_ref = text_ref.replace("<=", "0.00-")
-    text_ref = text_ref.replace("＜=", "0.00-")
-
-    text_ref = text_ref.replace("<", "0.00-")
-    text_ref = text_ref.replace("＜", "0.00-")
-    text_ref = text_ref.replace("〈", "0.00-")
-    text_ref = text_ref.replace("-≤", "0.00-")
-    text_ref = text_ref.replace("〈", "0.00-")
-    if(text_ref.startsWith("≤")){
-      text_ref = text_ref.replace("≤","0.00-")
-    }
-
-    if ( text_ref.contains("〉") ){
-      text_ref = text_ref.replace("〉", "")
-      text_ref = text_ref + "-Inf"
-    }
-    if ( text_ref.contains("->") ){
-      text_ref = text_ref.replace("〉", "")
-      text_ref = text_ref + "-Inf"
-    }
-    if ( text_ref.contains(">")) {
-      text_ref = text_ref.replace(">", "")
-      text_ref = text_ref + "-Inf"
-    }
-    if ( text_ref.contains("﹥"))
-      text_ref = text_ref.replace("﹥", "")
-    text_ref = text_ref + "-Inf"
-    if(text_ref.contains("＞")) {
-      text_ref = text_ref.replace("＞", "")
-      text_ref = text_ref + "-Inf"
-    }
-    if(text_ref.contains("》")) {
-      text_ref = text_ref.replace("》", "")
-      text_ref = text_ref + "-Inf"
-    }
-    if ( text_ref.contains("--")) text_ref = text_ref.replace("--", "-")
-    if ( text_ref.contains("～")) text_ref = text_ref.replace("～", "-")
-    if ( text_ref.contains("~")) text_ref = text_ref.replace("~", "-")
-    if (text_ref.contains("-")){
-      text_ref_lower = text_ref.split("-")(0)
-      text_ref_upper = text_ref.split("-")(1)
-      if (is_number(text_ref_lower)==1 && is_number(text_ref_upper)==1){
-        text_ref_lower = text_ref_lower.toDouble.formatted("%.2f").toString
-        if(text_ref_upper.equals("Inf")){
-        text_ref_upper = text_ref_upper
-        }else{
-          text_ref_upper = text_ref_upper.toDouble.formatted("%.2f").toString
-        }
-          text_ref = text_ref_lower + "-" + text_ref_upper
-      }
-      else
-      {
-        flag = 1
-        text_ref = text_ref1 + "(数据错误)"
-      }
-    }
-    else{
-      flag =2
-      text_ref = text_ref1 + "(数据错误)"
+  def textRefClean(textRef1:String)={
+    var textRef:String = textRef1
+    var flag:Integer = 2
+    var stdTextRef:String = ""
+    var lowTextRef:String = ""
+    var higeTextRef:String = ""
+    if(textRef.matches(match_unicode)){
+      textRef = textRef.replace(" ","")
+    }else if(textRef.matches(text_ref_replace_pattern1)){
+      textRef = textRef.replaceAll(text_ref_replace_pattern1,"")+"-Inf"
+    }else if(textRef.matches(text_ref_replace_pattern2)){
+      textRef = textRef.replaceAll(text_ref_replace_pattern2,"0.00-")
+    }else if(textRef.matches(text_ref_replace_pattern3)){
+      textRef = "0.00"+ textRef
+    }else{
+      textRef = textRef.replaceAll(text_ref_replace_pattern4,"0.00-").replaceAll(" ","")
+        .replaceAll(text_ref_replace_pattern5,"-")
     }
 
-    (text_ref,text_ref_lower,text_ref_upper,flag)
+    if(textRef.contains("-")){
+      lowTextRef = textRef.split("-")(0)
+      higeTextRef = textRef.split("-")(1)
+      if(lowTextRef.matches(text_ref_replace_pattern6)&&higeTextRef.matches(text_ref_replace_pattern6)){
+        flag=0
+      }else{}
+    }else{
+      flag = 1
+    }
+    stdTextRef = lowTextRef+"-"+higeTextRef
+    (stdTextRef,lowTextRef,higeTextRef,flag)
   }
 
 
@@ -153,9 +124,8 @@ object getBeiShu {
     if(text_ref.isEmpty){
       result=0
     }else {
-      println(text_ref_replace(text_ref))
-      val min = text_ref_replace(text_ref)._2
-      val max = text_ref_replace(text_ref)._3
+      val min = textRefClean(text_ref)._2
+      val max = textRefClean(text_ref)._3
       if (!min.equals("") && !max.equals("")) {
         if (min.toDouble < rs_val && rs_val < max.toDouble) {
           //println("合理范围")

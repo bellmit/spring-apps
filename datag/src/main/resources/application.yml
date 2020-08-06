@@ -67,11 +67,16 @@ spring:
       username: datag
       password: yjkdatag
       maximum-pool-size: 1
+    rptstd:
+      url: jdbc:mysql://192.168.1.162:3306/report_content_kafka?characterEncoding=utf-8
+      username: datag
+      password: yjkdatag
+      maximum-pool-size: 5
   kafka:
     bootstrap-servers: 192.168.1.153:9092
   data:
     elasticsearch:
-      cluster-nodes: es1:9300,es2:9300,es3:9300
+      cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300
       cluster-name: hz-datag-es
 
 hbase:

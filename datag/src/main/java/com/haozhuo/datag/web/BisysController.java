@@ -2,9 +2,9 @@ package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.common.ResultCodeBase;
 import com.haozhuo.datag.common.TipConstBase;
-import com.haozhuo.datag.model.HBStore;
 import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.bisys.*;
+import com.haozhuo.datag.model.report.AbnormalPxPo;
 import com.haozhuo.datag.service.BisysJdbcService;
 import com.haozhuo.datag.service.UserBehaviorService;
 import com.haozhuo.datag.service.WeChat.WeChatService;
@@ -365,6 +365,12 @@ public class BisysController {
     public List getvirus(){
 
         return bisysJdbcService.getVirus();
+    }
+
+    @PostMapping(value="/recommend/abnormal",produces = "application/json;charset=UTF-8")
+    @ApiOperation(value = "异常排序")
+    public ResponseEntity abnormalPx(@RequestBody AbnormalPxPo abnormalPxPo){
+        return bisysJdbcService.abnormalPx(abnormalPxPo);
     }
 }
 

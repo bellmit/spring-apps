@@ -2,11 +2,13 @@ package com.haozhuo.datag.web;
 
 import com.haozhuo.datag.common.*;
 import com.haozhuo.datag.model.ResponseEntity;
+import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.report.*;
 import com.haozhuo.datag.service.EsService;
 import com.haozhuo.datag.service.GetUserInfo;
 import com.haozhuo.datag.service.HbaseService;
 import com.haozhuo.datag.service.Insurance.*;
+import com.haozhuo.datag.service.RptStdService;
 import io.swagger.annotations.ApiOperation;
 import org.apache.hadoop.hbase.client.Scan;
 import org.slf4j.Logger;
@@ -31,6 +33,8 @@ public class ReportController {
     private UserReport userReport;
     @Autowired
     private EsService esService;
+    @Autowired
+    private RptStdService rptStdService;
 
     @GetMapping(value = "/body/reportId/{reportId}")
     @ApiOperation(value = "根据报告Id返回人体图数据", notes = "返回数据：item:18项之一，flag：1=异常，0=无异常")
@@ -80,6 +84,12 @@ public class ReportController {
 
         return new ResponseEntity<>(rep1.getCode() == 0 ? ResultCodeBase.CODE_SUCCESS : rep1.getCode(), StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 : rep1.getMsg(), rep1.getWeiBaoM());
     }
+    @PostMapping(value = "/rptstd",produces = "application/json;charset=UTF-8")
+    @ApiOperation(value = "报告标准化")
+    public ResponseEntity rptStd(@RequestParam String  rptjson) {
+         //System.out.println(rptStdPo.getJsonstr());
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),rptStdService.rptStd(rptjson));
+    }
 
     @GetMapping(value = "/weibao")
     @ApiOperation(value = "测试")
@@ -97,6 +107,7 @@ public class ReportController {
         //String s = utf8.convertPercent(label);
         return userReport.Push(pushBody.getRptid(), pushBody.getLabel(),pushBody.getAge());
     }
+
 
     @GetMapping(value = "/push")
     @ApiOperation(value = "推送")

@@ -93,4 +93,23 @@ public class JdbcConfig {
     public DataSource wuhanhaozhuoDataSource() {
         return whhaozhuoDataSourceProperties().initializeDataSourceBuilder().build();
     }
+
+
+
+    @Bean(name = "rptstdJdbc")
+    public JdbcTemplate rptStdJdbcTemplate() {
+        return new JdbcTemplate(rptstdDataSource());
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.rptstd")
+    public DataSourceProperties rptStdDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.rptstd")
+    public DataSource rptstdDataSource() {
+        return rptStdDataSourceProperties().initializeDataSourceBuilder().build();
+    }
 }

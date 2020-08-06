@@ -9,5 +9,4 @@ public class Msg {
     private String code;
     private String msg;
     private FourIn fourIn;
-
 }

@@ -11,6 +11,8 @@ import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
 import com.haozhuo.datag.model.bisys.virus.Virus;
 import com.haozhuo.datag.model.bisys.virus.VirusData;
+import com.haozhuo.datag.model.report.AbnormalPxPo;
+import com.haozhuo.datag.model.report.AbnormalSort;
 import com.haozhuo.datag.util.SqlDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -1101,4 +1104,39 @@ public class BisysJdbcService {
         System.out.println(format);
         return format;
     }
+
+
+    String abnormalPxSql = "select exception,level from exception_level where instr(?,exception) order by level desc limit 1   ";
+
+    public ResponseEntity abnormalPx(AbnormalPxPo abnormalPxPo){
+        List<AbnormalSort> list = new ArrayList<>();
+        List<String> list2 = new ArrayList<>();
+        abnormalPxPo.getAbnormalList().stream().forEach(x->{
+
+             whDB.query(abnormalPxSql, new Object[]{x},
+                    (resultSet, i) -> {
+                        AbnormalSort abnormalSort = new AbnormalSort();
+                        abnormalSort.setAbnormal(x);
+                        abnormalSort.setException(resultSet.getString("exception"));
+                        abnormalSort.setLevel(resultSet.getString("level"));
+                        //System.out.println(abnormalSort);
+                        list.add(abnormalSort);
+                        return abnormalSort;
+                    });
+        });
+        list.sort(Comparator.comparing(AbnormalSort::getLevel).reversed());
+//        for (AbnormalSort abnormalSorta:list) {
+//            System.out.println(abnormalSorta);
+//        }
+        for (AbnormalSort abnormalSorta:list) {
+           // System.out.println(abnormalSorta);
+            list2.add(abnormalSorta.getAbnormal());
+        }
+        list2.addAll(abnormalPxPo.getAbnormalList());
+        List<String> listAllDistinct = list2.stream().distinct().collect(Collectors.toList());
+
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),listAllDistinct);
+
+    }
+
 }

@@ -1,11 +1,15 @@
 package com.haozhuo.datag.service;
 
 import com.haozhuo.datag.common.JavaUtils;
+import com.haozhuo.datag.common.StringUtil;
 import com.haozhuo.datag.model.InfoALV;
+import com.haozhuo.datag.model.InfoArticle;
 import com.haozhuo.datag.model.PushedInfoKeys;
 import com.haozhuo.datag.model.RcmdNewsInfo;
 import com.haozhuo.datag.model.textspilt.MyKeyword;
 import com.haozhuo.datag.model.textspilt.SimpleArticle;
+import com.haozhuo.datag.service.biz.InfoRcmdService;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,6 +95,8 @@ public class RedisService {
         return pushedIds;
     }
 
+
+
     public void deletePushedInfoKeysAll(PushedInfoKeys pushedInfoKeys) {
         deleteHashKey(pushedInfoKeys.getKey(), pushedInfoKeys.getALVHashKeys().toArray());
     }
@@ -99,19 +105,81 @@ public class RedisService {
         deleteHashKey(key, hashKey);
     }
 
+    /**
+     * if exist return else init
+     * @param pushedInfoKeys
+     */
     private void initHashIfNotExist(PushedInfoKeys pushedInfoKeys) {
         if (redisDB0.hasKey(pushedInfoKeys.getKey()))
             return;
         logger.debug("redis create hash key:{}", pushedInfoKeys.getKey());
-        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), PushedInfoKeys.getChannelRcmdHashKey(), "");
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), PushedInfoKeys.getChannelRcmdHashKeyForArticle(), "");
         redisDB0.expire(pushedInfoKeys.getKey(), expireDays, TimeUnit.DAYS);
     }
 
+    private void initHashIfNotExistForA(PushedInfoKeys pushedInfoKeys) {
+        if (redisDB0.opsForHash().hasKey(pushedInfoKeys.getKey(),PushedInfoKeys.getChannelRcmdHashKeyForArticle()))
+            return;
+        logger.debug("redis create hash key:{}", pushedInfoKeys.getKey());
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), PushedInfoKeys.getChannelRcmdHashKeyForArticle(),"" );
+        redisDB0.expire(pushedInfoKeys.getKey(), expireDays, TimeUnit.DAYS);
+    }
+    private void initHashLabelIfNotExistForA(PushedInfoKeys pushedInfoKeys) {
+        if (redisDB0.opsForHash().hasKey(pushedInfoKeys.getKey(),"label"))
+            return;
+        logger.debug("redis create hash key:{}", pushedInfoKeys.getKey());
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), "label", InfoRcmdService.baseLabels );
+        redisDB0.expire(pushedInfoKeys.getKey(), expireDays, TimeUnit.DAYS);
+    }
+
+    /**
+     *
+     * @param pushedInfoKeys
+     * @return
+     */
+
     public InfoALV getPushedInfoALV(PushedInfoKeys pushedInfoKeys) {
+        //10000_0_a
         initHashIfNotExist(pushedInfoKeys);
+        // 0 article
+        //0 %s_%s_a", channelId, categoryId
         List avlHashKeys = pushedInfoKeys.getALVHashKeys();
+        //0 295382,295374,295372,295371,295369,295367,295359,295358,295355
         List<Object> values = redisDB0.opsForHash().multiGet(pushedInfoKeys.getKey(), avlHashKeys);
         return getInfoALVFromValues(values, pushedInfoKeys.getKey(), (List<String>) avlHashKeys);
+    }
+
+    public String getPushedInfoArticle(PushedInfoKeys pushedInfoKeys) {
+        //10000_0_a
+        initHashIfNotExistForA(pushedInfoKeys);
+        // 0 article
+        //0 %s_%s_a", channelId, categoryId
+        //0 295382,295374,295372,295371,295369,295367,295359,295358,295355
+        String values = (String) redisDB0.opsForHash().get(pushedInfoKeys.getKey(), pushedInfoKeys.getArticleHashKey());
+        return values;
+    }
+    public String getPushedLablefoArticle(PushedInfoKeys pushedInfoKeys) {
+        //10000_0_a
+        initHashLabelIfNotExistForA(pushedInfoKeys);
+        // 0 article
+        //0 %s_%s_a", channelId, categoryId
+        //0 295382,295374,295372,295371,295369,295367,295359,295358,295355
+        String values = (String) redisDB0.opsForHash().get(pushedInfoKeys.getKey(),"label");
+        return values;
+    }
+    public void putPushedInfoArticle(PushedInfoKeys pushedInfoKeys,String[] set) {
+        //deletePushedInfoKey(pushedInfoKeys.getKey(),pushedInfoKeys.getArticleHashKey());
+        String init ="";
+        if(set.length>0){
+            init = StringUtils.join(set,",");
+        }
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), pushedInfoKeys.getArticleHashKey(),init);
+    }
+
+    public void putPushedLabelInfoArticle(PushedInfoKeys pushedInfoKeys,String set) {
+        //deletePushedInfoKey(pushedInfoKeys.getKey(),pushedInfoKeys.getArticleHashKey());
+
+        redisDB0.opsForHash().put(pushedInfoKeys.getKey(), "label",set);
     }
 
 
@@ -221,12 +289,20 @@ public class RedisService {
                 ));
     }
 
+    /**
+     *
+     * @param userId
+     * @param channelId
+     * @param count
+     * @return
+     */
 
     public RcmdNewsInfo getRcmdNewsByChannel(String userId, String channelId, int count) {
         String rcmdKey = String.format(newsRcmdKeyFormat, userId, channelId);
         SetOperations newsSet = redisDB0.opsForSet();
         List<String> news = newsSet.pop(rcmdKey, count);
 
+        //
         addPushedNewsSet(userId, channelId, news);
 
         RcmdNewsInfo rcmdNewsInfo = new RcmdNewsInfo();
@@ -254,6 +330,7 @@ public class RedisService {
     }
 
     public RcmdNewsInfo getRcmdNews(String userId, int count) {
+
         Object queue = redisDB0.opsForHash().get(newsRcmdChannelsKey, userId);
         Integer[] queueRcmdNumArray = getRcmdNumArray();
         RcmdNewsInfo info = new RcmdNewsInfo();
@@ -261,7 +338,10 @@ public class RedisService {
             queue = "1";
         }
         String[] queueChannelIds = queue.toString().split(",");
+
+        // 推荐channel
         if (queueChannelIds.length < queueRcmdNumArray.length) {
+            //已经过期
             if (unLocked(userId)) {
                 info.addDefaultChannelIds();
                 setLocked(userId);

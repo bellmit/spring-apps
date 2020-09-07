@@ -84,6 +84,8 @@ public class ReportController {
 
         return new ResponseEntity<>(rep1.getCode() == 0 ? ResultCodeBase.CODE_SUCCESS : rep1.getCode(), StringUtil.isEmpty(rep1.getMsg()) ? TipConstBase.OPERATION_SAVE_SUCCESS1 : rep1.getMsg(), rep1.getWeiBaoM());
     }
+
+
     @PostMapping(value = "/rptstd",produces = "application/json;charset=UTF-8")
     @ApiOperation(value = "报告标准化")
     public ResponseEntity rptStd(@RequestParam String  rptjson) {

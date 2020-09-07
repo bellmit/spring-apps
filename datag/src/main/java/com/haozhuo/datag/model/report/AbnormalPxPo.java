@@ -11,4 +11,5 @@ import java.util.List;
 @AllArgsConstructor
 public class AbnormalPxPo {
     private List<String> abnormalList;
+    //private List<String> generalSummarys2;
 }

@@ -23,13 +23,13 @@ public class JdbcConfig {
 
     @Primary
     @Bean
-    @ConfigurationProperties("spring.datasource.dataetl")
+    @ConfigurationProperties(prefix = "spring.datasource.dataetl")
     public DataSourceProperties dataetlDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.dataetl")
+    @ConfigurationProperties(prefix = "spring.datasource.dataetl")
     public DataSource dataetlDataSource() {
         return dataetlDataSourceProperties().initializeDataSourceBuilder().build();
     }
@@ -41,13 +41,13 @@ public class JdbcConfig {
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.bisys")
+    @ConfigurationProperties(prefix = "spring.datasource.bisys")
     public DataSourceProperties bisysDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.bisys")
+    @ConfigurationProperties(prefix = "spring.datasource.bisys")
     public DataSource bisysDataSource() {
         return bisysDataSourceProperties().initializeDataSourceBuilder().build();
     }
@@ -62,13 +62,13 @@ public class JdbcConfig {
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.yjk-mall")
+    @ConfigurationProperties(prefix = "spring.datasource.yjk-mall")
     public DataSourceProperties yjkMallDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.yjk-mall")
+    @ConfigurationProperties(prefix = "spring.datasource.yjk-mall")
     public DataSource yjkMallDataSource() {
         return yjkMallDataSourceProperties().initializeDataSourceBuilder().build();
     }
@@ -83,13 +83,13 @@ public class JdbcConfig {
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.whhaozhuo")
+    @ConfigurationProperties(prefix = "spring.datasource.whhaozhuo")
     public DataSourceProperties whhaozhuoDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.whhaozhuo")
+    @ConfigurationProperties(prefix = "spring.datasource.whhaozhuo")
     public DataSource wuhanhaozhuoDataSource() {
         return whhaozhuoDataSourceProperties().initializeDataSourceBuilder().build();
     }
@@ -102,13 +102,13 @@ public class JdbcConfig {
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.rptstd")
+    @ConfigurationProperties(prefix = "spring.datasource.rptstd")
     public DataSourceProperties rptStdDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties("spring.datasource.rptstd")
+    @ConfigurationProperties(prefix = "spring.datasource.rptstd")
     public DataSource rptstdDataSource() {
         return rptStdDataSourceProperties().initializeDataSourceBuilder().build();
     }

@@ -300,7 +300,8 @@ public class RcmdController {
      *
      * @return
      */
-    @GetMapping("/mul/ALV/user_channel")
+    @Deprecated
+    @GetMapping("/mul/ALV/user_channel/deprecate")
     @ApiOperation(value = "userId和channelId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】",
             notes = "userId和channelId获取资讯、视频、直播的推荐列表  \n" +
                     "es-matcher-controller中的四个方法合并成一个  \n" +
@@ -329,6 +330,33 @@ public class RcmdController {
             categoryId = InfoRcmdService.allCategoryId;
         return infoRcmdService.channelRecommendNews(channelType, channelId, categoryId, userId, size);
     }
+    @GetMapping("/mul/ALV/user_channel")
+    @ApiOperation(value = "userId和channelId获取资讯、视频、直播的推荐列表  【/list/current/all,/list/current/scroll/all,...】",
+            notes = "userId和channelId获取资讯、视频、直播的推荐列表  \n" +
+                    "es-matcher-controller中的四个方法合并成一个  \n" +
+                    "原接口: http://192.168.1.152:8078/swagger-ui.html#/  \n" +
+                    "当前接口参数:  \n" +
+                    "userId可以不传，那么随机从这个频道中取出{size}条数据，否则会考虑用户标签进行推荐  \n" +
+                    "业务逻辑:  \n" +
+                    "1 推荐频道(channelType==R):  \n" +
+                    "  所有:需要用户标签  \n" +
+                    "2 视频频道(channelType==V):  \n" +
+                    "  所有:需要用户标签  \n" +
+                    "3 直播频道(channelType==L):  \n" +
+                    "  所有:需要用户标签  \n" +
+                    "4 文章频道(channelType==A):  \n" +
+                    "       categoryId==0,该频道下的所有,需要用户标签信息 \n" +
+                    "       categoryId>0,该频道下的分类,不需要用户标签信息  \n"
+    )
+    public Object getInfosByUserId(
+            @RequestParam(value = "channelType", defaultValue = "R") String channelType,
+            @RequestParam(value = "channelId", defaultValue = "200") String channelId,
+            @RequestParam(value = "categoryId", defaultValue = "200") String categoryId,
+            @RequestParam(value = "userId") String userId,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        return infoRcmdService.UseridRecommendNews(userId, size,categoryId,channelId);
+    }
 
     /**
      * 旧的接口：
@@ -356,23 +384,23 @@ public class RcmdController {
         Map<String, List<String>> map = new HashMap<>();
         logger.debug("tags:{}", tags);
         String[] articleIds = esService.getArticleIds(tags, new String[]{infoId}, size);
-        String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
-        String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
+        //String[] liveIds = esService.getLivesIds(tags, new String[]{}, size);
+        //String[] videoIds = esService.getVideoIds(tags, new String[]{}, size);
         if ("null".equals(cityId)) {
             cityId = "000000";
         }
 
         map.put("a", Arrays.asList(articleIds));
-        map.put("l", Arrays.asList(liveIds));
-        map.put("v", Arrays.asList(videoIds));
-
-        String goodsId = esService.getOneOfMatchedGoodsId(new GoodsSearchParams().keywords(tags).cityId(cityId).from(0).size(size));
-        List<String> goodsIds = new ArrayList<>();
-        if (goodsId != null) {
-            goodsIds.add(goodsId);
-        }
-        map.put("g", goodsIds);
-        logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={} resut->goodsId:{}  cost: {}ms", infoId, cityId, goodsId, System.currentTimeMillis() - beginTime);
+        //map.put("l", Arrays.asList(liveIds));
+        //map.put("v", Arrays.asList(videoIds));
+//
+//        String goodsId = esService.getOneOfMatchedGoodsId(new GoodsSearchParams().keywords(tags).cityId(cityId).from(0).size(size));
+//        List<String> goodsIds = new ArrayList<>();
+//        if (goodsId != null) {
+//            goodsIds.add(goodsId);
+//        }
+       // map.put("g", goodsIds);
+        //logger.info("/mul/ALVG/infoAndCity?infoId={}&cityId={} resut->goodsId:{}  cost: {}ms", infoId, cityId, goodsId, System.currentTimeMillis() - beginTime);
         return map;
     }
 
@@ -556,13 +584,16 @@ public class RcmdController {
     public Object setNotInterestedTagsByInfoId(
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "infoId") Long infoId) {
+
         //为视频、直播推荐
         //String tags = dataetlJdbcService.getInfoTagsById(infoId);
         //redisService.addHateTags(userId, tags); // 其他的推荐还是有用处的
         kafkaService.sendPrefUpdateMsg(new PrefUpdateMsg(5, userId, infoId.toString()));
         logger.info("/article/not_interested?userId={}&infoId={}", userId, infoId);
+
         return "success!";
     }
+
 
     @ApiOperation(value = "异常疾病标准化", notes="注意：现接口的参数和返回消息与原接口不同。   \n" +
             "现接口:   \n" +
@@ -593,7 +624,6 @@ public class RcmdController {
             @RequestParam (value = "abnormal") String abnormal) {
         return dataetlJdbcService.getSingleNormTag(abnormal);
     }
-
 
     @ApiOperation(value = "根据文章id得到题目和图片")
     @GetMapping(value = "/infoId/{infoId}")

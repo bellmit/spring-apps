@@ -30,7 +30,7 @@ public class PushedInfoKeys {
         return String.format("%s_%s_v", channelId, categoryId);
     }
 
-    private String getArticleHashKey() {
+    public String getArticleHashKey() {
         return String.format("%s_%s_a", channelId, categoryId);
     }
 
@@ -57,5 +57,8 @@ public class PushedInfoKeys {
 
     public static String getChannelRcmdHashKey() {
         return String.format("%s_%s_a", InfoRcmdService.channelRcmdId, InfoRcmdService.allCategoryId);
+    }
+    public static String getChannelRcmdHashKeyForArticle() {
+        return String.format("%s_%s_a", InfoRcmdService.defaultChannel, InfoRcmdService.dafaultCat);
     }
 }

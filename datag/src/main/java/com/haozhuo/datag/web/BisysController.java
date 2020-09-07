@@ -28,8 +28,10 @@ public class BisysController {
     private static final Logger logger = LoggerFactory.getLogger(BisysController.class);
     @Autowired
     private WeChatService weChatService;
+
     @Autowired
     private BisysJdbcService bisysJdbcService;
+
     @Autowired
     private UserBehaviorService userBehaviorService;
     private static final String uploadInfoNotes = "tableId -> 1:app-优健康App数据, 2:app-注册用户数据, 3:检后组-键管服务, 4:检后组-绿通, 5:检后组-美维口腔,6:体检组-体检渠道 8:实物组-实物交易 9:检后组-基因检测";

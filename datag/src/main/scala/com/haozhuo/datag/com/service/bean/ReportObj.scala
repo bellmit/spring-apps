@@ -20,6 +20,8 @@ class ReportObj extends Serializable {
   @BeanProperty
   @JsonProperty("sex") var sex: String = ""
   @BeanProperty
+  @JsonProperty("bmi") var bmi: String = ""
+  @BeanProperty
   @JsonProperty("checkUnitCode") var checkUnitCode: String = ""
   @BeanProperty
   @JsonProperty("checkUnitName") var checkUnitName: String = ""

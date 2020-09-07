@@ -37,6 +37,7 @@ public class DataEtlJdbcService {
     private List<DiseaseNorm> allDiseaseNormList;
     private List<DiseaseNormCheckItem> diseaseNormCheckItemList;
     private final String regEx = "[\\s+`~!@#$%^&*()+=|{}':;'\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
+    //private final String regEx = "[\\s+`~!@#$%^&*()=\|{}':;\\[\\].。<>/?！￥…（）—\\-【】　‘\\;；:：”“’，、？\]";
     private final String goodsTable;
     private final String liveTable;
     private final String videoTable;

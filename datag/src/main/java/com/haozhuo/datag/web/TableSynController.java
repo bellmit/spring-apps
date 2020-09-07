@@ -78,11 +78,12 @@ public class TableSynController {
         // must delete first!
         redisService.deleteKeywordsOfArticleInRedis(String.valueOf(article.getInformationId()));
 
-        dataetlJdbcService.updateArticle(article);
-        if (article.getStatus() == 1) { //只有状态是1的才认为是发布的文章。其他一切状态都认为是删除
+        ;
+        if (article.getStatus() == 1&&article.getSourceType()==1) { //只有状态是1的才认为是发布的文章。其他一切状态都认为是删除
+            dataetlJdbcService.updateArticle(article);
             esService.updateArticle(article);
             SimpleArticle simpleArticle = getSimpleArticle(article);
-            redisService.setKeywordsOfArticleInRedis(simpleArticle);
+            //redisService.setKeywordsOfArticleInRedis(simpleArticle);
             dataetlJdbcService.updateKeywordsOfArticle(simpleArticle);
         } else {
             esService.deleteArticle(article.getInformationId());

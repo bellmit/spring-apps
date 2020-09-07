@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 public class AbnormalSort {
     private String exception;
-    private String level;
+    private Float level;
     private String abnormal;
 
     @Override

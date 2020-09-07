@@ -9,11 +9,14 @@ import com.haozhuo.datag.model.ResponseEntity;
 import com.haozhuo.datag.model.ResponseEnum;
 import com.haozhuo.datag.model.YshInfo;
 import com.haozhuo.datag.model.bisys.*;
+import com.haozhuo.datag.model.bisys.abnormal.AbPxData;
 import com.haozhuo.datag.model.bisys.virus.Virus;
 import com.haozhuo.datag.model.bisys.virus.VirusData;
 import com.haozhuo.datag.model.report.AbnormalPxPo;
 import com.haozhuo.datag.model.report.AbnormalSort;
+import com.haozhuo.datag.model.report.AbnormalSortPo;
 import com.haozhuo.datag.util.SqlDate;
+import com.haozhuo.datag.util.StdUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,7 @@ public class BisysJdbcService {
     private static final String APIKEY = "2767273";
     private static final String SECKEY = "SdrFmOuLmqIY";
     private static int count = 0;
+
     @Autowired
     @Qualifier("bisysJdbc") //选择jdbc连接池
     private JdbcTemplate bisysDB;
@@ -1106,36 +1110,88 @@ public class BisysJdbcService {
     }
 
 
-    String abnormalPxSql = "select exception,level from exception_level where instr(?,exception) order by level desc limit 1   ";
+    String abnormalPxSql = "select sug_name,saleroom from abnormal_saleroom where sug_name = ?  limit 1   ";
 
     public ResponseEntity abnormalPx(AbnormalPxPo abnormalPxPo){
+        int sflag = abnormalPxPo.getAbnormalList().size();
         List<AbnormalSort> list = new ArrayList<>();
         List<String> list2 = new ArrayList<>();
+        List<AbnormalSortPo> list3 = new ArrayList<>();
+        List<String> listAllDistinct = null;
+        int flag =0;
         abnormalPxPo.getAbnormalList().stream().forEach(x->{
+            String stdAbnormal = StdUtil.getSingleNormTag(x);
 
-             whDB.query(abnormalPxSql, new Object[]{x},
+             whDB.query(abnormalPxSql, new Object[]{stdAbnormal},
                     (resultSet, i) -> {
                         AbnormalSort abnormalSort = new AbnormalSort();
                         abnormalSort.setAbnormal(x);
-                        abnormalSort.setException(resultSet.getString("exception"));
-                        abnormalSort.setLevel(resultSet.getString("level"));
+                        abnormalSort.setException(resultSet.getString("sug_name"));
+                        abnormalSort.setLevel(resultSet.getFloat("saleroom"));
                         //System.out.println(abnormalSort);
                         list.add(abnormalSort);
+
                         return abnormalSort;
                     });
         });
         list.sort(Comparator.comparing(AbnormalSort::getLevel).reversed());
-//        for (AbnormalSort abnormalSorta:list) {
-//            System.out.println(abnormalSorta);
-//        }
+
         for (AbnormalSort abnormalSorta:list) {
-           // System.out.println(abnormalSorta);
+            if(abnormalSorta.getLevel()>199999){
+                flag =1;
+            }
             list2.add(abnormalSorta.getAbnormal());
         }
-        list2.addAll(abnormalPxPo.getAbnormalList());
-        List<String> listAllDistinct = list2.stream().distinct().collect(Collectors.toList());
-
-        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),listAllDistinct);
+        int eflag = list2.size();
+        if(sflag != eflag) {
+            list2.addAll(abnormalPxPo.getAbnormalList());
+            listAllDistinct = list2.stream().distinct().collect(Collectors.toList());
+        }else {
+            listAllDistinct = list2;
+        }
+        //AbPxData abPxData = new AbPxData(listAllDistinct,flag);
+        if(flag==1){
+         for(int i=0;i< listAllDistinct.size();i++){
+             AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+             if(i==0){
+                 abnormalSortPo.setFlag(1);
+             }
+             abnormalSortPo.setAbnormal(listAllDistinct.get(i));
+             list3.add(abnormalSortPo);
+         }
+        }else {
+//            String summary = abnormalPxPo.getGeneralSummarys2().toString();
+//            if(summary.contains("胸")&&summary.toLowerCase().contains("ct")&&summary.contains("结节")){
+//             Boolean b=   abnormalPxPo.getGeneralSummarys2().stream().anyMatch(x->(x.split("建议")[0].contains("肺")||x.split("建议")[0].contains("支气管"))&&x.split("建议")[0].toLowerCase().contains("ct")
+//                        &&x.split("建议")[0].contains("结节"));
+//             if(b){
+//                 AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+//                 abnormalSortPo.setAbnormal("肺结节影");
+//                 abnormalSortPo.setFlag(1);
+//                 list3.add(abnormalSortPo);
+//                 for (String s:listAllDistinct) {
+//                     AbnormalSortPo abnormalSortPo1 = new AbnormalSortPo();
+//                     abnormalSortPo1.setAbnormal(s);
+//                     list3.add(abnormalSortPo1);
+//                 }
+//
+//
+//             }else {
+//                 for (String s:listAllDistinct) {
+//                     AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+//                     abnormalSortPo.setAbnormal(s);
+//                     list3.add(abnormalSortPo);
+//                 }
+//             }
+//
+//            }else {
+            for (String s:listAllDistinct) {
+                    AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+                    abnormalSortPo.setAbnormal(s);
+                    list3.add(abnormalSortPo);
+                }
+            }
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),list3);
 
     }
 

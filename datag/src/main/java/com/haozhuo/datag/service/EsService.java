@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import scala.annotation.meta.param;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -84,7 +85,7 @@ public class EsService {
 
     @Autowired
     private TransportClient client;
-
+    //以创建时间 为
     private final GaussDecayFunctionBuilder createTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("create_time", "now", "30d", "0d", 0.8);
     private final GaussDecayFunctionBuilder playTimeGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("play_time", "now", "30d", "0d", 0.8D);
     private final GaussDecayFunctionBuilder goodsRcmdScoreGaussDecayFunction = ScoreFunctionBuilders.gaussDecayFunction("rcmdScore", Goods.SCORE_MAX, 10, 0, 0.9);
@@ -169,6 +170,15 @@ public class EsService {
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         //System.out.println(stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString());
         return stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString();
+
+    }
+    public String getLabelsByUserId(String reportId) {
+        SearchRequestBuilder srb = client.prepareSearch(reportLabelIndex).setSize(1)
+                .setQuery(matchQuery("userId", reportId.trim()));
+        logger.debug(srb.toString());
+        SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
+        //System.out.println(stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString());
+        return Utils.removeStopWords(stream(searchHits).map(x -> x.getSource().get("label")).findFirst().orElse("").toString());
 
     }
 
@@ -513,6 +523,11 @@ public class EsService {
         logger.debug("text:{}, article ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
         return ids;
     }
+    public String[] getArticleIdsFuzzy(String text, String[] excludeIds, int size, String tags) {
+        String[] ids = getArticleIdsByCondition(QueryBuilders.fuzzyQuery(text, tags), excludeIds, size);
+        logger.debug("text:{}, article ids:{}", text, StringUtils.arrayToCommaDelimitedString(ids));
+        return ids;
+    }
 
     public String[] getArticleIds(String labels, int size, String... fieldNames) {
         return getArticleIds(labels, new String[]{}, size, fieldNames);
@@ -553,7 +568,7 @@ public class EsService {
         map.put("content", article.getContent());
         map.put("create_time", article.getCreateTime());
         map.put("update_time", article.getUpdateTime());
-        client.prepareIndex(articleIndex, article.getChannelId() + "_" + article.getCategoryId(), String.valueOf(article.getInformationId())).setSource(map).get();
+        client.prepareIndex(articleIndex, 200 + "_" + 200, String.valueOf(article.getInformationId())).setSource(map).get();
     }
 
     public void deleteArticle(long id) {

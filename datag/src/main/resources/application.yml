@@ -3,11 +3,11 @@ app:
     video-index: video4
     live-index: live4
     goods-index: goods5
-    article-index: article4
+    article-index: article5
     reportlabel-index: reportlabel
     goods-search-fields: name,category,goodsTags,searchKeywords,description
   mysql:
-    article: article4
+    article: article5
     video: video4
     live: live4
     goods: goods5
@@ -48,36 +48,37 @@ spring:
         min-idle: 0
   datasource:
     dataetl:
-      url: jdbc:mysql://192.168.1.162:3306/yjk_data_etl?characterEncoding=utf-8
+      url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com:3306/yjk_data_etl?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
       username: datag
       password: yjkdatag
       maximum-pool-size: 15
     bisys:
-      url: jdbc:mysql://192.168.1.162:3306/bisys?characterEncoding=utf-8
+      url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com/bisys?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
       username: datag
       password: yjkdatag
       maximum-pool-size: 15
     yjk-mall:
-      url: jdbc:mysql://192.168.1.201:3306/yjk_mall_2_0?characterEncoding=utf-8
+      url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com:3306/yjk_mall_2_0?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
       username: root
       password: mysql4hz@2015
       maximum-pool-size: 1
     whhaozhuo:
-      url: jdbc:mysql://192.168.1.162:3306/whhaozhuo?characterEncoding=utf-8
-      username: datag
-      password: yjkdatag
-      maximum-pool-size: 1
-    rptstd:
-      url: jdbc:mysql://192.168.1.162:3306/report_content_kafka?characterEncoding=utf-8
+      url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com:3306/whhaozhuo?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
       username: datag
       password: yjkdatag
       maximum-pool-size: 5
+
+    rptstd:
+      url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com:3306/report_content_kafka?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+      username: datag
+      password: yjkdatag
+      maximum-pool-size: 10
   kafka:
     bootstrap-servers: 192.168.1.153:9092
   data:
     elasticsearch:
       cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300
-      cluster-name: hz-datag-es
+      cluster-name: hz-es-cluster1
 
 hbase:
   zookeeper:

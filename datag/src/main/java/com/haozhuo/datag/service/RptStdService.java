@@ -12,6 +12,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,14 +23,16 @@ import java.util.Map;
 public class RptStdService {
     private static final Logger logger = LoggerFactory.getLogger(RptStdService.class);
 
-    public final static List<String> stopWords = new ArrayList<>();
     public final static Map<String,String[]> indexMap = new HashMap<>();
     public final static Map<String,String[]> sugMap = new HashMap<>();
-    //@Autowired
-    @Qualifier("rptstdJdbc") //选择jdbc连接池
-    private  JdbcTemplate rptstdDB;
 
-    public RptStdService(JdbcTemplate jdbcTemplate ,Environment env){
+
+     //选择jdbc连接池
+
+    private final JdbcTemplate rptstdDB;
+
+    @Autowired
+    public RptStdService(@Qualifier("rptstdJdbc") JdbcTemplate jdbcTemplate ,Environment env){
         this.rptstdDB = jdbcTemplate;
         inintIndexMap();
         initSugMap();
@@ -44,11 +47,13 @@ public class RptStdService {
 //
 //    }
     //
-    String indexSql ="select index_name,item_name,index_type,std_index_name,std_item_name,std_type from check_index_name_map ";
+    //String indexSql ="select index_name,item_name,index_type,std_index_name,std_item_name,std_type from check_index_name_map ";
+    String indexSql = "select * from check_index_name_map";
     private void inintIndexMap(){
+        int flag = 0 ;
         logger.info("加载标准化映射表：index_map");
         try{
-        rptstdDB.query(indexSql, (resultSet,i)->{
+        List list =rptstdDB.query(indexSql, (resultSet,i)->{
             String[] array = new String[4];
             String std_type;
             String index_name = resultSet.getString("index_name").trim();
@@ -58,22 +63,30 @@ public class RptStdService {
             String std_item_name = resultSet.getString("std_item_name").trim();
             if(resultSet.getString("std_type")==null){
                 std_type ="";
+                //flag =flag+1;
             }else
             {
                 std_type = resultSet.getString("std_type").trim();
-
+                //flag =flag+1;
             }
             array[0] = std_item_name;
             array[1] = std_index_name;
             array[2] = index_type;
             array[3] = std_type;
-
             indexMap.put(item_name+index_name,array);
             return array;
-        });}
-        catch(Exception ex) {
-            logger.debug("initindexmap error", ex);
+        });
+            System.out.println(list.size());
+            flag=flag+1;
         }
+        catch(Exception ex) {
+
+            logger.debug("initindexmap error", ex);
+        }finally {
+            System.out.println("记录："+flag);
+        }
+
+
     }
 
     private void initSugMap(){

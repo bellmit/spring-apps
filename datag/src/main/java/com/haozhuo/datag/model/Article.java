@@ -20,6 +20,15 @@ public class Article {
     private String tags;
     private String createTime;
     private String updateTime;
+    private int sourceType;
+
+    public int getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(int sourceType) {
+        this.sourceType = sourceType;
+    }
 
     public long getInformationId() {
         return informationId;

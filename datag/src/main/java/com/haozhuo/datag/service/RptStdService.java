@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -28,8 +29,17 @@ public class RptStdService {
 
 
      //选择jdbc连接池
-
     private final JdbcTemplate rptstdDB;
+
+
+    @Scheduled(cron = "0 */10 * * * ?")
+    public void execute() {
+        inintIndexMap();
+        initSugMap();
+    }
+
+
+
 
     @Autowired
     public RptStdService(@Qualifier("rptstdJdbc") JdbcTemplate jdbcTemplate ,Environment env){
@@ -48,9 +58,9 @@ public class RptStdService {
 //    }
     //
     //String indexSql ="select index_name,item_name,index_type,std_index_name,std_item_name,std_type from check_index_name_map ";
-    String indexSql = "select * from check_index_name_map";
+    String indexSql = "select * from check_index_name_map_copy1";
     private void inintIndexMap(){
-        int flag = 0 ;
+        //int flag = 0 ;
         logger.info("加载标准化映射表：index_map");
         try{
         List list =rptstdDB.query(indexSql, (resultSet,i)->{
@@ -76,14 +86,11 @@ public class RptStdService {
             indexMap.put(item_name+index_name,array);
             return array;
         });
-            System.out.println(list.size());
-            flag=flag+1;
+
         }
         catch(Exception ex) {
 
             logger.debug("initindexmap error", ex);
-        }finally {
-            System.out.println("记录："+flag);
         }
 
 
@@ -91,9 +98,9 @@ public class RptStdService {
 
     private void initSugMap(){
 
-        logger.info("加载标准化映射表：sug_map");
+        logger.info("加载标准化映射表：sug_map_copy1");
         try {
-        rptstdDB.query("select sug_name,std_sug_name,body,check_mode,abnormal_label from check_sug_name_map",(resultSet,i)->{
+        rptstdDB.query("select sug_name,std_sug_name,body,check_mode,abnormal_label from check_sug_name_map_copy1",(resultSet,i)->{
             String[] array = new String[4];
             String sug_name = resultSet.getString("sug_name").trim();
             String std_sug_name = resultSet.getString("std_sug_name").trim();

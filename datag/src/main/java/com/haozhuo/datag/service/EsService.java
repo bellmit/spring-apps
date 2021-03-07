@@ -1,11 +1,16 @@
 package com.haozhuo.datag.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.haozhuo.datag.com.service.bean.Desc;
+import com.haozhuo.datag.com.service.stdrpt.ParseReport;
 import com.haozhuo.datag.common.EsUtils;
 import com.haozhuo.datag.common.JavaUtils;
 import com.haozhuo.datag.common.Utils;
 import com.haozhuo.datag.model.*;
 import com.haozhuo.datag.model.crm.UserIdTagsId;
 import com.haozhuo.datag.model.report.ReVO;
+import com.haozhuo.datag.util.CloseableHttpClientToInterface;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
@@ -18,7 +23,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.*;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
-import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
@@ -30,7 +34,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import scala.annotation.meta.param;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -78,6 +81,7 @@ public class EsService {
     private String reportLabelIndex;
 
     private final static String countryId = "000000";
+    private final static String url = "http://192.168.20.159/api/app/getDesc?id=";
 
     private final GoodsTypeProportion goodsTypeProportion = new GoodsTypeProportion();
 
@@ -107,6 +111,19 @@ public class EsService {
         }
         return EsUtils.getDocIdsAsArray(srb);
     }
+    private void nest(String index, QueryBuilder query, int size, String... types) {
+        SearchRequestBuilder srb = client.prepareSearch(index)
+                .setSize(size).setQuery(
+                        new FunctionScoreQueryBuilder(query, getTimeGaussFunction(index))
+                );
+
+        if (types != null && types.length > 0) {
+            srb.setTypes(types);
+        }
+
+    }
+
+
 
     private String[] simpleRecommend(String index, QueryBuilder query, int size, String... types) {
         SearchRequestBuilder srb = client.prepareSearch(index)
@@ -584,6 +601,26 @@ public class EsService {
         SearchHit[] searchHits = srb.execute().actionGet().getHits().getHits();
         return stream(searchHits).map(x -> x.getSourceAsMap().get("rpt_create_date")).findFirst().orElse("").toString();
     }
+
+    public Desc getChkitems(String rptid) {
+       String s  = CloseableHttpClientToInterface.doGet(url+rptid);
+       String array =   JSONObject.parseObject(s).get("value").toString();
+       if(array.length()<10){
+           return  new Desc();
+       }
+       String report =  JSON.parseArray(array).get(0).toString();
+       String content = JSONObject.parseObject(report).get("report_content").toString();
+       return  ParseReport.parseReport(content);
+       // return s;
+
+    }
+    public void getDesc(Object json) {
+        System.out.println(json.toString());
+
+        String checkItems = JSONObject.parseObject(json.toString()).get("checkItems").toString();
+        System.out.println(checkItems);
+    }
+
 
     public String getrptid(String idcard) {
 

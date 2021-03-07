@@ -42,39 +42,13 @@ public class ReportController {
         return hbaseService.getBodyById(reportId);
     }
 
-/*    @GetMapping(value = "/ant/{idcard}")
-    @ApiOperation(value = "蚂蚁保险返回值")
-    public RepAbnormal getAnt(@PathVariable(value = "idcard") String idcard) {
-        RepAbnormal insurance = hbaseService.insurance(idcard);
-        return mayi.getAbnormalValue(idcard);
-    }
-    @GetMapping(value = "/antvalue/{idcard}")
-    @ApiOperation(value = "蚂蚁保险返回值")
-    public RepAbnormal getAnt1(@PathVariable(value = "idcard") String idcard) {
-        RepAbnormal insurance = hbaseService.insurance(idcard);
-        return mayi.insurance(idcard);
+    @GetMapping(value = "/getResultAndDesc/{reportId}")
+    public Object getDescByReportId(@PathVariable(value = "reportId") String reportId) {
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),esService.getChkitems(reportId));
+
+       // return esService.getChkitems(reportId);
     }
 
-    @GetMapping(value = "/hongkang/{idcard}")
-    @ApiOperation(value = "弘康保险返回值")
-    public HongKang getTest(@PathVariable(value = "idcard") String idcard) {
-
-        return hongkang.getAbnormalValueForHongkang(idcard);
-    }
-
-    @GetMapping(value = "/hongkangvalue/{idcard}")
-    @ApiOperation(value = "弘康保险返回值")
-    public HongKang getTest1(@PathVariable(value = "idcard") String idcard) {
-
-        return hongkang.getHongkangValue(idcard);
-    }*/
-
-/*    @GetMapping(value = "/hongkangvaluetest")
-    @ApiOperation(value = "弘康保险返回值")
-    public void test11() throws IOException {
-
-        hongkang.test();
-    }*/
 
     @GetMapping(value = "/weibao/{rptid}")
     @ApiOperation(value = "微保")

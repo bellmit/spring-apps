@@ -1124,6 +1124,7 @@ public class BisysJdbcService {
 
              whDB.query(abnormalPxSql, new Object[]{stdAbnormal},
                     (resultSet, i) -> {
+                        System.out.println("查询次数："+i);
                         AbnormalSort abnormalSort = new AbnormalSort();
                         abnormalSort.setAbnormal(x);
                         abnormalSort.setException(resultSet.getString("sug_name"));
@@ -1149,49 +1150,49 @@ public class BisysJdbcService {
         }else {
             listAllDistinct = list2;
         }
-        //AbPxData abPxData = new AbPxData(listAllDistinct,flag);
-        if(flag==1){
-         for(int i=0;i< listAllDistinct.size();i++){
-             AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
-             if(i==0){
-                 abnormalSortPo.setFlag(1);
-             }
-             abnormalSortPo.setAbnormal(listAllDistinct.get(i));
-             list3.add(abnormalSortPo);
-         }
-        }else {
-//            String summary = abnormalPxPo.getGeneralSummarys2().toString();
-//            if(summary.contains("胸")&&summary.toLowerCase().contains("ct")&&summary.contains("结节")){
-//             Boolean b=   abnormalPxPo.getGeneralSummarys2().stream().anyMatch(x->(x.split("建议")[0].contains("肺")||x.split("建议")[0].contains("支气管"))&&x.split("建议")[0].toLowerCase().contains("ct")
-//                        &&x.split("建议")[0].contains("结节"));
-//             if(b){
-//                 AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
-//                 abnormalSortPo.setAbnormal("肺结节影");
+        AbPxData abPxData = new AbPxData(listAllDistinct,flag);
+//        if(flag==1){
+//         for(int i=0;i< listAllDistinct.size();i++){
+//             AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+//             if(i==0){
 //                 abnormalSortPo.setFlag(1);
-//                 list3.add(abnormalSortPo);
-//                 for (String s:listAllDistinct) {
-//                     AbnormalSortPo abnormalSortPo1 = new AbnormalSortPo();
-//                     abnormalSortPo1.setAbnormal(s);
-//                     list3.add(abnormalSortPo1);
-//                 }
-//
-//
-//             }else {
-//                 for (String s:listAllDistinct) {
-//                     AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
-//                     abnormalSortPo.setAbnormal(s);
-//                     list3.add(abnormalSortPo);
-//                 }
 //             }
-//
-//            }else {
-            for (String s:listAllDistinct) {
-                    AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
-                    abnormalSortPo.setAbnormal(s);
-                    list3.add(abnormalSortPo);
-                }
-            }
-        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),list3);
+//             abnormalSortPo.setAbnormal(listAllDistinct.get(i));
+//             list3.add(abnormalSortPo);
+//         }
+//        }else {
+////            String summary = abnormalPxPo.getGeneralSummarys2().toString();
+////            if(summary.contains("胸")&&summary.toLowerCase().contains("ct")&&summary.contains("结节")){
+////             Boolean b=   abnormalPxPo.getGeneralSummarys2().stream().anyMatch(x->(x.split("建议")[0].contains("肺")||x.split("建议")[0].contains("支气管"))&&x.split("建议")[0].toLowerCase().contains("ct")
+////                        &&x.split("建议")[0].contains("结节"));
+////             if(b){
+////                 AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+////                 abnormalSortPo.setAbnormal("肺结节影");
+////                 abnormalSortPo.setFlag(1);
+////                 list3.add(abnormalSortPo);
+////                 for (String s:listAllDistinct) {
+////                     AbnormalSortPo abnormalSortPo1 = new AbnormalSortPo();
+////                     abnormalSortPo1.setAbnormal(s);
+////                     list3.add(abnormalSortPo1);
+////                 }
+////
+////
+////             }else {
+////                 for (String s:listAllDistinct) {
+////                     AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+////                     abnormalSortPo.setAbnormal(s);
+////                     list3.add(abnormalSortPo);
+////                 }
+////             }
+////
+////            }else {
+//            for (String s:listAllDistinct) {
+//                    AbnormalSortPo abnormalSortPo = new AbnormalSortPo();
+//                    abnormalSortPo.setAbnormal(s);
+//                    list3.add(abnormalSortPo);
+//                }
+//            }
+        return new ResponseEntity<>(ResponseEnum.SUCCESS.getCode(), ResponseEnum.SUCCESS.getMsg(),abPxData);
 
     }
 

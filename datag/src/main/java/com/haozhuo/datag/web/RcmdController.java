@@ -355,8 +355,8 @@ public class RcmdController {
             @RequestParam(value = "userId") String userId,
             @RequestParam(value = "size", defaultValue = "10") int size) {
         InfoArticle infoArticle =  new InfoArticle();
-        return  infoArticle;
-        //return infoRcmdService.UseridRecommendNews(userId, size,categoryId,channelId);
+        //return  infoArticle;
+        return infoRcmdService.UseridRecommendNews(userId, size,categoryId,channelId);
     }
 
     /**

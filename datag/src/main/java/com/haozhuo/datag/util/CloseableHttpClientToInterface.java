@@ -10,7 +10,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
-import java.io.IOException;
+import java.io.*;
 
 /**
  * @Author: Yang JianQiu
@@ -44,13 +44,13 @@ public class CloseableHttpClientToInterface {
             HttpResponse response = httpClient.execute(get);
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
                 //返回json格式
-                String res = EntityUtils.toString(response.getEntity());
+                String res = EntityUtils.toString (response.getEntity());
                 return res;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return "";
     }
 
     /**
@@ -75,7 +75,7 @@ public class CloseableHttpClientToInterface {
             StringEntity s = new StringEntity(json.toString());
             s.setContentEncoding("UTF-8");
             //发送json数据需要设置contentType
-            s.setContentType("application/x-www-form-urlencoded");
+            s.setContentType("application/json");
             //设置请求参数
             post.setEntity(s);
             HttpResponse response = httpClient.execute(post);
@@ -102,8 +102,45 @@ public class CloseableHttpClientToInterface {
 
 
     public static void main(String[] args) {
-       String s = doGet("http://192.168.1.152:8700/api/getDesc?id=2515208");
-       System.out.println(s);
+       //String s = doGet("http://192.168.1.152:8700/api/getDesc?id=2515208");
+       JSONObject param = new JSONObject();
+       param.put("text","子宫:子宫未探及（自述已切除）\\r\\n阴道囊肿可能,建议复查\\r\\n左附件、右附件未发现明显异常");
+       //String result = doPost("http://192.168.1.152:8233/data_std/v1/xj",param);
+       String uri = "http://tcc.taobao.com/cc/json/mobile_tel_segment.htm?tel=" ;
+        String fileName="province.txt";
+        try
+        {
+            BufferedWriter out=new BufferedWriter(new FileWriter(fileName));
+
+
+            String fileName1= "z.txt";
+            String line="";
+                BufferedReader in=new BufferedReader(new FileReader(fileName1));
+                line=in.readLine();
+                while (line!=null)
+                {
+                    String url = uri+line;
+                    System.out.println(url);
+                    String result = doGet(url);
+                    //System.out.println(result+"========"+line);
+                    String province = "";
+                    JSONObject provinceobj  = JSONObject.parseObject(result.replace("__GetZoneResult_ = ",""));
+                    if(!provinceobj.isEmpty()){
+                        province = provinceobj.getString("province").toString();
+                    }
+                    out.write(line+"\t"+province);
+                    out.newLine();
+                    line=in.readLine();
+                }
+                in.close();
+                out.close();
+        } catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+
     }
 
 }

@@ -20,6 +20,7 @@ app:
       prefs-update: prefs-update
       userBehaviorTopic: dev-syn-table-userBehavior
       userBehaviorTopicTest: test-syn-table-userBehavior1 
+      reportTopic: report-sink
   biz:
     send-rcmd-msg: false
     goods-sales-days: 90
@@ -67,14 +68,18 @@ spring:
       username: datag
       password: yjkdatag
       maximum-pool-size: 5
-
     rptstd:
-      url: jdbc:mysql://192.168.1.162:3306/report_content_kafka?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+      url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com:3306/report_content_kafka?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
       username: datag
       password: yjkdatag
       maximum-pool-size: 10
+    yjkrepot:
+      url: jdbc:mysql://192.168.1.170:3306/yjk_big?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+      username: yjk_user
+      password: user_pa$$w0rd
+      maximum-pool-size: 10
   kafka:
-    bootstrap-servers: 192.168.1.153:9092
+    bootstrap-servers: 192.168.1.152:9092
   data:
     elasticsearch:
       cluster-nodes: 192.168.1.152:9300,192.168.1.153:9300

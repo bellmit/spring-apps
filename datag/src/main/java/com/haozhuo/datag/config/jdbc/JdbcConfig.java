@@ -112,4 +112,45 @@ public class JdbcConfig {
     public DataSource rptstdDataSource() {
         return rptStdDataSourceProperties().initializeDataSourceBuilder().build();
     }
+
+
+    @Bean(name = "yjkrepot")
+    public JdbcTemplate rptStdSdJdbcTemplate() {
+        return new JdbcTemplate(rptstdSdDataSource());
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "spring.datasource.yjkrepot")
+    public DataSourceProperties rptStdSdDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "spring.datasource.yjkrepot")
+    public DataSource rptstdSdDataSource() {
+        return rptStdSdDataSourceProperties().initializeDataSourceBuilder().build();
+    }
+
+
+    @Bean(name = "newyjkrepot")
+    public JdbcTemplate newrptStdSdJdbcTemplate() {
+        return new JdbcTemplate(newrptstdSdDataSource());
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "spring.datasource.newyjkrepot")
+    public DataSourceProperties newrptStdSdDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "spring.datasource.newyjkrepot")
+    public DataSource newrptstdSdDataSource() {
+        return newrptStdSdDataSourceProperties().initializeDataSourceBuilder().build();
+    }
+
+
+
+
+
 }

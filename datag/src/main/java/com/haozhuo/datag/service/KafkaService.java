@@ -39,6 +39,18 @@ public class KafkaService {
     @Value("${app.kafka.topic.userBehaviorTopic: dev-syn-table-userBehavior}")
     private String devSynRableUserBehavior;
 
+    @Value("${app.kafka.topic.reportTopic: report-sink}")
+    private String stdReportSink;
+
+    public void sendStdReportMsg(String msg) {
+        try {
+            kafkaTemplate.send(stdReportSink, msg);
+        } catch (Exception e) {
+            logger.error("发送Kafka消息{}失败:{}", msg, e);
+        }
+    }
+
+
     public void sendRcmdRequestMsg(RcmdMsg msg) {
         try {
             logger.debug("send msg:{}", msg);

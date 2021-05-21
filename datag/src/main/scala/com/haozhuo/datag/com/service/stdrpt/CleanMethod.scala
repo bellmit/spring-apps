@@ -15,9 +15,9 @@ object CleanMethod {
   //异常名称清洗
   private val not_needed_symbols_replace_pattern =  """[\s+`~!@#$%^&*()=|{}'\[\].。<>/?！￥…（）—\-【】 ‘;；:：”“’,，、？\\]"""
   //阴阳性结果匹配模式
-  private val positive_or_negative_match_pattern1 = """^[+-]+(/(hp|HP))?$""".r.toString()
-  private val positive_or_negative_match_pattern_2 = """^[\d-]+/(hp|HP)$""".r.toString()
-  private val positive_or_negative_match_pattern_3 = """^(hp|HP|弱|强)?[阴阳]性""".r.toString()
+  private val positive_or_negative_match_pattern1 = """^[+-]+(/(hp|HP))?$.*""".r.toString()
+  private val positive_or_negative_match_pattern_2 = """^[\d-]+/(hp|HP)$.*""".r.toString()
+  private val positive_or_negative_match_pattern_3 = """^(hp|HP|弱|强)?[阴阳]性.*""".r.toString()
 
   //数值型指标项检查结果
   private val numeric_chk_item_value_pattern = """^[0-9]+[0-9Ee.]+([↓↑]?(\([\u4e00-\u9fa5,*].*?\))?|次/分|(mmol|umol|CELL|g)/u?L)?$""".r
@@ -273,6 +273,19 @@ object CleanMethod {
     }
     value
   }
+	def result_value_replace_tag(result_value:String)= {
+		var value:String = result_value
+		value = result_value.split("\\(")(0).split("（")(0).split("/")(0)
+		val qylist = List("强阳","3+","4+","+3","+4","+++","++++")
+		val ruolist = List("弱阳","+-")
+		val ylist = List("阳性","++","+","+2","+1","1+","2+")
+		if(result_value.contains("阳性")&&result_value.contains("阴性")) value="数据错误"
+		else if(qylist.filter(value.contains(_)).nonEmpty) value="强阳性"
+		else if(ruolist.filter(value.contains(_)).nonEmpty) value="弱阳性"
+		else if(ylist.filter(value.contains(_)).nonEmpty) value="阳性"
+		else value = "阴性"
+		value
+	}
 
 class CleanMethod{}
 
@@ -301,8 +314,11 @@ class CleanMethod{}
     ("异常名称："+cleanName)
     val numdate = is_numberic_data("0.63")
     println("数值型数据："+numdate)
-    val textref = textRefClean("100-300 10^9/L")
+    val textref = textRefClean("0-3")
     println(textref)
+
+	val typeID = is_numberic_data("2")
+	  println(typeID)
 
   }
 }

@@ -6,6 +6,7 @@ package com.haozhuo.datag.model;
 public enum ResponseEnum {
     SUCCESS(200, "成功"),
     ERROR(400, "失败"),
+    PARAM_ERROR(400, "参数为空"),
 /*    SIGN_ERROR(700, "签名验证失败"),
     WX_PAY_ERROR(3602001, "调用微信下单接口异常"),
     FREE_COUNT_OUT(3602002, "所选免费加项包数量超过允许最大数量"),

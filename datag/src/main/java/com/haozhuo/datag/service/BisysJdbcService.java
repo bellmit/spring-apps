@@ -1124,7 +1124,6 @@ public class BisysJdbcService {
 
              whDB.query(abnormalPxSql, new Object[]{stdAbnormal},
                     (resultSet, i) -> {
-                        System.out.println("查询次数："+i);
                         AbnormalSort abnormalSort = new AbnormalSort();
                         abnormalSort.setAbnormal(x);
                         abnormalSort.setException(resultSet.getString("sug_name"));

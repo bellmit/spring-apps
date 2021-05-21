@@ -77,7 +77,6 @@ public class InfoRcmdService {
             } else {
                 result.setVideo(new String[]{videoId});
             }
-
         } else {
             String liveId = dataetlJdbcService.getUnPushedVideoOrLiveId(pushedALV.getLive(), false, channelId);
             if (liveId == null) {
@@ -151,7 +150,7 @@ public class InfoRcmdService {
         String[] inits = new String[]{"1"};
         PushedInfoKeys pushedInfoKeys = new PushedInfoKeys(userId, channelId, categoryId);
         String labels = redisService.getPushedLablefoArticle(pushedInfoKeys);
-
+        System.out.println(labels);
         if(labels.length()<2){
            String  eslabels = esService.getLabelsByUserId(userId);
            if (eslabels.length()<2){
@@ -194,7 +193,7 @@ public class InfoRcmdService {
             }else {
                 tags = dataetlJdbcService.getTagsKeywordsByInfoId(articleIds1[0]);
             }
-            String[] articleIds2 = esService.getArticleIds(labels, articleIds1, size-articleIds1.length);
+            String[] articleIds2 = esService.getArticleIds(tags, articleIds1, size-articleIds1.length);
             String[] articleIds3 = merageStrings(articleIds1,articleIds2);
             infoArticle.setArticle(articleIds3);
             if(articleIds3.length<size){

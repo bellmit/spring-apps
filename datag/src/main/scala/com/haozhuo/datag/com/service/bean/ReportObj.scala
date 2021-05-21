@@ -5,6 +5,7 @@ import org.codehaus.jackson.annotate.JsonProperty
 import scala.beans.BeanProperty
 
 class ReportObj extends Serializable {
+
   @BeanProperty
   @JsonProperty("healthReportId") var healthReportId: String = ""
   @BeanProperty

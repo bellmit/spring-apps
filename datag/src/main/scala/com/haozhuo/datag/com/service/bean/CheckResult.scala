@@ -60,12 +60,20 @@ class CheckResult extends Serializable{
   @JsonProperty("unit") var unit: String=""
 
   @BeanProperty
+  @JsonProperty("stdUnit") var stdUnit: String=""
+
+  @BeanProperty
   @JsonProperty("stdType") var stdType: String = ""
 
   @BeanProperty
   @JsonProperty("checkIndexType") var checkIndexType: String = ""
 
+  @BeanProperty
+  @JsonProperty("stdCheckId") var stdCheckId: String = ""
 
-  override def toString = s"CheckResult($appendInfo, $canExplain, $result, $checkIndexName, $stdCheckIndexName, $highValueRef, $isAbandon, $isCalc, $lowValueRef, $resultFlagId, $resultTypeId, $resultValue, $stdResultValue, $showIndex, $textRef, $stdTextRef, $unit, $stdType, $checkIndexType)"
+  @BeanProperty
+  @JsonProperty("indexTag") var indexTag: String = ""
+
+  override def toString = s"CheckResult($appendInfo, $canExplain, $result, $checkIndexName, $stdCheckIndexName, $highValueRef, $isAbandon, $isCalc, $lowValueRef, $resultFlagId, $resultTypeId, $resultValue, $stdResultValue, $showIndex, $textRef, $stdTextRef, $unit,$stdUnit, $stdType, $checkIndexType, $stdCheckId)"
 }
 

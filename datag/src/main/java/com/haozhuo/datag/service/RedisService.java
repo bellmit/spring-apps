@@ -164,6 +164,7 @@ public class RedisService {
         // 0 article
         //0 %s_%s_a", channelId, categoryId
         //0 295382,295374,295372,295371,295369,295367,295359,295358,295355
+        System.out.println(pushedInfoKeys.getKey());
         String values = (String) redisDB0.opsForHash().get(pushedInfoKeys.getKey(),"label");
         return values;
     }

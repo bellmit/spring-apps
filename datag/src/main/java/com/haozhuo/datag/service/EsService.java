@@ -16,6 +16,7 @@ import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -77,11 +78,15 @@ public class EsService {
 
     private final Random random = new Random();
 
+    private final KafkaService kafkaService;
+
     @Value("${app.es.reportlabel-index}")
     private String reportLabelIndex;
 
     private final static String countryId = "000000";
     private final static String url = "http://192.168.20.159/api/app/getDesc?id=";
+    private String testUrl = "http://192.168.20.159/api/app/getDesc?id=";
+    private String stdtUrl = "http://192.168.20.159/api/hm/getStdRpt?id=";
 
     private final GoodsTypeProportion goodsTypeProportion = new GoodsTypeProportion();
 
@@ -96,7 +101,8 @@ public class EsService {
     private final ExponentialDecayFunctionBuilder goodsCreateTimeExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("createTime", "now", "180d", "0d", 0.8);
     private final ExponentialDecayFunctionBuilder goodsSaleNumExpDecayFunction = ScoreFunctionBuilders.exponentialDecayFunction("salesNum", 10000, 500, 9000, 0.5D);
 
-    public EsService(Environment env) {
+    public EsService(KafkaService kafkaService, Environment env) {
+        this.kafkaService = kafkaService;
         goodsSearchFields = env.getProperty("app.es.goods-search-fields", "name,goodsTags").split(",");
         logger.info("goodsSearchFields:{}", Arrays.asList(goodsSearchFields));
     }
@@ -603,7 +609,7 @@ public class EsService {
     }
 
     public Desc getChkitems(String rptid) {
-       String s  = CloseableHttpClientToInterface.doGet(url+rptid);
+       String s  = CloseableHttpClientToInterface.doGet(testUrl+rptid);
        String array =   JSONObject.parseObject(s).get("value").toString();
        if(array.length()<10){
            return  new Desc();
@@ -614,6 +620,20 @@ public class EsService {
        // return s;
 
     }
+
+    public String getStdReport(String rptid){
+
+        String s  = CloseableHttpClientToInterface.doGet(stdtUrl+rptid);
+        String array =   JSONObject.parseObject(s).get("value").toString();
+        kafkaService.sendStdReportMsg(array);
+        return  "success";
+    }
+
+
+
+
+
+
     public void getDesc(Object json) {
         System.out.println(json.toString());
 
@@ -787,6 +807,8 @@ public class EsService {
     private String[] getVideoIdsByCondition(QueryBuilder condition, String[] excludeIds, int size) {
         return getIndexByCondition(videoIndex, condition, excludeIds, size);
     }
+
+
 
     //---------------------- video end -----------------------------------
 }

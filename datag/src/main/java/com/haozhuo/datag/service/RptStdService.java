@@ -1,9 +1,10 @@
 package com.haozhuo.datag.service;
 
+import com.google.inject.internal.cglib.core.$DuplicatesPredicate;
 import com.haozhuo.datag.com.service.bean.Report;
+import com.haozhuo.datag.com.service.bean.ReportContent;
 import com.haozhuo.datag.com.service.stdrpt.RptStd;
-import lombok.experimental.var;
-import org.apache.kafka.common.protocol.types.Field;
+import com.haozhuo.datag.com.service.stdrpt.UnifMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +14,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,26 +24,37 @@ public class RptStdService {
 
     public final static Map<String,String[]> indexMap = new HashMap<>();
     public final static Map<String,String[]> sugMap = new HashMap<>();
+    public final static Map<String,String> unitMap = new HashMap<>();
+    public final static Map<String,String> partMap = new HashMap<>();
+    public final static Map<String,String> symptomsMap = new HashMap<>();
+    public final static Map<String,String[]> checkIdMap = new HashMap<>();
 
 
-     //选择jdbc连接池
+
+
+    //选择jdbc连接池
     private final JdbcTemplate rptstdDB;
 
 
-    @Scheduled(cron = "0 */10 * * * ?")
+
+
+    @Scheduled(cron = "0 */30 * * * ?")
     public void execute() {
         inintIndexMap();
-        initSugMap();
+        inintSugMap();
+        inintCheckIdMap();
     }
 
 
-
-
     @Autowired
-    public RptStdService(@Qualifier("rptstdJdbc") JdbcTemplate jdbcTemplate ,Environment env){
+    public RptStdService(@Qualifier("rptstdJdbc") JdbcTemplate jdbcTemplate,Environment env){
         this.rptstdDB = jdbcTemplate;
         inintIndexMap();
-        initSugMap();
+        inintSugMap();
+        inintPartMap();
+        inintSymptomsMap();
+        inintUnitMap();
+        inintCheckIdMap();
     }
 
 
@@ -58,7 +67,7 @@ public class RptStdService {
 //    }
     //
     //String indexSql ="select index_name,item_name,index_type,std_index_name,std_item_name,std_type from check_index_name_map ";
-    String indexSql = "select * from check_index_name_map_copy1";
+    String indexSql = "select * from check_index_name_map  ";
     private void inintIndexMap(){
         //int flag = 0 ;
         logger.info("加载标准化映射表：index_map");
@@ -96,11 +105,91 @@ public class RptStdService {
 
     }
 
-    private void initSugMap(){
 
-        logger.info("加载标准化映射表：sug_map_copy1");
+    String checkIdSql = "select concat(ifnull(item_name,''),'_',ifnull(index_name,'')) as code ,ifnull(check_item_code,'') as check_item_code,state,update_time from data_assets_ms_v2.unif_origin where state in(0,1,3,4,5) and active = 1  ";
+
+    private void inintCheckIdMap(){
+        //int flag = 0 ;
+        logger.info("加载标准化映射表：checkIdSql");
+        try{
+            rptstdDB.query(checkIdSql, (resultSet)->{
+                String[] array = new String[3];
+                String code = resultSet.getString("code").trim();
+                String tmpcheckid = resultSet.getString("check_item_code").trim();
+                String state = resultSet.getString("state").trim();
+                String updatetime = resultSet.getString("update_time").trim();
+                array[0] = tmpcheckid;
+                array[1] = state;
+                array[2] = updatetime;
+                checkIdMap.put(code,array);
+            });
+        }
+        catch(Exception ex) {
+            logger.debug("symptomsMap error", ex);
+        }
+
+    }
+
+
+
+
+    String symptomsSql ="select distinct symptoms from data_assets_ms_v2.nlp_symptoms ";
+
+    private void inintSymptomsMap(){
+        //int flag = 0 ;
+        logger.info("加载标准化映射表：symptomsMap");
+        try{
+            rptstdDB.query(symptomsSql, (resultSet)->{
+                String part = resultSet.getString("symptoms").trim();
+                symptomsMap.put(part,part);
+            });
+        }
+        catch(Exception ex) {
+            logger.debug("symptomsMap error", ex);
+        }
+
+    }
+
+
+    String partSql ="select distinct part from data_assets_ms_v2.nlp_part ";
+    private void inintPartMap(){
+        //int flag = 0 ;
+        logger.info("加载标准化映射表：partMap");
+        try{
+            rptstdDB.query(partSql, (resultSet)->{
+                String part = resultSet.getString("part").trim();
+                partMap.put(part,part);
+            });
+        }
+        catch(Exception ex) {
+            logger.debug("partMap error", ex);
+        }
+
+    }
+
+
+    String unitSql = "select unit,stdunit from data_assets_ms_v2.unif_unit";
+    private void inintUnitMap(){
+        //int flag = 0 ;
+        logger.info("加载标准化映射表：unif_unit");
+        try{
+            rptstdDB.query(unitSql, (resultSet)->{
+                String keystr = resultSet.getString("unit").trim();
+                String  rulestr = resultSet.getString("stdunit").trim();
+                unitMap.put(keystr,rulestr);
+            });
+        }
+        catch(Exception ex) {
+            logger.debug("unif_unit error", ex);
+        }
+
+    }
+
+    private void inintSugMap(){
+
+        logger.info("加载标准化映射表：sug_map");
         try {
-        rptstdDB.query("select sug_name,std_sug_name,body,check_mode,abnormal_label from check_sug_name_map_copy1",(resultSet,i)->{
+        rptstdDB.query("select sug_name,std_sug_name,body,check_mode,abnormal_label from check_sug_name_map ",(resultSet,i)->{
             String[] array = new String[4];
             String sug_name = resultSet.getString("sug_name").trim();
             String std_sug_name = resultSet.getString("std_sug_name").trim();
@@ -122,6 +211,10 @@ public class RptStdService {
 
     public Report rptStd(String rptjson){
        return RptStd.rptStd(rptjson);
+    }
+
+    public ReportContent rptStdSd(String rptjson){
+        return UnifMethod.stdReport(rptjson);
     }
 
 }

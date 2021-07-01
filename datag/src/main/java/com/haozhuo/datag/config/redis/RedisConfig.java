@@ -1,3 +1,4 @@
+/*
 package com.haozhuo.datag.config.redis;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import java.util.Set;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
 
+*/
 /**
  * Spring boot配置多个redis数据库。
  * 我这里使用的是Redis Sentinel模式.数据库的地址都相同.只不过一个Redis数据库是0(默认),另一个是1
@@ -26,8 +28,9 @@ import static java.util.stream.Collectors.toSet;
  * redis数据库，但是翻遍了整个网络都没找到具体实现的examples.
  * 只能使用以下这种旧办法：
  * http://www.cnblogs.com/lchb/articles/7222870.html
- */
-@Configuration
+ *//*
+
+
 class RedisConfig {
 
     @Value("${spring.redis.sentinel.master}")
@@ -112,3 +115,4 @@ class RedisConfig {
         return buildRedisTemplate(buildConnectionFactory(3));
     }
 }
+*/

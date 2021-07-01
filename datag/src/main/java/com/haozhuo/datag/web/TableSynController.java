@@ -35,7 +35,6 @@ public class TableSynController {
     @Autowired
     private YjkMallJdbcService yjkMallJdbcService;
 
-    @Autowired
     private RedisService redisService;
 
     @Value("${app.biz.admin-password:321}")

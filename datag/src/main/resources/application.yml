@@ -38,15 +38,15 @@ logging:
   file: tmp/recommder.log
 
 spring:
-  redis:
-    sentinel:
-      master: mymaster
-      nodes: 192.168.1.150:26379,192.168.1.152:26379
-    jedis:
-      pool:
-        max-idle: 8
-        max-active: 8
-        min-idle: 0
+#  redis:
+#    sentinel:
+#      master: mymaster
+#      nodes: 192.168.1.150:26379,192.168.1.152:26379
+#    jedis:
+#      pool:
+#        max-idle: 8
+#        max-active: 8
+#        min-idle: 0
   datasource:
     dataetl:
       url: jdbc:mysql://rm-uf64qwlstnkq2n35uzo.mysql.rds.aliyuncs.com:3306/yjk_data_etl?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
@@ -77,6 +77,11 @@ spring:
       url: jdbc:mysql://192.168.1.170:3306/yjk_big?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
       username: yjk_user
       password: user_pa$$w0rd
+      maximum-pool-size: 10
+    newyjkrepot:
+      url: jdbc:mysql://192.168.1.170:3306/yjk_report_content?characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+      username: datag
+      password: datag@Hz2017
       maximum-pool-size: 10
   kafka:
     bootstrap-servers: 192.168.1.152:9092

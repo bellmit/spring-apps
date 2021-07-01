@@ -33,7 +33,7 @@ import static java.util.stream.Collectors.*;
  */
 
 @SuppressWarnings({"unchecked", "unused"})
-@Component
+//@Component
 public class RedisService {
     private static final Logger logger = LoggerFactory.getLogger(RedisService.class);
 
